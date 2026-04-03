@@ -55,7 +55,7 @@ DATA_DIR = os.environ.get("ATBOARDS_DATA_DIR", user_data_dir("atboards"))
 
 
 class AtboardsApp(App):
-    TITLE = "atboards"
+    TITLE = "@boards"
     CSS_PATH = "app.tcss"
     BINDINGS = [
         ("ctrl+q", "quit", "quit"),

@@ -31,7 +31,7 @@ class LoginScreen(Screen):
     def compose(self) -> ComposeResult:
         from tui.widgets.breadcrumb import Breadcrumb
         yield Breadcrumb(
-            ("atboards", 1),
+            ("@boards", 1),
             ("log in", 0),
         )
         with Vertical():

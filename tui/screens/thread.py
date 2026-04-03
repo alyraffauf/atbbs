@@ -29,7 +29,7 @@ class ThreadScreen(Screen):
         board_name = next((b.name for b in self.bbs.site.boards if b.slug == board_slug), board_slug)
         from tui.widgets.breadcrumb import Breadcrumb
         yield Breadcrumb(
-            ("atboards", 3),
+            ("@boards", 3),
             (self.bbs.site.name, 2),
             (board_name, 1),
             (self.thread.title, 0),

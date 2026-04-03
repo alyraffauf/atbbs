@@ -1,29 +1,43 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="max-w-2xl mx-auto px-4">
-    <h1 class="text-lg text-neutral-200 mb-1">atboards</h1>
-    <p class="text-neutral-500 mb-8">Decentralized bulletin boards on <a href="https://atproto.com" class="text-neutral-400 hover:text-neutral-300">atproto</a>. Anyone can run a BBS from their own account, no server required. Users own their posts, and communities can migrate freely.</p>
-    <div class="border-t border-neutral-800 pt-6">
-        <p class="text-neutral-500 mb-4">Enter a handle to connect to a BBS.</p>
+    <!-- Hero -->
+    <div class="py-16 text-center">
+        <div class="text-7xl font-bold mb-4"><span class="text-amber-500">@</span>&#8202;<span class="text-neutral-100">boards</span></div>
+        <h1 class="text-lg text-neutral-400 mb-3">Bulletin boards on the atmosphere.</h1>
+        <p class="text-neutral-500 max-w-md mx-auto">Run a BBS from your own account. No server required. Users own their posts, communities migrate freely. Built on <a href="https://atproto.com" class="text-neutral-400 hover:text-neutral-300 underline underline-offset-2">atproto</a>.</p>
     </div>
-    <form action="/" method="get" id="handle-form" class="flex gap-2 mb-8">
-        <input
-            type="text"
-            name="handle"
-            placeholder="handle.example.com"
-            required
-            class="flex-1 bg-neutral-900 border border-neutral-800 rounded px-3 py-2 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
-        >
-        <button type="submit" class="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 px-4 py-2 rounded">
-            go
-        </button>
-    </form>
 
-    <div id="discover" class="border-t border-neutral-800 pt-6 mb-8 hidden">
-        <h2 class="text-xs text-neutral-500 uppercase tracking-wide mb-3">Discover</h2>
-        <div id="discover-list" class="space-y-1"></div>
+    <!-- Connect -->
+    <div class="border-t border-neutral-800 py-8">
+        <h2 class="text-neutral-300 mb-4">Connect to a BBS</h2>
+        <form action="/" method="get" id="handle-form" class="flex gap-2 mb-6">
+            <input
+                type="text"
+                name="handle"
+                placeholder="handle.example.com"
+                required
+                class="flex-1 bg-neutral-900 border border-neutral-800 rounded px-3 py-2 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
+            >
+            <button type="submit" class="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 px-4 py-2 rounded">
+                go
+            </button>
+        </form>
+        <div id="discover" class="hidden">
+            <p class="text-neutral-500 text-xs uppercase tracking-wide mb-3">or find one</p>
+            <div id="discover-list" class="space-y-1"></div>
+        </div>
+    </div>
+
+    <!-- Install -->
+    <div class="border-t border-neutral-800 py-8">
+        <h2 class="text-neutral-300 mb-4">Dial in from your terminal</h2>
+        <pre class="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-400 text-xs mb-3"><span class="text-neutral-500">$</span> pip install atboards
+<span class="text-neutral-500">$</span> atb</pre>
+        <p class="text-neutral-500 text-xs">Requires Python 3.14+.</p>
     </div>
 </div>
+
 <script>
     document.getElementById("handle-form").addEventListener("submit", function(e) {
         e.preventDefault();

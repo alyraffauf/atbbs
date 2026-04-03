@@ -113,10 +113,18 @@ HomeScreen {
 }
 
 HomeScreen #home-container {
-    width: 50;
+    width: 60;
     height: auto;
     padding: 1 2;
 }
+
+HomeScreen #hero-title,
+HomeScreen #hero-sub1,
+HomeScreen #hero-sub2 {
+    text-align: center;
+    width: 100%;
+}
+
 
 HomeScreen Input {
     margin: 1 0;

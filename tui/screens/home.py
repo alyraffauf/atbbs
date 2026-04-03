@@ -23,13 +23,14 @@ class HomeScreen(Screen):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="home-container"):
-            yield Static("atboards", classes="title")
-            yield Static("Decentralized bulletin boards on atproto. Anyone can run a BBS from their own account, no server required. Users own their posts, and communities can migrate freely.", classes="subtitle")
+            yield Static("\n   [#d97706]@[/]boards\n", classes="title", id="hero-title")
+            yield Static("Bulletin boards on the atmosphere.", classes="subtitle", id="hero-sub1")
+            yield Static("Run a BBS from your own account. No server required. Users own their posts, communities migrate freely.", classes="subtitle", id="hero-sub2")
             yield Static("")
-            yield Static("Enter a handle to connect to a BBS.", classes="subtitle")
+            yield Static("Connect to a BBS", classes="title")
             yield Input(placeholder="handle.example.com", id="handle-input")
             yield Static(
-                "DISCOVER", id="discover-label", classes="section-label"
+                "OR FIND ONE", id="discover-label", classes="section-label"
             )
             yield ListView(id="discover-list")
         yield Footer()
