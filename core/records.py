@@ -76,6 +76,50 @@ async def hydrate_replies(
     return replies, backlinks.cursor
 
 
+async def _try_refresh_token(client, session, session_updater):
+    """Attempt to refresh an expired OAuth token. Updates session in place."""
+    if not session.get("dpop_private_jwk") or not session.get("refresh_token"):
+        return False
+    try:
+        from core.auth.oauth import refresh_tokens
+        from core.auth.config import load_secrets
+        import json, os
+        from platformdirs import user_data_dir
+
+        data_dir = os.environ.get("ATBOARDS_DATA_DIR", user_data_dir("atboards"))
+        secrets = load_secrets(data_dir)
+        client_secret_jwk = json.loads(secrets["client_secret_jwk"])
+
+        # Loopback client ID for TUI
+        from urllib.parse import urlencode
+        redirect_uri = "http://127.0.0.1:23847/oauth/callback"
+        scope = "atproto transition:generic"
+        client_id = "http://localhost?" + urlencode(
+            {"redirect_uri": redirect_uri, "scope": scope}
+        )
+
+        token_resp, dpop_nonce = await refresh_tokens(
+            client=client,
+            session=session,
+            client_id=client_id,
+            client_secret_jwk=client_secret_jwk,
+        )
+
+        session["access_token"] = token_resp["access_token"]
+        if "refresh_token" in token_resp:
+            session["refresh_token"] = token_resp["refresh_token"]
+        session["dpop_authserver_nonce"] = dpop_nonce
+
+        async def _noop(*a): pass
+        updater = session_updater or _noop
+        await updater(session["did"], "access_token", session["access_token"])
+        await updater(session["did"], "refresh_token", session["refresh_token"])
+        await updater(session["did"], "dpop_authserver_nonce", dpop_nonce)
+        return True
+    except Exception:
+        return False
+
+
 async def _pds_post(
     client: httpx.AsyncClient,
     session: dict,
@@ -83,14 +127,20 @@ async def _pds_post(
     body: dict,
     session_updater=None,
 ) -> httpx.Response:
-    """POST to a user's PDS, using DPoP if available, Bearer otherwise."""
+    """POST to a user's PDS, using DPoP if available, Bearer otherwise. Refreshes tokens on 401."""
     url = f"{session['pds_url']}/xrpc/{endpoint}"
 
     if "dpop_private_jwk" in session and session["dpop_private_jwk"]:
         from core.auth.oauth import pds_request
         async def _noop(*a): pass
         updater = session_updater or _noop
-        return await pds_request(client, "POST", url, session, updater, body=body)
+        resp = await pds_request(client, "POST", url, session, updater, body=body)
+
+        if resp.status_code == 401:
+            if await _try_refresh_token(client, session, session_updater):
+                resp = await pds_request(client, "POST", url, session, updater, body=body)
+
+        return resp
 
     resp = await client.post(
         url,
@@ -111,32 +161,20 @@ async def upload_blob(
     url = f"{session['pds_url']}/xrpc/com.atproto.repo.uploadBlob"
 
     if "dpop_private_jwk" in session and session["dpop_private_jwk"]:
-        from core.auth.oauth import pds_dpop_jwt, is_use_dpop_nonce_error
-        from authlib.jose import JsonWebKey
-        import json
-
+        from core.auth.oauth import pds_request
         async def _noop(*a): pass
         updater = session_updater or _noop
+        resp = await pds_request(
+            client, "POST", url, session, updater,
+            content=data, content_type=mime_type,
+        )
 
-        dpop_private_jwk = JsonWebKey.import_key(json.loads(session["dpop_private_jwk"]))
-        dpop_nonce = session.get("dpop_pds_nonce") or ""
-
-        for _ in range(2):
-            dpop_proof = pds_dpop_jwt("POST", url, dpop_nonce, session["access_token"], dpop_private_jwk)
-            resp = await client.post(
-                url,
-                headers={
-                    "Authorization": f"DPoP {session['access_token']}",
-                    "DPoP": dpop_proof,
-                    "Content-Type": mime_type,
-                },
-                content=data,
-            )
-            if is_use_dpop_nonce_error(resp):
-                dpop_nonce = resp.headers["DPoP-Nonce"]
-                await updater(session["did"], "dpop_pds_nonce", dpop_nonce)
-                continue
-            break
+        if resp.status_code == 401:
+            if await _try_refresh_token(client, session, session_updater):
+                resp = await pds_request(
+                    client, "POST", url, session, updater,
+                    content=data, content_type=mime_type,
+                )
     else:
         resp = await client.post(
             url,

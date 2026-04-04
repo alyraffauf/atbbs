@@ -342,10 +342,13 @@ async def pds_request(
     session: dict,
     session_updater,
     body: dict | None = None,
+    content: bytes | None = None,
+    content_type: str | None = None,
 ) -> httpx.Response:
     """Make an authenticated request to a user's PDS with DPoP.
 
     session_updater is a callable(did, field, value) to persist nonce updates.
+    Use body for JSON, or content+content_type for raw bytes (e.g. uploadBlob).
     """
     dpop_private_jwk = JsonWebKey.import_key(json.loads(session["dpop_private_jwk"]))
     dpop_nonce = session.get("dpop_pds_nonce") or ""
@@ -357,8 +360,13 @@ async def pds_request(
             "Authorization": f"DPoP {access_token}",
             "DPoP": dpop_proof,
         }
+        if content_type:
+            headers["Content-Type"] = content_type
+
         if method == "GET":
             resp = await client.get(url, headers=headers)
+        elif content is not None:
+            resp = await client.post(url, headers=headers, content=content)
         else:
             resp = await client.post(url, headers=headers, json=body)
 
