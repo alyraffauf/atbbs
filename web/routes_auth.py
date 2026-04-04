@@ -39,7 +39,7 @@ def _compute_client_id() -> tuple[str, str]:
         if not app_url.endswith("/"):
             app_url += "/"
         redirect_uri = f"{app_url}oauth/callback"
-        client_id = f"{app_url}oauth/client-metadata.json"
+        client_id = f"{app_url}oauth-client-metadata.json"
 
     return client_id, redirect_uri
 
@@ -48,9 +48,12 @@ def _client_secret_jwk():
     return json.loads(current_app.config["CLIENT_SECRET_JWK"])
 
 
-@bp.route("/oauth/client-metadata.json")
+@bp.route("/oauth-client-metadata.json")
 async def client_metadata():
     client_id, redirect_uri = _compute_client_id()
+    app_url = current_app.config["PUBLIC_URL"]
+    if not app_url.endswith("/"):
+        app_url += "/"
     return {
         "client_id": client_id,
         "client_name": "atboards",
@@ -63,15 +66,20 @@ async def client_metadata():
         "token_endpoint_auth_method": "private_key_jwt",
         "token_endpoint_auth_signing_alg": "ES256",
         "dpop_bound_access_tokens": True,
-        "jwks": {
-            "keys": [
-                json.loads(
-                    JsonWebKey.import_key(
-                        _client_secret_jwk()
-                    ).as_json(is_private=False)
-                )
-            ]
-        },
+        "jwks_uri": f"{app_url}oauth/jwks.json",
+    }
+
+
+@bp.route("/oauth/jwks.json")
+async def jwks():
+    return {
+        "keys": [
+            json.loads(
+                JsonWebKey.import_key(
+                    _client_secret_jwk()
+                ).as_json(is_private=False)
+            )
+        ]
     }
 
 
