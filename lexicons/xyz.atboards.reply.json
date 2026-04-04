@@ -25,10 +25,32 @@
             "type": "string",
             "format": "datetime"
           },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "ref",
+              "ref": "#attachment"
+            }
+          },
           "updatedAt": {
             "type": "string",
             "format": "datetime"
           }
+        }
+      }
+    },
+    "attachment": {
+      "type": "object",
+      "required": ["file", "name"],
+      "properties": {
+        "file": {
+          "type": "blob",
+          "accept": ["*/*"],
+          "maxSize": 1000000
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 256
         }
       }
     }
