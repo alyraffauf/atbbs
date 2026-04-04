@@ -27,7 +27,7 @@ logs:
 
 # Set version in pyproject.toml
 version ver:
-    sed -i 's/^version = ".*"/version = "{{ ver }}"/' pyproject.toml
+    sed -i '' 's/^version = ".*"/version = "{{ ver }}"/' pyproject.toml
     uv lock
 
 # Tag and push a release
