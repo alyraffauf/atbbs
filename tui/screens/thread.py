@@ -127,7 +127,11 @@ class ThreadScreen(Screen):
             self.load_replies(cursor=self.next_cursor)
 
     def action_reply(self) -> None:
-        if not self.app.user_session:
+        session = self.app.user_session
+        if not session:
+            return
+        if session["did"] in self.bbs.site.banned_dids:
+            self.notify("You have been banned from this BBS.", severity="error")
             return
         from tui.screens.compose import ComposeReplyScreen
         self.app.push_screen(ComposeReplyScreen(self.bbs, self.handle, self.thread))

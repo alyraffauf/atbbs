@@ -96,7 +96,11 @@ class BoardScreen(Screen):
             self.load_threads()
 
     def action_new_thread(self) -> None:
-        if not self.app.user_session:
+        session = self.app.user_session
+        if not session:
+            return
+        if session["did"] in self.bbs.site.banned_dids:
+            self.notify("You have been banned from this BBS.", severity="error")
             return
         from tui.screens.compose import ComposeThreadScreen
         self.app.push_screen(ComposeThreadScreen(self.bbs, self.handle, self.board))

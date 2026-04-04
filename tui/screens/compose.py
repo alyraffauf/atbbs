@@ -43,6 +43,9 @@ class ComposeThreadScreen(Screen):
         if not session:
             self.notify("Not logged in.", severity="error")
             return
+        if session["did"] in self.bbs.site.banned_dids:
+            self.notify("You have been banned from this BBS.", severity="error")
+            return
 
         title = self.query_one("#thread-title", Input).value.strip()
         body = self.query_one("#thread-body", TextArea).text.strip()
@@ -98,6 +101,9 @@ class ComposeReplyScreen(Screen):
         session = self.app.user_session
         if not session:
             self.notify("Not logged in.", severity="error")
+            return
+        if session["did"] in self.bbs.site.banned_dids:
+            self.notify("You have been banned from this BBS.", severity="error")
             return
 
         body = self.query_one("#reply-body", TextArea).text.strip()

@@ -17,6 +17,14 @@ async def error(message: str, status: int = 404):
     return await render_template("error.html", message=message), status
 
 
+async def check_banned(bbs):
+    """Return an error response if the current user is banned, or None."""
+    from quart import g
+    if g.user and g.user.get("did") in bbs.site.banned_dids:
+        return await render_template("error.html", message="You have been banned from this BBS."), 403
+    return None
+
+
 @bp.route("/")
 async def home():
     return await render_template("home.html")
@@ -77,6 +85,10 @@ async def site(handle: str):
     except NetworkError:
         return await error("Could not reach the network. Try again.", 502)
 
+    banned = await check_banned(bbs)
+    if banned:
+        return banned
+
     return await render_template("site.html", bbs=bbs, handle=handle)
 
 
@@ -91,6 +103,10 @@ async def board(handle: str, slug: str):
         return await error("This account isn't running a BBS.")
     except NetworkError:
         return await error("Could not reach the network. Try again.", 502)
+
+    banned = await check_banned(bbs)
+    if banned:
+        return banned
 
     current_board = next((b for b in bbs.site.boards if b.slug == slug), None)
     if current_board is None:
@@ -113,6 +129,10 @@ async def api_threads(handle: str, slug: str):
         bbs = await resolve_bbs(client, handle)
     except Exception:
         return {"threads": [], "cursor": None}
+
+    banned = await check_banned(bbs)
+    if banned:
+        return {"threads": [], "cursor": None, "banned": True}
 
     current_board = next((b for b in bbs.site.boards if b.slug == slug), None)
     if not current_board:
@@ -151,6 +171,10 @@ async def thread(handle: str, did: str, tid: str):
         return await error("This account isn't running a BBS.")
     except NetworkError:
         return await error("Could not reach the network. Try again.", 502)
+
+    banned = await check_banned(bbs)
+    if banned:
+        return banned
 
     try:
         thread_record = await get_record(client, did, "xyz.atboards.thread", tid)
@@ -195,6 +219,11 @@ async def api_replies(did: str, tid: str):
             bbs = None
     except Exception:
         bbs = None
+
+    if bbs:
+        banned = await check_banned(bbs)
+        if banned:
+            return {"replies": [], "cursor": None, "banned": True}
 
     if not bbs:
         return {"replies": [], "cursor": None}

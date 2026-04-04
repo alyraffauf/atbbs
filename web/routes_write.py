@@ -77,6 +77,10 @@ async def create_thread(handle: str, slug: str):
         bbs = await resolve_bbs(client, handle)
     except Exception:
         return redirect(f"/bbs/{handle}/board/{slug}")
+
+    if user["did"] in bbs.site.banned_dids:
+        return redirect(f"/bbs/{handle}/board/{slug}")
+
     board_uri = f"at://{bbs.identity.did}/xyz.atboards.board/{slug}"
 
     resp = await _authed_pds_post(user, "com.atproto.repo.createRecord", {
