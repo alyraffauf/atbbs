@@ -19,6 +19,11 @@
                 <button type="submit" class="text-xs text-neutral-500 hover:text-red-400">delete</button>
             </form>
             {% endif %}
+            {% if g.user and g.user.did == bbs.identity.did and g.user.did != thread.author.did %}
+            <form method="post" action="/bbs/{{ handle }}/ban/{{ thread.author.did }}" class="inline" onsubmit="return confirm('Ban this user from your BBS?')">
+                <button type="submit" class="text-xs text-neutral-500 hover:text-red-400">ban</button>
+            </form>
+            {% endif %}
         </div>
     </div>
     <h1 class="text-base text-neutral-200 font-bold mb-3">{{ thread.title }}</h1>
@@ -52,6 +57,7 @@
     const threadTid = "{{ thread.uri.split('/')[-1] }}";
     const handle = "{{ handle }}";
     const userDid = "{{ g.user.did if g.user else '' }}";
+    const sysopDid = "{{ bbs.identity.did }}";
     let nextCursor = null;
 
     function formatDate(iso) {
@@ -68,8 +74,12 @@
 
     function renderReply(r) {
         let deleteBtn = '';
+        let banBtn = '';
         if (userDid && userDid === r.did) {
             deleteBtn = `<form method="post" action="/bbs/${handle}/thread/${threadDid}/${threadTid}/reply/${r.rkey}/delete" class="inline" onsubmit="return confirm('Delete this reply?')"><button type="submit" class="text-xs text-neutral-500 hover:text-red-400">delete</button></form>`;
+        }
+        if (userDid && userDid === sysopDid && userDid !== r.did) {
+            banBtn = `<form method="post" action="/bbs/${handle}/ban/${r.did}" class="inline" onsubmit="return confirm('Ban this user from your BBS?')"><button type="submit" class="text-xs text-neutral-500 hover:text-red-400">ban</button></form>`;
         }
         return `<div class="border border-neutral-800/50 rounded p-4">
             <div class="flex items-baseline justify-between mb-2">
@@ -77,6 +87,7 @@
                 <div class="flex items-center gap-3">
                     <span class="text-xs text-neutral-500">${formatDate(r.created_at)}</span>
                     ${deleteBtn}
+                    ${banBtn}
                 </div>
             </div>
             <p class="text-neutral-400 whitespace-pre-wrap leading-relaxed">${escapeHtml(r.body)}</p>

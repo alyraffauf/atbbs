@@ -101,7 +101,15 @@ async def edit_bbs():
             bbs = await resolve_bbs(client, user["handle"])
         except Exception:
             return redirect("/account/create")
-        return await render_template("sysop_edit.html", bbs=bbs)
+
+        # Resolve banned DIDs to handles
+        from core.slingshot import resolve_identities_batch
+        banned_handles = {}
+        if bbs.site.banned_dids:
+            authors = await resolve_identities_batch(client, list(bbs.site.banned_dids))
+            banned_handles = {did: authors[did].handle for did in authors}
+
+        return await render_template("sysop_edit.html", bbs=bbs, banned_handles=banned_handles)
 
     form = await request.form
     name = form.get("name", "").strip()
@@ -110,6 +118,7 @@ async def edit_bbs():
     board_slugs = [s.strip() for s in form.getlist("board_slug") if s.strip()]
     board_names = [s.strip() for s in form.getlist("board_name") if s.strip()]
     board_descs = form.getlist("board_desc")
+    banned_dids = [d.strip() for d in form.getlist("banned_did") if d.strip()]
 
     if not name:
         return redirect("/account/edit")
@@ -121,10 +130,8 @@ async def edit_bbs():
     try:
         existing = await get_record(client, user["did"], "xyz.atboards.site", "self")
         created_at = existing.value.get("createdAt", now)
-        existing_banned = existing.value.get("bannedDids", [])
     except Exception:
         created_at = now
-        existing_banned = []
 
     # Upsert board records
     for i, slug in enumerate(board_slugs):
@@ -153,7 +160,7 @@ async def edit_bbs():
             "description": description,
             "intro": intro,
             "boards": board_slugs,
-            "bannedDids": existing_banned,
+            "bannedDids": banned_dids,
             "createdAt": created_at,
             "updatedAt": now,
         },
@@ -201,3 +208,37 @@ async def delete_news(handle: str, tid: str):
     await authed_delete_record(user, "xyz.atboards.news", tid)
 
     return redirect(f"/bbs/{handle}")
+
+
+@bp.route("/bbs/<handle>/ban/<did_to_ban>", methods=["POST"])
+async def ban_user(handle: str, did_to_ban: str):
+    user = await get_user()
+    if not user or user["handle"] != handle:
+        return redirect(request.referrer or f"/bbs/{handle}")
+
+    client = current_app.http_client
+
+    # Fetch existing site record
+    from core.slingshot import get_record
+    try:
+        existing = await get_record(client, user["did"], "xyz.atboards.site", "self")
+        site_value = existing.value
+    except Exception:
+        return redirect(request.referrer or f"/bbs/{handle}")
+
+    # Add DID to ban list if not already there
+    banned = site_value.get("bannedDids", [])
+    if did_to_ban not in banned:
+        banned.append(did_to_ban)
+
+    # Update site record
+    site_value["bannedDids"] = banned
+    site_value["updatedAt"] = now_iso()
+    await _authed_pds_post(user, "com.atproto.repo.putRecord", {
+        "repo": user["did"],
+        "collection": "xyz.atboards.site",
+        "rkey": "self",
+        "record": site_value,
+    })
+
+    return redirect(request.referrer or f"/bbs/{handle}")

@@ -38,12 +38,50 @@
         <button type="button" id="add-board" class="mt-2 text-neutral-500 hover:text-neutral-300 text-xs">+ add board</button>
     </div>
 
+    <div>
+        <label class="block text-neutral-400 mb-1">Banned Users</label>
+        <div id="ban-list" class="space-y-2 mb-3">
+            {% for did in bbs.site.banned_dids %}
+            <div class="flex items-center gap-2">
+                <input type="hidden" name="banned_did" value="{{ did }}">
+                <span class="text-neutral-300">{{ banned_handles.get(did, did) }}</span>
+                <button type="button" onclick="this.parentElement.remove()" class="text-xs text-neutral-500 hover:text-red-400">remove</button>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="flex gap-2">
+            <input type="text" id="ban-handle-input" placeholder="handle to ban" class="flex-1 bg-neutral-900 border border-neutral-800 rounded px-3 py-2 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-neutral-600">
+            <button type="button" id="add-ban" class="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 px-3 py-2 rounded text-xs">ban</button>
+        </div>
+    </div>
+
     <button type="submit" class="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 px-4 py-2 rounded">
         save changes
     </button>
 </form>
 
 <script>
+    document.getElementById("add-ban").addEventListener("click", async function() {
+        const input = document.getElementById("ban-handle-input");
+        const handle = input.value.trim();
+        if (!handle) return;
+
+        try {
+            const resp = await fetch(`/api/resolve/${encodeURIComponent(handle)}`);
+            const data = await resp.json();
+            if (!data.did) { alert("Could not resolve handle."); return; }
+
+            const list = document.getElementById("ban-list");
+            const row = document.createElement("div");
+            row.className = "flex items-center gap-2";
+            row.innerHTML = `<input type="hidden" name="banned_did" value="${data.did}"><span class="text-neutral-300">${data.handle}</span><button type="button" onclick="this.parentElement.remove()" class="text-xs text-neutral-500 hover:text-red-400">remove</button>`;
+            list.appendChild(row);
+            input.value = "";
+        } catch (e) {
+            alert("Could not resolve handle.");
+        }
+    });
+
     document.getElementById("add-board").addEventListener("click", function() {
         const row = document.createElement("div");
         row.className = "flex gap-2";
