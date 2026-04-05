@@ -6,8 +6,7 @@
   </p>
   <img width="128" height="128" src="assets/logo.svg" alt="@bbs logo">
   <h1>@bbs</h1>
-  <h3>Bulletin boards on the Atmosphere.</h3>
-  <p>Run a BBS from your own account. No server required. Users own their posts, communities migrate freely. Built on <a href="https://atproto.com">atproto</a>.</p>
+  <p>Bulletin boards on <a href="https://atproto.com">atproto</a>. Web app and terminal client.</p>
 </div>
 
 ## Features
