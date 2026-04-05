@@ -82,13 +82,16 @@ async def _try_refresh_token(client, session, session_updater):
     if not session.get("dpop_private_jwk") or not session.get("refresh_token"):
         return False
     try:
-        from core.auth.oauth import refresh_tokens
+        import json
+        import os
+
         from core.auth.config import load_secrets
-        import json, os
+        from core.auth.oauth import refresh_tokens
 
         data_dir = os.environ.get("ATBBS_DATA_DIR")
         if not data_dir:
             from platformdirs import user_data_dir
+
             data_dir = user_data_dir("atbbs")
         secrets = load_secrets(data_dir)
         client_secret_jwk = json.loads(secrets["client_secret_jwk"])
@@ -110,7 +113,9 @@ async def _try_refresh_token(client, session, session_updater):
             session["refresh_token"] = token_resp["refresh_token"]
         session["dpop_authserver_nonce"] = dpop_nonce
 
-        async def _noop(*a): pass
+        async def _noop(*a):
+            pass
+
         updater = session_updater or _noop
         await updater(session["did"], "access_token", session["access_token"])
         await updater(session["did"], "refresh_token", session["refresh_token"])
@@ -132,13 +137,18 @@ async def _pds_post(
 
     if "dpop_private_jwk" in session and session["dpop_private_jwk"]:
         from core.auth.oauth import pds_request
-        async def _noop(*a): pass
+
+        async def _noop(*a):
+            pass
+
         updater = session_updater or _noop
         resp = await pds_request(client, "POST", url, session, updater, body=body)
 
         if resp.status_code == 401:
             if await _try_refresh_token(client, session, session_updater):
-                resp = await pds_request(client, "POST", url, session, updater, body=body)
+                resp = await pds_request(
+                    client, "POST", url, session, updater, body=body
+                )
 
         return resp
 
@@ -162,18 +172,31 @@ async def upload_blob(
 
     if "dpop_private_jwk" in session and session["dpop_private_jwk"]:
         from core.auth.oauth import pds_request
-        async def _noop(*a): pass
+
+        async def _noop(*a):
+            pass
+
         updater = session_updater or _noop
         resp = await pds_request(
-            client, "POST", url, session, updater,
-            content=data, content_type=mime_type,
+            client,
+            "POST",
+            url,
+            session,
+            updater,
+            content=data,
+            content_type=mime_type,
         )
 
         if resp.status_code == 401:
             if await _try_refresh_token(client, session, session_updater):
                 resp = await pds_request(
-                    client, "POST", url, session, updater,
-                    content=data, content_type=mime_type,
+                    client,
+                    "POST",
+                    url,
+                    session,
+                    updater,
+                    content=data,
+                    content_type=mime_type,
                 )
     else:
         resp = await client.post(
@@ -208,11 +231,17 @@ async def create_thread_record(
     }
     if attachments:
         record["attachments"] = attachments
-    return await _pds_post(client, session, "com.atproto.repo.createRecord", {
-        "repo": session["did"],
-        "collection": "xyz.atboards.thread",
-        "record": record,
-    }, session_updater)
+    return await _pds_post(
+        client,
+        session,
+        "com.atproto.repo.createRecord",
+        {
+            "repo": session["did"],
+            "collection": "xyz.atboards.thread",
+            "record": record,
+        },
+        session_updater,
+    )
 
 
 async def create_reply_record(
@@ -235,11 +264,17 @@ async def create_reply_record(
         record["attachments"] = attachments
     if quote:
         record["quote"] = quote
-    return await _pds_post(client, session, "com.atproto.repo.createRecord", {
-        "repo": session["did"],
-        "collection": "xyz.atboards.reply",
-        "record": record,
-    }, session_updater)
+    return await _pds_post(
+        client,
+        session,
+        "com.atproto.repo.createRecord",
+        {
+            "repo": session["did"],
+            "collection": "xyz.atboards.reply",
+            "record": record,
+        },
+        session_updater,
+    )
 
 
 async def delete_record(
@@ -250,11 +285,17 @@ async def delete_record(
     session_updater=None,
 ) -> httpx.Response:
     """Delete a record from the user's repo."""
-    resp = await _pds_post(client, session, "com.atproto.repo.deleteRecord", {
-        "repo": session["did"],
-        "collection": collection,
-        "rkey": rkey,
-    }, session_updater)
+    resp = await _pds_post(
+        client,
+        session,
+        "com.atproto.repo.deleteRecord",
+        {
+            "repo": session["did"],
+            "collection": collection,
+            "rkey": rkey,
+        },
+        session_updater,
+    )
     resp.raise_for_status()
     return resp
 
@@ -305,15 +346,17 @@ async def fetch_inbox(
                 author_did = r.uri.split("/")[2]
                 if author_did not in authors:
                     continue
-                all_items.append({
-                    "type": "reply",
-                    "thread_title": thread_title,
-                    "thread_uri": thread_uri,
-                    "handle": authors[author_did].handle,
-                    "body": r.value.get("body", "")[:200],
-                    "created_at": r.value.get("createdAt", ""),
-                    "bbs_handle": bbs_handle,
-                })
+                all_items.append(
+                    {
+                        "type": "reply",
+                        "thread_title": thread_title,
+                        "thread_uri": thread_uri,
+                        "handle": authors[author_did].handle,
+                        "body": r.value.get("body", "")[:200],
+                        "created_at": r.value.get("createdAt", ""),
+                        "bbs_handle": bbs_handle,
+                    }
+                )
         except Exception:
             continue
 
@@ -333,7 +376,10 @@ async def fetch_inbox(
         thread_uri = rr["value"].get("subject", "")
         try:
             backlinks = await get_backlinks(
-                client, subject=reply_uri, source="xyz.atboards.reply:quote", limit=50,
+                client,
+                subject=reply_uri,
+                source="xyz.atboards.reply:quote",
+                limit=50,
             )
             if not backlinks.records:
                 continue
@@ -350,17 +396,30 @@ async def fetch_inbox(
                 author_did = r.uri.split("/")[2]
                 if author_did not in authors:
                     continue
-                all_items.append({
-                    "type": "quote",
-                    "thread_title": "",
-                    "thread_uri": thread_uri,
-                    "handle": authors[author_did].handle,
-                    "body": r.value.get("body", "")[:200],
-                    "created_at": r.value.get("createdAt", ""),
-                    "bbs_handle": "",
-                })
+                all_items.append(
+                    {
+                        "type": "quote",
+                        "thread_title": "",
+                        "thread_uri": thread_uri,
+                        "handle": authors[author_did].handle,
+                        "body": r.value.get("body", "")[:200],
+                        "created_at": r.value.get("createdAt", ""),
+                        "bbs_handle": "",
+                    }
+                )
         except Exception:
             continue
 
-    all_items.sort(key=lambda a: a["created_at"], reverse=True)
-    return all_items
+    # Deduplicate and prefer quotes if same record appears in both
+    seen = {}
+    for item in all_items:
+        key = item["handle"] + item["body"] + item["created_at"]
+        if key in seen:
+            if item["type"] == "quote":
+                seen[key] = item
+        else:
+            seen[key] = item
+
+    deduped = list(seen.values())
+    deduped.sort(key=lambda a: a["created_at"], reverse=True)
+    return deduped
