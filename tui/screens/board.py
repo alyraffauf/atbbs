@@ -65,6 +65,9 @@ class BoardScreen(Screen):
             label = f"  {t.title}  —  {t.author.handle} · {format_datetime(t.created_at)}"
             await lv.append(ListItem(Static(label), name=t.uri))
 
+        if self.threads:
+            lv.index = 0
+
         # Remove old next page button if present
         try:
             await self.query_one("#next-page", Button).remove()
