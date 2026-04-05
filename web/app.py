@@ -8,17 +8,21 @@ from core.auth.session import SessionStore
 from core.util import format_datetime_utc
 
 
-def create_app() -> Quart:
+def create_app(
+    data_dir: str | None = None,
+    public_url: str | None = None,
+) -> Quart:
     app = Quart(__name__)
 
     # Data directory for secrets and database
-    data_dir = os.environ.get("ATBBS_DATA_DIR", ".")
+    data_dir = data_dir or os.environ.get("ATBBS_DATA_DIR", ".")
+    os.makedirs(data_dir, exist_ok=True)
 
     # Load secrets
     secrets = load_secrets(data_dir)
     app.secret_key = secrets["secret_key"]
     app.config["CLIENT_SECRET_JWK"] = secrets["client_secret_jwk"]
-    app.config["PUBLIC_URL"] = os.environ.get("PUBLIC_URL", "http://127.0.0.1:5000")
+    app.config["PUBLIC_URL"] = public_url or os.environ.get("PUBLIC_URL", "http://localhost:8000")
 
     # Session store
     db_path = os.path.join(data_dir, "atbbs.db")

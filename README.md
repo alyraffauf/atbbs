@@ -15,7 +15,7 @@
 - **Discover BBSes**: The home screen shows BBSes from across the network.
 - **Flat replies with quotes**: Threads with chronological replies. Quote other replies inline.
 - **File attachments**: Attach files to threads and replies, stored as blobs in your repo.
-- **Inbox**: See replies to your threads and quotes of your replies in one place.
+- **Messages**: See replies to your threads and quotes of your replies in one place.
 - **Moderation**: Sysops can ban users, hide posts, and manage their BBS.
 - **Sysop tools**: Create and edit your BBS, manage boards, post news, delete your BBS.
 - **Self-hostable**: One Docker command to run the web app.
@@ -28,7 +28,10 @@ Requires Python 3.14+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 uv tool install atbbs
-atbbs
+atbbs                  # launch TUI
+atbbs dial aly.codes   # dial a BBS directly
+atbbs serve            # start the web server
+atbbs --help           # see all options
 ```
 
 Or from source:
@@ -85,7 +88,9 @@ On first run, atbbs generates:
 - `secrets.json` — app secret key and OAuth client signing key
 - `atbbs.db` — SQLite database for OAuth sessions
 
-**Web app**: Set `ATBBS_DATA_DIR` to control where these are stored (default: current directory, `/data` in Docker). Set `PUBLIC_URL` to your domain for OAuth callbacks.
+**Web app (Docker)**: Set `ATBBS_DATA_DIR` to control where these are stored (default: `/data`). Set `PUBLIC_URL` to your domain for OAuth callbacks.
+
+**Web app (CLI)**: Use `atbbs serve --data-dir` and `--public-url` to configure. Defaults to the platform data directory and `http://{host}:{port}`.
 
 **TUI**: Data is stored in `~/.local/share/atbbs/` (Linux), `~/Library/Application Support/atbbs/` (macOS), or `%APPDATA%/atbbs/` (Windows).
 
