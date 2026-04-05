@@ -63,7 +63,7 @@ class BoardScreen(Screen):
                 cursor=cursor,
             )
         except Exception:
-            self.notify("Failed to load threads.", severity="error")
+            self.notify("Could not fetch threads.", severity="error")
             return
 
         lv = self.query_one("#thread-list", ListView)

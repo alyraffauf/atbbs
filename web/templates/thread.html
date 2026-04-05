@@ -162,7 +162,7 @@
             })
             .catch(() => {
                 const loading = document.getElementById('replies-loading');
-                if (loading) loading.textContent = 'Failed to load replies.';
+                if (loading) loading.textContent = 'Could not fetch replies.';
             });
     }
 

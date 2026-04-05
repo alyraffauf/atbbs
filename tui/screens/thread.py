@@ -72,7 +72,7 @@ class ThreadScreen(Screen):
                 cursor=cursor,
             )
         except Exception:
-            self.notify("Failed to load replies.", severity="error")
+            self.notify("Could not fetch replies.", severity="error")
             return
 
         scroll = self.query_one("#thread-scroll")
@@ -126,7 +126,7 @@ class ThreadScreen(Screen):
                 self.thread,
             )
         except Exception:
-            self.notify("Failed to load replies.", severity="error")
+            self.notify("Could not fetch replies.", severity="error")
             return
 
         scroll = self.query_one("#thread-scroll")

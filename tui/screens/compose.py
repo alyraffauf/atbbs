@@ -80,7 +80,7 @@ class ComposeThreadScreen(Screen):
         title = self.query_one("#thread-title", Input).value.strip()
         body = self.query_one("#thread-body", TextArea).text.strip()
         if not title or not body:
-            self.notify("Title and body are required.", severity="error")
+            self.notify("Title and body cannot be empty.", severity="error")
             return
 
         board_uri = f"at://{self.bbs.identity.did}/xyz.atboards.board/{self.board.slug}"
@@ -187,7 +187,7 @@ class ComposeReplyScreen(Screen):
 
         body = self.query_one("#reply-body", TextArea).text.strip()
         if not body:
-            self.notify("Reply body is required.", severity="error")
+            self.notify("Message body cannot be empty.", severity="error")
             return
 
         # Handle file attachment

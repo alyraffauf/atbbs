@@ -103,7 +103,7 @@
             })
             .catch(() => {
                 const loading = document.getElementById('threads-loading');
-                if (loading) loading.textContent = 'Failed to load threads.';
+                if (loading) loading.textContent = 'Could not fetch threads.';
             });
     }
 

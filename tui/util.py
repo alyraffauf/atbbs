@@ -7,7 +7,7 @@ def require_session(screen) -> dict | None:
     """Return the user session if logged in and not banned, else notify and return None."""
     session = screen.app.user_session
     if not session:
-        screen.notify("You are not logged in.", severity="error")
+        screen.notify("You must be logged in to do that.", severity="error")
         return None
     if session["did"] in screen.bbs.site.banned_dids:
         screen.notify("You have been banned from this BBS.", severity="error")
