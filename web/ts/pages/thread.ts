@@ -1,13 +1,21 @@
 import { escapeHtml, relativeDate, formatFullDate, getData } from "../lib/util";
-import { fetchAndHydrate, type HydratedRecord } from "../lib/atproto";
-import { THREAD, REPLY } from "../lib/lexicon";
+import { createPaginatedLoader } from "../lib/pagination";
+import { REPLY } from "../lib/lexicon";
 
-const PAGE_SIZE = 50;
+interface Attachment {
+  file: { ref: { $link: string } };
+  name: string;
+}
 
-interface ReplyItem extends HydratedRecord {
+interface ReplyItem {
+  uri: string;
+  did: string;
+  rkey: string;
+  handle: string;
+  pds_url: string;
   body: string;
   created_at: string;
-  attachments: { file: { ref: { $link: string } }; name: string }[];
+  attachments: Attachment[];
   quote: string | null;
 }
 
@@ -77,7 +85,7 @@ function renderAttachments(r: ReplyItem): string {
   return (r.attachments || [])
     .map(
       (a) =>
-        `<a href="${r.pds}/xrpc/com.atproto.sync.getBlob?did=${r.did}&cid=${a.file.ref["$link"]}" target="_blank" class="text-xs text-neutral-500 hover:text-neutral-300 block mt-1">[${escapeHtml(a.name)}]</a>`,
+        `<a href="${r.pds_url}/xrpc/com.atproto.sync.getBlob?did=${r.did}&cid=${a.file.ref["$link"]}" target="_blank" class="text-xs text-neutral-500 hover:text-neutral-300 block mt-1">[${escapeHtml(a.name)}]</a>`,
     )
     .join("");
 }
@@ -105,79 +113,6 @@ function renderReply(
   </div>`;
 }
 
-// --- Data loading ---
-
-function toReplyItem(r: HydratedRecord): ReplyItem {
-  return {
-    ...r,
-    body: (r.value.body as string) ?? "",
-    created_at: (r.value.createdAt as string) ?? "",
-    attachments: (r.value.attachments as ReplyItem["attachments"]) ?? [],
-    quote: (r.value.quote as string) ?? null,
-  };
-}
-
-function createReplyLoader(
-  threadDid: string,
-  threadTid: string,
-  handle: string,
-  userDid: string,
-  sysopDid: string,
-  bannedDids: Set<string>,
-  hiddenPosts: Set<string>,
-) {
-  const container = document.getElementById("replies")!;
-  const nextContainer = document.getElementById("replies-next");
-  const threadUri = `at://${threadDid}/${THREAD}/${threadTid}`;
-  let nextCursor: string | null = null;
-
-  async function load(cursor?: string) {
-    const loading = document.getElementById("replies-loading");
-
-    try {
-      const result = await fetchAndHydrate(
-        threadUri,
-        `${REPLY}:subject`,
-        { limit: PAGE_SIZE, cursor, bannedDids, hiddenPosts },
-      );
-
-      if (loading) loading.remove();
-
-      const replies = result.records
-        .map(toReplyItem)
-        .sort((a, b) => a.created_at.localeCompare(b.created_at));
-
-      for (const r of replies) {
-        allReplies[r.uri] = r;
-      }
-
-      for (const r of replies) {
-        container.insertAdjacentHTML(
-          "beforeend",
-          renderReply(r, handle, threadDid, threadTid, userDid, sysopDid),
-        );
-      }
-
-      nextCursor = result.cursor;
-      nextContainer?.classList.toggle("hidden", !nextCursor);
-
-      if (container.children.length === 0 && !userDid) {
-        container.innerHTML = '<p class="text-neutral-500">No replies yet.</p>';
-      }
-    } catch {
-      if (loading) loading.textContent = "Could not fetch replies.";
-    }
-  }
-
-  // Bind load-more
-  document.getElementById("load-more")?.addEventListener("click", () => {
-    if (nextCursor) load(nextCursor);
-  });
-
-  // Initial load
-  load();
-}
-
 // --- Init ---
 
 export function initThread() {
@@ -186,12 +121,6 @@ export function initThread() {
   const handle = getData("replies", "handle");
   const userDid = getData("replies", "userDid");
   const sysopDid = getData("replies", "sysopDid");
-  const bannedDids = new Set(
-    (getData("replies", "bannedDids") || "").split(",").filter(Boolean),
-  );
-  const hiddenPosts = new Set(
-    (getData("replies", "hiddenPosts") || "").split(",").filter(Boolean),
-  );
 
   document.getElementById("quote-clear")?.addEventListener("click", clearQuote);
   document.getElementById("replies")?.addEventListener("click", (e) => {
@@ -199,5 +128,25 @@ export function initThread() {
     if (btn) quoteReply(btn.dataset.uri!, btn.dataset.handle!);
   });
 
-  createReplyLoader(threadDid, threadTid, handle, userDid, sysopDid, bannedDids, hiddenPosts);
+  createPaginatedLoader<ReplyItem>({
+    fetchUrl: (cursor) => {
+      let url = `/api/replies/${threadDid}/${threadTid}?handle=${encodeURIComponent(handle)}`;
+      if (cursor) url += `&cursor=${encodeURIComponent(cursor)}`;
+      return url;
+    },
+    containerId: "replies",
+    loadingId: "replies-loading",
+    nextContainerId: "replies-next",
+    loadMoreId: "load-more",
+    dataKey: "replies",
+    emptyMessage: userDid ? undefined : "No replies yet.",
+    onData: (data) => {
+      const replies = data.replies as ReplyItem[];
+      for (const r of replies) {
+        allReplies[r.uri] = r;
+      }
+    },
+    renderItem: (r) =>
+      renderReply(r, handle, threadDid, threadTid, userDid, sysopDid),
+  });
 }

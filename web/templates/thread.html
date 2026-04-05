@@ -49,13 +49,11 @@
      data-thread-tid="{{ thread.uri.split('/')[-1] }}"
      data-handle="{{ handle }}"
      data-user-did="{{ g.user.did if g.user else '' }}"
-     data-sysop-did="{{ bbs.identity.did }}"
-     data-banned-dids="{{ bbs.site.banned_dids | join(',') }}"
-     data-hidden-posts="{{ bbs.site.hidden_posts | join(',') }}">
+     data-sysop-did="{{ bbs.identity.did }}">
     <p id="replies-loading" class="text-neutral-500">Loading replies...</p>
 </div>
 <div id="replies-next" class="mt-6 text-center hidden">
-    <button id="load-more" class="text-neutral-500 hover:text-neutral-300">more replies</button>
+    <button id="load-more" class="text-neutral-500 hover:text-neutral-300">next page →</button>
 </div>
 
 {% if g.user %}
