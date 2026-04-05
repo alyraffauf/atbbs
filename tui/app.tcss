@@ -119,7 +119,13 @@ HomeScreen #home-container {
     padding: 1 2;
 }
 
-HomeScreen #hero-title,
+HomeScreen #hero-title {
+    content-align: center middle;
+    width: 100%;
+    margin-bottom: 1;
+    color: #e5e5e5;
+}
+
 HomeScreen #hero-sub1,
 HomeScreen #hero-sub2 {
     text-align: center;

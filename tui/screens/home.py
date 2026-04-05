@@ -23,7 +23,18 @@ class HomeScreen(Screen):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="home-container"):
-            yield Static("\n   [#d97706]@[/]bbs\n", classes="title", id="hero-title")
+            from rich.text import Text
+
+            hero = Text()
+            hero.append("▞▀▖", style="#d97706")
+            hero.append("▌  ▌\n")
+            hero.append("▌▙▌", style="#d97706")
+            hero.append("▛▀▖▛▀▖▞▀▘\n")
+            hero.append("▌▀ ", style="#d97706")
+            hero.append("▌ ▌▌ ▌▝▀▖\n")
+            hero.append("▝▀ ", style="#d97706")
+            hero.append("▀▀ ▀▀ ▀▀")
+            yield Static(hero, id="hero-title")
             yield Static(
                 "Bulletin boards on the Atmosphere.", classes="subtitle", id="hero-sub1"
             )
