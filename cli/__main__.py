@@ -68,10 +68,14 @@ def serve(host: str, port: int, workers: int, public_url: str | None, data_dir: 
     load_secrets(data_dir)
 
     cmd = [
-        sys.executable, "-m", "hypercorn",
+        sys.executable,
+        "-m",
+        "hypercorn",
         "web.app:create_app()",
-        "--bind", f"{host}:{port}",
-        "--workers", str(workers),
+        "--bind",
+        f"{host}:{port}",
+        "--workers",
+        str(workers),
     ]
     raise SystemExit(subprocess.run(cmd).returncode)
 
