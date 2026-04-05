@@ -44,8 +44,11 @@ async def get_threads(
 ) -> BacklinksResponse:
     """Get threads pointing at a board."""
     return await get_backlinks(
-        client, subject=board_uri, source="xyz.atboards.thread:board",
-        limit=limit, cursor=cursor,
+        client,
+        subject=board_uri,
+        source="xyz.atboards.thread:board",
+        limit=limit,
+        cursor=cursor,
     )
 
 
@@ -57,8 +60,11 @@ async def get_news(
 ) -> BacklinksResponse:
     """Get news posts pointing at a site."""
     return await get_backlinks(
-        client, subject=site_uri, source="xyz.atboards.news:site",
-        limit=limit, cursor=cursor,
+        client,
+        subject=site_uri,
+        source="xyz.atboards.news:site",
+        limit=limit,
+        cursor=cursor,
     )
 
 
@@ -70,6 +76,9 @@ async def get_replies(
 ) -> BacklinksResponse:
     """Get replies pointing at a thread."""
     return await get_backlinks(
-        client, subject=thread_uri, source="xyz.atboards.reply:subject",
-        limit=limit, cursor=cursor,
+        client,
+        subject=thread_uri,
+        source="xyz.atboards.reply:subject",
+        limit=limit,
+        cursor=cursor,
     )

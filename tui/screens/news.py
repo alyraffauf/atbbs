@@ -18,6 +18,7 @@ class NewsScreen(Screen):
 
     def compose(self) -> ComposeResult:
         from tui.widgets.breadcrumb import Breadcrumb
+
         yield Breadcrumb(
             ("@bbs", 2),
             (self.bbs.site.name, 1),

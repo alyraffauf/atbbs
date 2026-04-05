@@ -39,6 +39,7 @@ def create_app() -> Quart:
     @app.before_request
     async def load_user():
         from quart import g, session
+
         did = session.get("did")
         if did:
             g.user = app.session_store.get_session(did)

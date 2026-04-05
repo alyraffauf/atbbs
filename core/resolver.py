@@ -2,7 +2,15 @@ import asyncio
 
 import httpx
 
-from core.models import BBS, Board, News, Site, BBSNotFoundError, NoBBSError, NetworkError
+from core.models import (
+    BBS,
+    Board,
+    News,
+    Site,
+    BBSNotFoundError,
+    NoBBSError,
+    NetworkError,
+)
 from core.constellation import get_news
 from core.slingshot import get_record, get_records_batch, resolve_identity
 

@@ -19,13 +19,17 @@ class ActivityScreen(Screen):
 
     def compose(self) -> ComposeResult:
         from tui.widgets.breadcrumb import Breadcrumb
+
         yield Breadcrumb(
             ("@bbs", 1),
             ("inbox", 0),
         )
         with VerticalScroll(id="activity-scroll"):
             yield Static("Inbox", classes="title")
-            yield Static("Replies to your threads and quotes of your replies.", classes="subtitle")
+            yield Static(
+                "Replies to your threads and quotes of your replies.",
+                classes="subtitle",
+            )
             yield Static("Loading...", id="activity-loading")
         yield Footer()
 
@@ -39,7 +43,9 @@ class ActivityScreen(Screen):
             self.query_one("#activity-loading").remove()
         except Exception:
             pass
-        self.query_one("#activity-scroll").mount(Static("Loading...", id="activity-loading"))
+        self.query_one("#activity-scroll").mount(
+            Static("Loading...", id="activity-loading")
+        )
         self.load_inbox()
 
     def action_open_thread(self) -> None:
@@ -69,7 +75,9 @@ class ActivityScreen(Screen):
         client = self.app.http_client
         try:
             bbs = await resolve_bbs(client, handle)
-            rec = await get_record(client, thread_did, "xyz.atboards.thread", thread_tid)
+            rec = await get_record(
+                client, thread_did, "xyz.atboards.thread", thread_tid
+            )
             author = await resolve_identity(client, thread_did)
             thread = Thread(
                 uri=rec.uri,
@@ -82,6 +90,7 @@ class ActivityScreen(Screen):
                 attachments=rec.value.get("attachments"),
             )
             from tui.screens.thread import ThreadScreen
+
             self.app.push_screen(ThreadScreen(bbs, handle, thread))
         except Exception:
             self.notify("Could not open thread.", severity="error")
@@ -97,6 +106,7 @@ class ActivityScreen(Screen):
             return
 
         from core.records import fetch_inbox
+
         client = self.app.http_client
 
         try:
@@ -120,7 +130,12 @@ class ActivityScreen(Screen):
             if a["type"] == "reply":
                 title = f"on: {title}"
             await scroll.mount(
-                Post(author=a["handle"], date=a["created_at"], title=title, body=a["body"])
+                Post(
+                    author=a["handle"],
+                    date=a["created_at"],
+                    title=title,
+                    body=a["body"],
+                )
             )
 
         # Focus first post

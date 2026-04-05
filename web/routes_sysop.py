@@ -14,6 +14,7 @@ async def _has_bbs(user: dict) -> bool:
     client = current_app.http_client
     try:
         from core.slingshot import get_record
+
         await get_record(client, user["did"], "xyz.atboards.site", "self")
         return True
     except Exception:
@@ -31,11 +32,16 @@ async def account():
     if has_bbs:
         try:
             from core.slingshot import get_record
-            record = await get_record(current_app.http_client, user["did"], "xyz.atboards.site", "self")
+
+            record = await get_record(
+                current_app.http_client, user["did"], "xyz.atboards.site", "self"
+            )
             bbs_name = record.value.get("name", user["handle"])
         except Exception:
             bbs_name = user["handle"]
-    return await render_template("account.html", user=user, has_bbs=has_bbs, bbs_name=bbs_name)
+    return await render_template(
+        "account.html", user=user, has_bbs=has_bbs, bbs_name=bbs_name
+    )
 
 
 @bp.route("/account/delete", methods=["POST"])
@@ -48,6 +54,7 @@ async def delete_bbs():
 
     # Fetch site record to get board slugs and news
     from core.slingshot import get_record
+
     try:
         existing = await get_record(client, user["did"], "xyz.atboards.site", "self")
         board_slugs = existing.value.get("boards", [])
@@ -63,6 +70,7 @@ async def delete_bbs():
 
     # Delete news records (via Constellation backlinks)
     from core.constellation import get_news
+
     site_uri = f"at://{user['did']}/xyz.atboards.site/self"
     try:
         backlinks = await get_news(client, site_uri)
@@ -99,7 +107,9 @@ async def create_bbs():
     board_descs = form.getlist("board_desc")
 
     if not name or not board_slugs:
-        return await render_template("sysop_create.html", error="Name and at least one board are required.")
+        return await render_template(
+            "sysop_create.html", error="Name and at least one board are required."
+        )
 
     now = now_iso()
 
@@ -107,34 +117,42 @@ async def create_bbs():
     for i, slug in enumerate(board_slugs):
         board_name = board_names[i] if i < len(board_names) else slug
         board_desc = board_descs[i].strip() if i < len(board_descs) else ""
-        await _authed_pds_post(user, "com.atproto.repo.putRecord", {
-            "repo": user["did"],
-            "collection": "xyz.atboards.board",
-            "rkey": slug,
-            "record": {
-                "$type": "xyz.atboards.board",
-                "name": board_name,
-                "description": board_desc,
-                "createdAt": now,
+        await _authed_pds_post(
+            user,
+            "com.atproto.repo.putRecord",
+            {
+                "repo": user["did"],
+                "collection": "xyz.atboards.board",
+                "rkey": slug,
+                "record": {
+                    "$type": "xyz.atboards.board",
+                    "name": board_name,
+                    "description": board_desc,
+                    "createdAt": now,
+                },
             },
-        })
+        )
 
     # Create site record
-    await _authed_pds_post(user, "com.atproto.repo.putRecord", {
-        "repo": user["did"],
-        "collection": "xyz.atboards.site",
-        "rkey": "self",
-        "record": {
-            "$type": "xyz.atboards.site",
-            "name": name,
-            "description": description,
-            "intro": intro,
-            "boards": board_slugs,
-            "bannedDids": [],
-            "hiddenPosts": [],
-            "createdAt": now,
+    await _authed_pds_post(
+        user,
+        "com.atproto.repo.putRecord",
+        {
+            "repo": user["did"],
+            "collection": "xyz.atboards.site",
+            "rkey": "self",
+            "record": {
+                "$type": "xyz.atboards.site",
+                "name": name,
+                "description": description,
+                "intro": intro,
+                "boards": board_slugs,
+                "bannedDids": [],
+                "hiddenPosts": [],
+                "createdAt": now,
+            },
         },
-    })
+    )
 
     return redirect(f"/bbs/{user['handle']}")
 
@@ -150,11 +168,13 @@ async def moderate_bbs():
     if request.method == "GET":
         try:
             from core.resolver import resolve_bbs
+
             bbs = await resolve_bbs(client, user["handle"])
         except Exception:
             return redirect("/account/create")
 
         from core.slingshot import resolve_identities_batch, get_record_by_uri
+
         banned_handles = {}
         if bbs.site.banned_dids:
             authors = await resolve_identities_batch(client, list(bbs.site.banned_dids))
@@ -162,7 +182,13 @@ async def moderate_bbs():
 
         hidden_posts = []
         if bbs.site.hidden_posts:
-            hidden_dids = list({uri.split("/")[2] for uri in bbs.site.hidden_posts if len(uri.split("/")) > 2})
+            hidden_dids = list(
+                {
+                    uri.split("/")[2]
+                    for uri in bbs.site.hidden_posts
+                    if len(uri.split("/")) > 2
+                }
+            )
             hidden_authors = await resolve_identities_batch(client, hidden_dids)
 
             for uri in bbs.site.hidden_posts:
@@ -172,21 +198,30 @@ async def moderate_bbs():
 
                 try:
                     record = await get_record_by_uri(client, uri)
-                    hidden_posts.append({
-                        "uri": uri,
-                        "handle": handle,
-                        "title": record.value.get("title", ""),
-                        "body": record.value.get("body", "")[:100],
-                    })
+                    hidden_posts.append(
+                        {
+                            "uri": uri,
+                            "handle": handle,
+                            "title": record.value.get("title", ""),
+                            "body": record.value.get("body", "")[:100],
+                        }
+                    )
                 except Exception:
-                    hidden_posts.append({
-                        "uri": uri,
-                        "handle": handle,
-                        "title": "",
-                        "body": parts[-1] if parts else uri,
-                    })
+                    hidden_posts.append(
+                        {
+                            "uri": uri,
+                            "handle": handle,
+                            "title": "",
+                            "body": parts[-1] if parts else uri,
+                        }
+                    )
 
-        return await render_template("sysop_moderate.html", bbs=bbs, banned_handles=banned_handles, hidden_posts=hidden_posts)
+        return await render_template(
+            "sysop_moderate.html",
+            bbs=bbs,
+            banned_handles=banned_handles,
+            hidden_posts=hidden_posts,
+        )
 
     # POST — save moderation changes
     form = await request.form
@@ -194,6 +229,7 @@ async def moderate_bbs():
     hidden_uris = [u.strip() for u in form.getlist("hidden_uri") if u.strip()]
 
     from core.slingshot import get_record
+
     try:
         existing = await get_record(client, user["did"], "xyz.atboards.site", "self")
         site_value = existing.value
@@ -204,12 +240,16 @@ async def moderate_bbs():
     site_value["hiddenPosts"] = hidden_uris
     site_value["updatedAt"] = now_iso()
 
-    await _authed_pds_post(user, "com.atproto.repo.putRecord", {
-        "repo": user["did"],
-        "collection": "xyz.atboards.site",
-        "rkey": "self",
-        "record": site_value,
-    })
+    await _authed_pds_post(
+        user,
+        "com.atproto.repo.putRecord",
+        {
+            "repo": user["did"],
+            "collection": "xyz.atboards.site",
+            "rkey": "self",
+            "record": site_value,
+        },
+    )
 
     return redirect("/account/moderate")
 
@@ -225,6 +265,7 @@ async def edit_bbs():
     if request.method == "GET":
         try:
             from core.resolver import resolve_bbs
+
             bbs = await resolve_bbs(client, user["handle"])
         except Exception:
             return redirect("/account/create")
@@ -245,6 +286,7 @@ async def edit_bbs():
 
     # Fetch existing site record to preserve createdAt
     from core.slingshot import get_record
+
     try:
         existing = await get_record(client, user["did"], "xyz.atboards.site", "self")
         created_at = existing.value.get("createdAt", now)
@@ -259,35 +301,43 @@ async def edit_bbs():
     for i, slug in enumerate(board_slugs):
         board_name = board_names[i] if i < len(board_names) else slug
         board_desc = board_descs[i].strip() if i < len(board_descs) else ""
-        await _authed_pds_post(user, "com.atproto.repo.putRecord", {
-            "repo": user["did"],
-            "collection": "xyz.atboards.board",
-            "rkey": slug,
-            "record": {
-                "$type": "xyz.atboards.board",
-                "name": board_name,
-                "description": board_desc,
-                "createdAt": now,
+        await _authed_pds_post(
+            user,
+            "com.atproto.repo.putRecord",
+            {
+                "repo": user["did"],
+                "collection": "xyz.atboards.board",
+                "rkey": slug,
+                "record": {
+                    "$type": "xyz.atboards.board",
+                    "name": board_name,
+                    "description": board_desc,
+                    "createdAt": now,
+                },
             },
-        })
+        )
 
     # Update site record
-    await _authed_pds_post(user, "com.atproto.repo.putRecord", {
-        "repo": user["did"],
-        "collection": "xyz.atboards.site",
-        "rkey": "self",
-        "record": {
-            "$type": "xyz.atboards.site",
-            "name": name,
-            "description": description,
-            "intro": intro,
-            "boards": board_slugs,
-            "bannedDids": existing_banned,
-            "hiddenPosts": existing_hidden,
-            "createdAt": created_at,
-            "updatedAt": now,
+    await _authed_pds_post(
+        user,
+        "com.atproto.repo.putRecord",
+        {
+            "repo": user["did"],
+            "collection": "xyz.atboards.site",
+            "rkey": "self",
+            "record": {
+                "$type": "xyz.atboards.site",
+                "name": name,
+                "description": description,
+                "intro": intro,
+                "boards": board_slugs,
+                "bannedDids": existing_banned,
+                "hiddenPosts": existing_hidden,
+                "createdAt": created_at,
+                "updatedAt": now,
+            },
         },
-    })
+    )
 
     return redirect(f"/bbs/{user['handle']}")
 
@@ -307,17 +357,21 @@ async def create_news(handle: str):
     site_uri = f"at://{user['did']}/xyz.atboards.site/self"
     now = now_iso()
 
-    await _authed_pds_post(user, "com.atproto.repo.createRecord", {
-        "repo": user["did"],
-        "collection": "xyz.atboards.news",
-        "record": {
-            "$type": "xyz.atboards.news",
-            "site": site_uri,
-            "title": title,
-            "body": body,
-            "createdAt": now,
+    await _authed_pds_post(
+        user,
+        "com.atproto.repo.createRecord",
+        {
+            "repo": user["did"],
+            "collection": "xyz.atboards.news",
+            "record": {
+                "$type": "xyz.atboards.news",
+                "site": site_uri,
+                "title": title,
+                "body": body,
+                "createdAt": now,
+            },
         },
-    })
+    )
 
     return redirect(f"/bbs/{handle}")
 
@@ -343,6 +397,7 @@ async def ban_user(handle: str, did_to_ban: str):
 
     # Fetch existing site record
     from core.slingshot import get_record
+
     try:
         existing = await get_record(client, user["did"], "xyz.atboards.site", "self")
         site_value = existing.value
@@ -357,12 +412,16 @@ async def ban_user(handle: str, did_to_ban: str):
     # Update site record
     site_value["bannedDids"] = banned
     site_value["updatedAt"] = now_iso()
-    await _authed_pds_post(user, "com.atproto.repo.putRecord", {
-        "repo": user["did"],
-        "collection": "xyz.atboards.site",
-        "rkey": "self",
-        "record": site_value,
-    })
+    await _authed_pds_post(
+        user,
+        "com.atproto.repo.putRecord",
+        {
+            "repo": user["did"],
+            "collection": "xyz.atboards.site",
+            "rkey": "self",
+            "record": site_value,
+        },
+    )
 
     return redirect(request.referrer or f"/bbs/{handle}")
 
@@ -381,6 +440,7 @@ async def hide_post(handle: str):
     client = current_app.http_client
 
     from core.slingshot import get_record
+
     try:
         existing = await get_record(client, user["did"], "xyz.atboards.site", "self")
         site_value = existing.value
@@ -393,11 +453,15 @@ async def hide_post(handle: str):
 
     site_value["hiddenPosts"] = hidden
     site_value["updatedAt"] = now_iso()
-    await _authed_pds_post(user, "com.atproto.repo.putRecord", {
-        "repo": user["did"],
-        "collection": "xyz.atboards.site",
-        "rkey": "self",
-        "record": site_value,
-    })
+    await _authed_pds_post(
+        user,
+        "com.atproto.repo.putRecord",
+        {
+            "repo": user["did"],
+            "collection": "xyz.atboards.site",
+            "rkey": "self",
+            "record": site_value,
+        },
+    )
 
     return redirect(request.referrer or f"/bbs/{handle}")

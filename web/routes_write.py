@@ -12,16 +12,23 @@ bp = Blueprint("write", __name__)
 async def _authed_pds_post(user: dict, endpoint: str, body: dict):
     """Make an authenticated POST to the user's PDS."""
     from core.records import _pds_post
-    return await _pds_post(current_app.http_client, user, endpoint, body, session_updater)
+
+    return await _pds_post(
+        current_app.http_client, user, endpoint, body, session_updater
+    )
 
 
 async def authed_delete_record(user: dict, collection: str, rkey: str):
     """Delete a record from the user's repo."""
-    resp = await _authed_pds_post(user, "com.atproto.repo.deleteRecord", {
-        "repo": user["did"],
-        "collection": collection,
-        "rkey": rkey,
-    })
+    resp = await _authed_pds_post(
+        user,
+        "com.atproto.repo.deleteRecord",
+        {
+            "repo": user["did"],
+            "collection": collection,
+            "rkey": rkey,
+        },
+    )
     resp.raise_for_status()
     return resp
 
@@ -39,6 +46,7 @@ async def create_thread(handle: str, slug: str):
         return redirect(f"/bbs/{handle}/board/{slug}")
 
     from core.resolver import resolve_bbs
+
     client = current_app.http_client
     try:
         bbs = await resolve_bbs(client, handle)
@@ -57,10 +65,19 @@ async def create_thread(handle: str, slug: str):
         if f.filename:
             data = f.read()
             try:
-                blob_ref = await upload_blob(client, user, data, f.content_type or "application/octet-stream", session_updater)
+                blob_ref = await upload_blob(
+                    client,
+                    user,
+                    data,
+                    f.content_type or "application/octet-stream",
+                    session_updater,
+                )
                 attachments.append({"file": blob_ref, "name": f.filename})
             except Exception:
-                return await render_template("error.html", message=f"Failed to upload {f.filename}. The file may be too large."), 400
+                return await render_template(
+                    "error.html",
+                    message=f"Failed to upload {f.filename}. The file may be too large.",
+                ), 400
 
     record = {
         "$type": "xyz.atboards.thread",
@@ -72,11 +89,15 @@ async def create_thread(handle: str, slug: str):
     if attachments:
         record["attachments"] = attachments
 
-    resp = await _authed_pds_post(user, "com.atproto.repo.createRecord", {
-        "repo": user["did"],
-        "collection": "xyz.atboards.thread",
-        "record": record,
-    })
+    resp = await _authed_pds_post(
+        user,
+        "com.atproto.repo.createRecord",
+        {
+            "repo": user["did"],
+            "collection": "xyz.atboards.thread",
+            "record": record,
+        },
+    )
     resp.raise_for_status()
 
     return redirect(f"/bbs/{handle}/board/{slug}")
@@ -104,10 +125,19 @@ async def create_reply(handle: str, did: str, tid: str):
         if f.filename:
             data = f.read()
             try:
-                blob_ref = await upload_blob(client, user, data, f.content_type or "application/octet-stream", session_updater)
+                blob_ref = await upload_blob(
+                    client,
+                    user,
+                    data,
+                    f.content_type or "application/octet-stream",
+                    session_updater,
+                )
                 attachments.append({"file": blob_ref, "name": f.filename})
             except Exception:
-                return await render_template("error.html", message=f"Failed to upload {f.filename}. The file may be too large."), 400
+                return await render_template(
+                    "error.html",
+                    message=f"Failed to upload {f.filename}. The file may be too large.",
+                ), 400
 
     record = {
         "$type": "xyz.atboards.reply",
@@ -120,11 +150,15 @@ async def create_reply(handle: str, did: str, tid: str):
     if quote:
         record["quote"] = quote
 
-    resp = await _authed_pds_post(user, "com.atproto.repo.createRecord", {
-        "repo": user["did"],
-        "collection": "xyz.atboards.reply",
-        "record": record,
-    })
+    resp = await _authed_pds_post(
+        user,
+        "com.atproto.repo.createRecord",
+        {
+            "repo": user["did"],
+            "collection": "xyz.atboards.reply",
+            "record": record,
+        },
+    )
     resp.raise_for_status()
 
     return redirect(f"/bbs/{handle}/thread/{did}/{tid}")

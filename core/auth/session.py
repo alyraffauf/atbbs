@@ -94,25 +94,29 @@ class SessionStore:
 
     def get_session(self, did: str) -> dict | None:
         con = self._connect()
-        row = con.execute(
-            "SELECT * FROM oauth_session WHERE did = ?", [did]
-        ).fetchone()
+        row = con.execute("SELECT * FROM oauth_session WHERE did = ?", [did]).fetchone()
         con.close()
         return dict(row) if row else None
 
-    ALLOWED_FIELDS = {"dpop_pds_nonce", "dpop_authserver_nonce", "access_token", "refresh_token", "client_id"}
+    ALLOWED_FIELDS = {
+        "dpop_pds_nonce",
+        "dpop_authserver_nonce",
+        "access_token",
+        "refresh_token",
+        "client_id",
+    }
 
     def update_session_field(self, did: str, field: str, value: str):
         if field not in self.ALLOWED_FIELDS:
             raise ValueError(f"Invalid field: {field}")
         con = self._connect()
-        con.execute(
-            f"UPDATE oauth_session SET {field} = ? WHERE did = ?", [value, did]
-        )
+        con.execute(f"UPDATE oauth_session SET {field} = ? WHERE did = ?", [value, did])
         con.commit()
         con.close()
 
-    def update_session_tokens(self, did: str, access_token: str, refresh_token: str, dpop_nonce: str):
+    def update_session_tokens(
+        self, did: str, access_token: str, refresh_token: str, dpop_nonce: str
+    ):
         con = self._connect()
         con.execute(
             """UPDATE oauth_session

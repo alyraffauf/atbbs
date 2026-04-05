@@ -19,6 +19,7 @@ class SiteScreen(Screen):
 
     def compose(self) -> ComposeResult:
         from tui.widgets.breadcrumb import Breadcrumb
+
         yield Breadcrumb(
             ("@bbs", 1),
             (self.handle, 0),
@@ -41,7 +42,9 @@ class SiteScreen(Screen):
                 yield ListView(
                     *[
                         ListItem(
-                            Static(f"  {item.title}  —  {format_datetime(item.created_at)}"),
+                            Static(
+                                f"  {item.title}  —  {format_datetime(item.created_at)}"
+                            ),
                             name=str(i),
                         )
                         for i, item in enumerate(self.bbs.news)
@@ -73,9 +76,13 @@ class SiteScreen(Screen):
             board = next((b for b in self.bbs.site.boards if b.slug == slug), None)
             if board:
                 from tui.screens.board import BoardScreen
+
                 self.app.push_screen(BoardScreen(self.bbs, self.handle, board))
         elif event.list_view.id == "news-list":
             idx = int(event.item.name)
             if 0 <= idx < len(self.bbs.news):
                 from tui.screens.news import NewsScreen
-                self.app.push_screen(NewsScreen(self.bbs, self.handle, self.bbs.news[idx]))
+
+                self.app.push_screen(
+                    NewsScreen(self.bbs, self.handle, self.bbs.news[idx])
+                )

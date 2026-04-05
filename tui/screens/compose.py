@@ -8,6 +8,7 @@ import mimetypes
 from pathlib import Path
 
 from core.records import create_thread_record, create_reply_record, upload_blob
+from tui.util import require_session
 
 
 async def _upload_file(screen, file_path: str, session: dict) -> list[dict] | None:
@@ -21,12 +22,15 @@ async def _upload_file(screen, file_path: str, session: dict) -> list[dict] | No
         return None
     data = p.read_bytes()
     mime = mimetypes.guess_type(str(p))[0] or "application/octet-stream"
+
     async def _update_nonce(did, field, value):
-        if hasattr(screen.app, 'user_session') and screen.app.user_session:
+        if hasattr(screen.app, "user_session") and screen.app.user_session:
             screen.app.user_session[field] = value
 
     try:
-        blob_ref = await upload_blob(screen.app.http_client, session, data, mime, session_updater=_update_nonce)
+        blob_ref = await upload_blob(
+            screen.app.http_client, session, data, mime, session_updater=_update_nonce
+        )
         return [{"file": blob_ref, "name": p.name}]
     except Exception as e:
         screen.notify(f"Failed to upload file: {e}", severity="error")
@@ -44,6 +48,7 @@ class ComposeThreadScreen(Screen):
 
     def compose(self) -> ComposeResult:
         from tui.widgets.breadcrumb import Breadcrumb
+
         yield Breadcrumb(
             ("@bbs", 3),
             (self.bbs.site.name, 2),
@@ -66,12 +71,8 @@ class ComposeThreadScreen(Screen):
 
     @work(exclusive=True)
     async def post_thread(self) -> None:
-        session = self.app.user_session
+        session = require_session(self)
         if not session:
-            self.notify("Not logged in.", severity="error")
-            return
-        if session["did"] in self.bbs.site.banned_dids:
-            self.notify("You have been banned from this BBS.", severity="error")
             return
 
         title = self.query_one("#thread-title", Input).value.strip()
@@ -92,7 +93,11 @@ class ComposeThreadScreen(Screen):
 
         try:
             resp = await create_thread_record(
-                self.app.http_client, session, board_uri, title, body,
+                self.app.http_client,
+                session,
+                board_uri,
+                title,
+                body,
                 attachments=attachments or None,
             )
             resp.raise_for_status()
@@ -115,6 +120,7 @@ class ComposeReplyScreen(Screen):
 
     def compose(self) -> ComposeResult:
         from tui.widgets.breadcrumb import Breadcrumb
+
         yield Breadcrumb(
             ("@bbs", 3),
             (self.bbs.site.name, 2),
@@ -124,8 +130,14 @@ class ComposeReplyScreen(Screen):
         with Vertical():
             yield Static(f"reply to: {self.thread.title}", classes="title")
             if self.quote:
-                body_preview = self.quote.body[:60] + ("..." if len(self.quote.body) > 60 else "")
-                yield Static(f"quoting {self.quote.author.handle}: {body_preview} [clear: ctrl+g]", classes="subtitle", id="quote-info")
+                body_preview = self.quote.body[:60] + (
+                    "..." if len(self.quote.body) > 60 else ""
+                )
+                yield Static(
+                    f"quoting {self.quote.author.handle}: {body_preview} [clear: ctrl+g]",
+                    classes="subtitle",
+                    id="quote-info",
+                )
             yield TextArea(id="reply-body", language=None)
             yield Input(placeholder="attach file (path, optional)", id="reply-file")
             yield Static("ctrl+s to post", classes="subtitle")
@@ -148,12 +160,8 @@ class ComposeReplyScreen(Screen):
 
     @work(exclusive=True)
     async def post_reply(self) -> None:
-        session = self.app.user_session
+        session = require_session(self)
         if not session:
-            self.notify("Not logged in.", severity="error")
-            return
-        if session["did"] in self.bbs.site.banned_dids:
-            self.notify("You have been banned from this BBS.", severity="error")
             return
 
         body = self.query_one("#reply-body", TextArea).text.strip()
@@ -171,7 +179,10 @@ class ComposeReplyScreen(Screen):
 
         try:
             resp = await create_reply_record(
-                self.app.http_client, session, self.thread.uri, body,
+                self.app.http_client,
+                session,
+                self.thread.uri,
+                body,
                 attachments=attachments or None,
                 quote=self.quote.uri if self.quote else None,
             )

@@ -53,17 +53,13 @@ async def resolve_identities_batch(
     """Resolve multiple DIDs concurrently, skipping failures."""
     tasks = [resolve_identity(client, did) for did in dids]
     results = await asyncio.gather(*tasks, return_exceptions=True)
-    return {
-        r.did: r for r in results if isinstance(r, MiniDoc)
-    }
+    return {r.did: r for r in results if isinstance(r, MiniDoc)}
 
 
 async def get_records_batch(
     client: httpx.AsyncClient, refs: list[BacklinkRef]
 ) -> list[Record]:
     """Fetch multiple records concurrently, skipping failures."""
-    tasks = [
-        get_record(client, ref.did, ref.collection, ref.rkey) for ref in refs
-    ]
+    tasks = [get_record(client, ref.did, ref.collection, ref.rkey) for ref in refs]
     results = await asyncio.gather(*tasks, return_exceptions=True)
     return [r for r in results if isinstance(r, Record)]

@@ -75,9 +75,7 @@ async def jwks():
     return {
         "keys": [
             json.loads(
-                JsonWebKey.import_key(
-                    _client_secret_jwk()
-                ).as_json(is_private=False)
+                JsonWebKey.import_key(_client_secret_jwk()).as_json(is_private=False)
             )
         ]
     }

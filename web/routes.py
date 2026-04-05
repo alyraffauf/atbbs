@@ -4,7 +4,10 @@ import httpx
 from quart import Blueprint, current_app, render_template, request
 
 from core.models import (
-    BBSNotFoundError, NetworkError, NoBBSError, Thread,
+    BBSNotFoundError,
+    NetworkError,
+    NoBBSError,
+    Thread,
 )
 from core.records import hydrate_replies, hydrate_threads
 from core.resolver import resolve_bbs
@@ -20,8 +23,11 @@ async def error(message: str, status: int = 404):
 async def check_banned(bbs):
     """Return an error response if the current user is banned, or None."""
     from quart import g
+
     if g.user and g.user.get("did") in bbs.site.banned_dids:
-        return await render_template("error.html", message="You have been banned from this BBS."), 403
+        return await render_template(
+            "error.html", message="You have been banned from this BBS."
+        ), 403
     return None
 
 
@@ -38,17 +44,19 @@ async def login_page():
 @bp.route("/api/inbox")
 async def api_inbox():
     from quart import g
+
     if not g.user:
         return {"inbox": [], "cursor": None}
 
     from core.records import fetch_inbox
+
     client = current_app.http_client
     cursor = request.args.get("cursor")
     offset = int(cursor) if cursor else 0
     limit = 20
 
     all_items = await fetch_inbox(client, g.user["did"], g.user["pds_url"])
-    page = all_items[offset:offset + limit]
+    page = all_items[offset : offset + limit]
     next_cursor = str(offset + limit) if offset + limit < len(all_items) else None
 
     return {"inbox": page, "cursor": next_cursor}
@@ -82,11 +90,13 @@ async def discover():
             for r in raw:
                 did = r["did"]
                 if did in authors:
-                    bbses.append({
-                        "handle": authors[did].handle,
-                        "name": r["record"].get("name", ""),
-                        "description": r["record"].get("description", ""),
-                    })
+                    bbses.append(
+                        {
+                            "handle": authors[did].handle,
+                            "name": r["record"].get("name", ""),
+                            "description": r["record"].get("description", ""),
+                        }
+                    )
     except Exception:
         pass
     return {"bbses": bbses}
@@ -158,7 +168,9 @@ async def api_threads(handle: str, slug: str):
         return {"threads": [], "cursor": None}
 
     try:
-        threads, next_cursor = await hydrate_threads(client, bbs, current_board, cursor=cursor)
+        threads, next_cursor = await hydrate_threads(
+            client, bbs, current_board, cursor=cursor
+        )
     except Exception:
         return {"threads": [], "cursor": None}
 
@@ -251,6 +263,7 @@ async def api_replies(did: str, tid: str):
     # Build a minimal Thread object for hydrate_replies
     thread_uri = f"at://{did}/xyz.atboards.thread/{tid}"
     from core.models import MiniDoc
+
     dummy_thread = Thread(
         uri=thread_uri,
         board_uri="",
@@ -261,7 +274,9 @@ async def api_replies(did: str, tid: str):
     )
 
     try:
-        replies, next_cursor = await hydrate_replies(client, bbs, dummy_thread, cursor=cursor)
+        replies, next_cursor = await hydrate_replies(
+            client, bbs, dummy_thread, cursor=cursor
+        )
     except Exception:
         return {"replies": [], "cursor": None}
 

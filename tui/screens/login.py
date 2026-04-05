@@ -30,13 +30,17 @@ class LoginScreen(Screen):
 
     def compose(self) -> ComposeResult:
         from tui.widgets.breadcrumb import Breadcrumb
+
         yield Breadcrumb(
             ("@bbs", 1),
             ("log in", 0),
         )
         with Vertical():
             yield Static("log in", classes="title")
-            yield Static("Sign in with your atproto handle. A browser window will open.", classes="subtitle")
+            yield Static(
+                "Sign in with your atproto handle. A browser window will open.",
+                classes="subtitle",
+            )
             yield Input(placeholder="your-handle.bsky.social", id="login-handle")
         yield Footer()
 
@@ -67,6 +71,7 @@ class LoginScreen(Screen):
 
         # Load client secrets from TUI data dir
         from tui.app import DATA_DIR
+
         secrets = load_secrets(DATA_DIR)
         client_secret_jwk = json.loads(secrets["client_secret_jwk"])
 

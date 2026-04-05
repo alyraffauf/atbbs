@@ -1,12 +1,13 @@
+from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, Footer
-from textual import work
 
 from core.models import BBS, Thread
 from tui.fetchers import delete_record, fetch_replies
+from tui.util import require_session
 from tui.widgets.post import Post
 
 
@@ -28,8 +29,11 @@ class ThreadScreen(Screen):
 
     def compose(self) -> ComposeResult:
         board_slug = self.thread.board_uri.split("/")[-1]
-        board_name = next((b.name for b in self.bbs.site.boards if b.slug == board_slug), board_slug)
+        board_name = next(
+            (b.name for b in self.bbs.site.boards if b.slug == board_slug), board_slug
+        )
         from tui.widgets.breadcrumb import Breadcrumb
+
         yield Breadcrumb(
             ("@bbs", 3),
             (self.bbs.site.name, 2),
@@ -62,7 +66,10 @@ class ThreadScreen(Screen):
         client = self.app.http_client
         try:
             replies, self.next_cursor = await fetch_replies(
-                client, self.bbs, self.thread, cursor=cursor,
+                client,
+                self.bbs,
+                self.thread,
+                cursor=cursor,
             )
         except Exception:
             self.notify("Failed to load replies.", severity="error")
@@ -96,9 +103,7 @@ class ThreadScreen(Screen):
             )
 
         if self.next_cursor:
-            await scroll.mount(
-                Button("next page →", id="next-page")
-            )
+            await scroll.mount(Button("next page →", id="next-page"))
 
     def refresh_data(self) -> None:
         self._do_refresh()
@@ -116,7 +121,9 @@ class ThreadScreen(Screen):
         client = self.app.http_client
         try:
             replies, self.next_cursor = await fetch_replies(
-                client, self.bbs, self.thread,
+                client,
+                self.bbs,
+                self.thread,
             )
         except Exception:
             self.notify("Failed to load replies.", severity="error")
@@ -157,21 +164,25 @@ class ThreadScreen(Screen):
             self.load_replies(cursor=self.next_cursor)
 
     def action_reply(self) -> None:
-        session = self.app.user_session
+        session = require_session(self)
         if not session:
-            return
-        if session["did"] in self.bbs.site.banned_dids:
-            self.notify("You have been banned from this BBS.", severity="error")
             return
 
         # If focused on a reply, quote it
         quote = None
         focused = self.focused
-        if isinstance(focused, Post) and focused.collection == "xyz.atboards.reply" and focused.record_uri:
+        if (
+            isinstance(focused, Post)
+            and focused.collection == "xyz.atboards.reply"
+            and focused.record_uri
+        ):
             quote = self._replies_map.get(focused.record_uri)
 
         from tui.screens.compose import ComposeReplyScreen
-        self.app.push_screen(ComposeReplyScreen(self.bbs, self.handle, self.thread, quote=quote))
+
+        self.app.push_screen(
+            ComposeReplyScreen(self.bbs, self.handle, self.thread, quote=quote)
+        )
 
     def action_delete(self) -> None:
         session = self.app.user_session
@@ -192,7 +203,10 @@ class ThreadScreen(Screen):
         session = self.app.user_session
         try:
             await delete_record(
-                self.app.http_client, session, post.collection, post.rkey,
+                self.app.http_client,
+                session,
+                post.collection,
+                post.rkey,
             )
         except Exception:
             self.notify("Failed to delete.", severity="error")

@@ -1,11 +1,12 @@
+from textual import work
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, Footer, ListItem, ListView, Static
-from textual import work
 
 from core.models import BBS, Board
 from tui.fetchers import fetch_threads
+from tui.util import require_session
 from tui.util import format_datetime
 
 
@@ -32,6 +33,7 @@ class BoardScreen(Screen):
 
     def compose(self) -> ComposeResult:
         from tui.widgets.breadcrumb import Breadcrumb
+
         yield Breadcrumb(
             ("@bbs", 2),
             (self.bbs.site.name, 1),
@@ -39,7 +41,9 @@ class BoardScreen(Screen):
         )
         with VerticalScroll():
             yield Static("")
-            yield Static(f"{self.board.name} — {self.board.description}", classes="subtitle")
+            yield Static(
+                f"{self.board.name} — {self.board.description}", classes="subtitle"
+            )
             yield ListView(id="thread-list")
         yield Footer()
 
@@ -53,7 +57,10 @@ class BoardScreen(Screen):
         cursor = self.cursor_history[self.page]
         try:
             self.threads, next_cursor = await fetch_threads(
-                client, self.bbs, self.board, cursor=cursor,
+                client,
+                self.bbs,
+                self.board,
+                cursor=cursor,
             )
         except Exception:
             self.notify("Failed to load threads.", severity="error")
@@ -62,7 +69,9 @@ class BoardScreen(Screen):
         lv = self.query_one("#thread-list", ListView)
         lv.clear()
         for t in self.threads:
-            label = f"  {t.title}  —  {t.author.handle} · {format_datetime(t.created_at)}"
+            label = (
+                f"  {t.title}  —  {t.author.handle} · {format_datetime(t.created_at)}"
+            )
             await lv.append(ListItem(Static(label), name=t.uri))
 
         if self.threads:
@@ -86,6 +95,7 @@ class BoardScreen(Screen):
         thread = next((t for t in self.threads if t.uri == uri), None)
         if thread:
             from tui.screens.thread import ThreadScreen
+
             self.app.push_screen(ThreadScreen(self.bbs, self.handle, thread))
 
     def refresh_data(self) -> None:
@@ -99,11 +109,8 @@ class BoardScreen(Screen):
             self.load_threads()
 
     def action_new_thread(self) -> None:
-        session = self.app.user_session
-        if not session:
-            return
-        if session["did"] in self.bbs.site.banned_dids:
-            self.notify("You have been banned from this BBS.", severity="error")
+        if not require_session(self):
             return
         from tui.screens.compose import ComposeThreadScreen
+
         self.app.push_screen(ComposeThreadScreen(self.bbs, self.handle, self.board))

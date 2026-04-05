@@ -24,14 +24,18 @@ class HomeScreen(Screen):
     def compose(self) -> ComposeResult:
         with Vertical(id="home-container"):
             yield Static("\n   [#d97706]@[/]bbs\n", classes="title", id="hero-title")
-            yield Static("Bulletin boards on the Atmosphere.", classes="subtitle", id="hero-sub1")
-            yield Static("Run a BBS from your own account. No server required. Users own their posts, communities migrate freely.", classes="subtitle", id="hero-sub2")
+            yield Static(
+                "Bulletin boards on the Atmosphere.", classes="subtitle", id="hero-sub1"
+            )
+            yield Static(
+                "Run a BBS from your own account. No server required. Users own their posts, communities migrate freely.",
+                classes="subtitle",
+                id="hero-sub2",
+            )
             yield Static("")
             yield Static("Connect to a BBS", classes="title")
             yield Input(placeholder="handle.example.com", id="handle-input")
-            yield Static(
-                "OR FIND ONE", id="discover-label", classes="section-label"
-            )
+            yield Static("OR FIND ONE", id="discover-label", classes="section-label")
             yield ListView(id="discover-list")
         yield Footer()
 
@@ -79,6 +83,7 @@ class HomeScreen(Screen):
             return
 
         from tui.screens.site import SiteScreen
+
         self.app.push_screen(SiteScreen(bbs, handle))
         self.query_one("#handle-input", Input).value = ""
 
@@ -117,7 +122,7 @@ class HomeScreen(Screen):
 
             self.query_one("#discover-label").display = True
             lv.display = True
-            lv.index = 0 # select first bbs
+            lv.index = 0  # select first bbs
 
         except Exception:
             pass

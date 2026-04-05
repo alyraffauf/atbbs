@@ -117,7 +117,9 @@ def authserver_dpop_jwt(method: str, url: str, nonce: str, dpop_private_jwk) -> 
     ).decode("utf-8")
 
 
-def pds_dpop_jwt(method: str, url: str, nonce: str, access_token: str, dpop_private_jwk) -> str:
+def pds_dpop_jwt(
+    method: str, url: str, nonce: str, access_token: str, dpop_private_jwk
+) -> str:
     """Create a DPoP proof JWT for PDS requests (includes ath claim)."""
     dpop_pub_jwk = json.loads(dpop_private_jwk.as_json(is_private=False))
     body = {
@@ -253,7 +255,9 @@ async def exchange_code(
     authserver_url = auth_request["authserver_iss"]
     authserver_meta = await fetch_authserver_meta(client, authserver_url)
     token_url = authserver_meta["token_endpoint"]
-    dpop_private_jwk = JsonWebKey.import_key(json.loads(auth_request["dpop_private_jwk"]))
+    dpop_private_jwk = JsonWebKey.import_key(
+        json.loads(auth_request["dpop_private_jwk"])
+    )
 
     dpop_nonce, resp = await auth_server_post(
         client=client,
@@ -355,7 +359,9 @@ async def pds_request(
     access_token = session["access_token"]
 
     for _ in range(2):
-        dpop_proof = pds_dpop_jwt(method, url, dpop_nonce, access_token, dpop_private_jwk)
+        dpop_proof = pds_dpop_jwt(
+            method, url, dpop_nonce, access_token, dpop_private_jwk
+        )
         headers = {
             "Authorization": f"DPoP {access_token}",
             "DPoP": dpop_proof,

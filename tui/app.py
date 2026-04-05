@@ -80,6 +80,7 @@ class AtbbsApp(App):
     def _restore_session(self) -> None:
         """Load the most recent session from the database."""
         import sqlite3
+
         try:
             con = sqlite3.connect(self.session_store.db_path)
             con.row_factory = sqlite3.Row
@@ -96,6 +97,7 @@ class AtbbsApp(App):
             self.push_screen(LogoutConfirmScreen())
         else:
             from tui.screens.login import LoginScreen
+
             self.push_screen(LoginScreen())
 
     def do_logout(self) -> None:
@@ -112,6 +114,7 @@ class AtbbsApp(App):
             self.notify("Log in to see your inbox.", severity="warning")
             return
         from tui.screens.activity import ActivityScreen
+
         self.push_screen(ActivityScreen())
 
     def watch_screen(self) -> None:

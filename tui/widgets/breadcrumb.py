@@ -74,7 +74,9 @@ class Breadcrumb(Widget):
         # Show logged-in user on the right
         session = getattr(self.app, "user_session", None)
         if session:
-            yield Static(f" {session['handle']} ", classes="breadcrumb-user", markup=False)
+            yield Static(
+                f" {session['handle']} ", classes="breadcrumb-user", markup=False
+            )
 
         for i, (label, pop_count) in enumerate(self._segments):
             if i > 0:
