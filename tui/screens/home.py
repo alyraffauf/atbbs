@@ -33,9 +33,9 @@ class HomeScreen(Screen):
                 id="hero-sub2",
             )
             yield Static("")
-            yield Static("Connect to a BBS", classes="title")
+            yield Static("Dial a BBS", classes="title")
             yield Input(placeholder="handle.example.com", id="handle-input")
-            yield Static("OR FIND ONE", id="discover-label", classes="section-label")
+            yield Static("OR TRY ONE OF THESE", id="discover-label", classes="section-label")
             yield ListView(id="discover-list")
         yield Footer()
 
