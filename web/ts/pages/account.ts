@@ -1,12 +1,12 @@
 import { escapeHtml, relativeDate, getData } from "../lib/util";
 import {
   listRecords,
-  getBacklinks,
-  getRecordsBatch,
+  fetchAndHydrate,
   resolveIdentitiesBatch,
   parseAtUri,
+  type HydratedRecord,
 } from "../lib/atproto";
-import { THREAD, REPLY } from "../lib/lexicon";
+import { THREAD, REPLY, BACKLINK_LIMIT } from "../lib/lexicon";
 
 interface InboxItem {
   type: string;
@@ -17,8 +17,10 @@ interface InboxItem {
   created_at: string;
   bbs_handle: string;
 }
+
 const SCAN_LIMIT = 50;
-const BACKLINK_LIMIT = 50;
+
+// --- Tabs ---
 
 function initTabs() {
   const panels = ["inbox", "bbs"];
@@ -41,6 +43,8 @@ function initTabs() {
   });
 }
 
+// --- Render ---
+
 function renderItem(m: InboxItem, handle: string): HTMLElement {
   const { did: threadDid, rkey: threadRkey } = parseAtUri(m.thread_uri);
 
@@ -56,96 +60,44 @@ function renderItem(m: InboxItem, handle: string): HTMLElement {
   return el;
 }
 
-async function fetchThreadReplies(
-  threadRecord: { uri: string; value: Record<string, unknown> },
-  did: string,
-  bbsAuthors: Record<string, { handle: string }>,
-): Promise<InboxItem[]> {
-  const threadUri = threadRecord.uri;
-  const threadTitle = (threadRecord.value.title as string) ?? "";
-  const boardUri = (threadRecord.value.board as string) ?? "";
-  const bbsDid = boardUri ? parseAtUri(boardUri).did : did;
-  const bbsHandle = bbsAuthors[bbsDid]?.handle ?? "";
+// --- Data loading ---
 
-  try {
-    const backlinks = await getBacklinks(
-      threadUri,
-      `${REPLY}:subject`,
-      BACKLINK_LIMIT,
-    );
-    if (!backlinks.records.length) return [];
-
-    const records = await getRecordsBatch(backlinks.records);
-    const others = records.filter((r) => parseAtUri(r.uri).did !== did);
-    if (!others.length) return [];
-
-    const dids = others.map((r) => parseAtUri(r.uri).did);
-    const authors = await resolveIdentitiesBatch(dids);
-
-    return others
-      .filter((r) => parseAtUri(r.uri).did in authors)
-      .map((r) => ({
-        type: "reply",
-        thread_title: threadTitle,
-        thread_uri: threadUri,
-        handle: authors[parseAtUri(r.uri).did].handle,
-        body: ((r.value.body as string) ?? "").substring(0, 200),
-        created_at: (r.value.createdAt as string) ?? "",
-        bbs_handle: bbsHandle,
-      }));
-  } catch {
-    return [];
-  }
+function recordsToInboxItems(
+  records: HydratedRecord[],
+  type: string,
+  threadTitle: string,
+  threadUri: string,
+  bbsHandle: string,
+): InboxItem[] {
+  return records.map((r) => ({
+    type,
+    thread_title: threadTitle,
+    thread_uri: threadUri,
+    handle: r.handle,
+    body: ((r.value.body as string) ?? "").substring(0, 200),
+    created_at: (r.value.createdAt as string) ?? "",
+    bbs_handle: bbsHandle,
+  }));
 }
 
-async function fetchReplyQuotes(
-  replyRecord: { uri: string; value: Record<string, unknown> },
-  did: string,
-): Promise<InboxItem[]> {
-  const replyUri = replyRecord.uri;
-  const threadUri = (replyRecord.value.subject as string) ?? "";
-
-  try {
-    const backlinks = await getBacklinks(
-      replyUri,
-      `${REPLY}:quote`,
-      BACKLINK_LIMIT,
-    );
-    if (!backlinks.records.length) return [];
-
-    const records = await getRecordsBatch(backlinks.records);
-    const others = records.filter((r) => parseAtUri(r.uri).did !== did);
-    if (!others.length) return [];
-
-    const dids = others.map((r) => parseAtUri(r.uri).did);
-    const authors = await resolveIdentitiesBatch(dids);
-
-    return others
-      .filter((r) => parseAtUri(r.uri).did in authors)
-      .map((r) => ({
-        type: "quote",
-        thread_title: "",
-        thread_uri: threadUri,
-        handle: authors[parseAtUri(r.uri).did].handle,
-        body: ((r.value.body as string) ?? "").substring(0, 200),
-        created_at: (r.value.createdAt as string) ?? "",
-        bbs_handle: "",
-      }));
-  } catch {
-    return [];
+function deduplicateItems(items: InboxItem[]): InboxItem[] {
+  const seen = new Map<string, InboxItem>();
+  for (const item of items) {
+    const key = item.handle + item.body + item.created_at;
+    if (!seen.has(key) || item.type === "quote") {
+      seen.set(key, item);
+    }
   }
+  return [...seen.values()].sort((a, b) =>
+    b.created_at.localeCompare(a.created_at),
+  );
 }
 
-async function loadInbox(
-  did: string,
-  pdsUrl: string,
-  handle: string,
-) {
+async function loadInbox(did: string, pdsUrl: string, handle: string) {
   const container = document.getElementById("inbox")!;
   const loading = document.getElementById("inbox-loading");
 
   try {
-    // Fetch thread and reply records concurrently
     const [threadRecords, replyRecords] = await Promise.all([
       listRecords(pdsUrl, did, THREAD, SCAN_LIMIT),
       listRecords(pdsUrl, did, REPLY, SCAN_LIMIT),
@@ -166,28 +118,53 @@ async function loadInbox(
 
     // Fan out all lookups concurrently
     const results = await Promise.all([
-      ...threadRecords.map((tr) => fetchThreadReplies(tr, did, bbsAuthors)),
-      ...replyRecords.map((rr) => fetchReplyQuotes(rr, did)),
+      ...threadRecords.map(async (tr) => {
+        const boardUri = (tr.value.board as string) ?? "";
+        const bbsDid = boardUri ? parseAtUri(boardUri).did : did;
+        const bbsHandle = bbsAuthors[bbsDid]?.handle ?? "";
+
+        try {
+          const { records } = await fetchAndHydrate(
+            tr.uri,
+            `${REPLY}:subject`,
+            { limit: BACKLINK_LIMIT, excludeDid: did },
+          );
+          return recordsToInboxItems(
+            records,
+            "reply",
+            (tr.value.title as string) ?? "",
+            tr.uri,
+            bbsHandle,
+          );
+        } catch {
+          return [];
+        }
+      }),
+      ...replyRecords.map(async (rr) => {
+        try {
+          const { records } = await fetchAndHydrate(
+            rr.uri,
+            `${REPLY}:quote`,
+            { limit: BACKLINK_LIMIT, excludeDid: did },
+          );
+          return recordsToInboxItems(
+            records,
+            "quote",
+            "",
+            (rr.value.subject as string) ?? "",
+            "",
+          );
+        } catch {
+          return [];
+        }
+      }),
     ]);
 
-    const allItems: InboxItem[] = results.flat();
-
-    // Deduplicate — prefer quotes
-    const seen = new Map<string, InboxItem>();
-    for (const item of allItems) {
-      const key = item.handle + item.body + item.created_at;
-      if (!seen.has(key) || item.type === "quote") {
-        seen.set(key, item);
-      }
-    }
-
-    const items = [...seen.values()].sort(
-      (a, b) => b.created_at.localeCompare(a.created_at),
-    );
+    const items = deduplicateItems(results.flat());
 
     if (loading) loading.remove();
 
-    if (items.length === 0) {
+    if (!items.length) {
       container.innerHTML = '<p class="text-neutral-500">No messages yet.</p>';
       return;
     }
@@ -199,6 +176,8 @@ async function loadInbox(
     if (loading) loading.textContent = "Failed to fetch messages.";
   }
 }
+
+// --- Init ---
 
 export function initAccount() {
   initTabs();

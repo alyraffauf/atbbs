@@ -84,10 +84,78 @@ export async function getBacklinks(
   subject: string,
   source: string,
   limit = 25,
+  cursor?: string,
 ): Promise<BacklinksResponse> {
-  return fetchJson<BacklinksResponse>(
-    `${CONSTELLATION}/blue.microcosm.links.getBacklinks?subject=${encodeURIComponent(subject)}&source=${encodeURIComponent(source)}&limit=${limit}`,
-  );
+  let url = `${CONSTELLATION}/blue.microcosm.links.getBacklinks?subject=${encodeURIComponent(subject)}&source=${encodeURIComponent(source)}&limit=${limit}`;
+  if (cursor) url += `&cursor=${encodeURIComponent(cursor)}`;
+  return fetchJson<BacklinksResponse>(url);
+}
+
+export interface HydratedRecord {
+  uri: string;
+  did: string;
+  rkey: string;
+  handle: string;
+  pds: string;
+  value: Record<string, unknown>;
+}
+
+export interface FetchAndHydrateResult {
+  records: HydratedRecord[];
+  cursor: string | null;
+}
+
+/**
+ * Fetch backlinks, hydrate records, resolve authors, and filter.
+ * Shared pattern used by thread replies, inbox, etc.
+ */
+export async function fetchAndHydrate(
+  subject: string,
+  source: string,
+  opts?: {
+    limit?: number;
+    cursor?: string;
+    excludeDid?: string;
+    bannedDids?: Set<string>;
+    hiddenPosts?: Set<string>;
+  },
+): Promise<FetchAndHydrateResult> {
+  const limit = opts?.limit ?? 50;
+
+  const backlinks = await getBacklinks(subject, source, limit, opts?.cursor);
+  if (!backlinks.records.length) return { records: [], cursor: null };
+
+  const records = await getRecordsBatch(backlinks.records);
+
+  const filtered = records.filter((r) => {
+    const { did } = parseAtUri(r.uri);
+    if (opts?.excludeDid && did === opts.excludeDid) return false;
+    if (opts?.bannedDids?.has(did)) return false;
+    if (opts?.hiddenPosts?.has(r.uri)) return false;
+    return true;
+  });
+
+  if (!filtered.length) return { records: [], cursor: backlinks.cursor ?? null };
+
+  const dids = filtered.map((r) => parseAtUri(r.uri).did);
+  const authors = await resolveIdentitiesBatch(dids);
+
+  const hydrated = filtered
+    .filter((r) => parseAtUri(r.uri).did in authors)
+    .map((r) => {
+      const parsed = parseAtUri(r.uri);
+      const author = authors[parsed.did];
+      return {
+        uri: r.uri,
+        did: parsed.did,
+        rkey: parsed.rkey,
+        handle: author.handle,
+        pds: author.pds ?? "",
+        value: r.value,
+      };
+    });
+
+  return { records: hydrated, cursor: backlinks.cursor ?? null };
 }
 
 export async function listRecords(
