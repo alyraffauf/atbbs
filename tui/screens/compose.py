@@ -16,6 +16,9 @@ async def _upload_file(screen, file_path: str, session: dict) -> list[dict] | No
     if not p.exists():
         screen.notify(f"File not found: {p}", severity="error")
         return None
+    if not p.is_file():
+        screen.notify(f"Not a file: {p}", severity="error")
+        return None
     data = p.read_bytes()
     mime = mimetypes.guess_type(str(p))[0] or "application/octet-stream"
     async def _update_nonce(did, field, value):
