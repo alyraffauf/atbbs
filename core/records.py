@@ -307,9 +307,13 @@ async def fetch_inbox(
     client: httpx.AsyncClient,
     did: str,
     pds_url: str,
+    max_items: int = 50,
 ) -> list[dict]:
     """Fetch inbox: replies to user's threads + quotes of user's replies."""
     from core.constellation import get_backlinks
+
+    SCAN_LIMIT = 20  # how many threads/replies to scan
+    BACKLINK_LIMIT = 25  # backlinks per record
 
     all_items = []
 
@@ -317,26 +321,36 @@ async def fetch_inbox(
     try:
         resp = await client.get(
             f"{pds_url}/xrpc/com.atproto.repo.listRecords",
-            params={"repo": did, "collection": lexicon.THREAD, "limit": 100},
+            params={"repo": did, "collection": lexicon.THREAD, "limit": SCAN_LIMIT},
         )
         resp.raise_for_status()
         thread_records = resp.json().get("records", [])
     except Exception:
         thread_records = []
 
+    # Batch-resolve BBS handles for all threads at once
+    bbs_dids = set()
     for tr in thread_records:
+        board_uri = tr["value"].get("board", "")
+        if board_uri:
+            bbs_dids.add(AtUri.parse(board_uri).did)
+    try:
+        bbs_authors = await resolve_identities_batch(client, list(bbs_dids)) if bbs_dids else {}
+    except Exception:
+        bbs_authors = {}
+
+    for tr in thread_records:
+        if len(all_items) >= max_items:
+            break
+
         thread_uri = tr["uri"]
         thread_title = tr["value"].get("title", "")
         board_uri = tr["value"].get("board", "")
         bbs_did = AtUri.parse(board_uri).did if board_uri else did
-        try:
-            bbs_authors = await resolve_identities_batch(client, [bbs_did])
-            bbs_handle = bbs_authors[bbs_did].handle if bbs_did in bbs_authors else ""
-        except Exception:
-            bbs_handle = ""
+        bbs_handle = bbs_authors[bbs_did].handle if bbs_did in bbs_authors else ""
 
         try:
-            backlinks = await get_replies(client, thread_uri, limit=50)
+            backlinks = await get_replies(client, thread_uri, limit=BACKLINK_LIMIT)
             records = await get_records_batch(client, backlinks.records)
             parsed = {r.uri: AtUri.parse(r.uri) for r in records}
             records = [r for r in records if parsed[r.uri].did != did]
@@ -368,7 +382,7 @@ async def fetch_inbox(
     try:
         resp = await client.get(
             f"{pds_url}/xrpc/com.atproto.repo.listRecords",
-            params={"repo": did, "collection": lexicon.REPLY, "limit": 100},
+            params={"repo": did, "collection": lexicon.REPLY, "limit": SCAN_LIMIT},
         )
         resp.raise_for_status()
         reply_records = resp.json().get("records", [])
@@ -376,6 +390,9 @@ async def fetch_inbox(
         reply_records = []
 
     for rr in reply_records:
+        if len(all_items) >= max_items:
+            break
+
         reply_uri = rr["uri"]
         thread_uri = rr["value"].get("subject", "")
         try:
@@ -383,7 +400,7 @@ async def fetch_inbox(
                 client,
                 subject=reply_uri,
                 source=f"{lexicon.REPLY}:quote",
-                limit=50,
+                limit=BACKLINK_LIMIT,
             )
             if not backlinks.records:
                 continue
