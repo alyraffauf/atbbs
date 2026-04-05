@@ -8,17 +8,25 @@ ADD https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwin
 RUN chmod +x /usr/local/bin/tailwindcss
 RUN apt-get update && apt-get install -y --no-install-recommends nodejs npm && rm -rf /var/lib/apt/lists/*
 
-# Install JS dependencies and build frontend
+# Install JS dependencies
 COPY package.json ./
 RUN npm install
-COPY web/static/input.css web/static/input.css
-COPY web/templates/ web/templates/
-COPY web/ts/ web/ts/
+
+# Copy all source
+COPY pyproject.toml uv.lock README.md ./
+COPY cli/ cli/
+COPY core/ core/
+COPY tui/ tui/
+COPY web/ web/
+
+# Build frontend assets (before uv sync so they're included in the package)
 RUN tailwindcss -i web/static/input.css -o web/static/style.css --minify
 RUN npx esbuild web/ts/main.ts --bundle --outfile=web/static/app.js --minify
 
-# Install Python dependencies
-COPY pyproject.toml uv.lock README.md ./
+# Remove TS source before installing (excluded in wheel anyway)
+RUN rm -rf web/ts
+
+# Install Python package
 RUN uv sync --frozen --no-dev
 
 
@@ -26,21 +34,8 @@ FROM python:3.14-slim
 
 WORKDIR /app
 
-# Copy uv and dependencies
 COPY --from=build /usr/local/bin/uv /usr/local/bin/uv
 COPY --from=build /app/.venv /app/.venv
-
-# Copy application code
-COPY cli/ cli/
-COPY core/ core/
-COPY web/ web/
-
-# Copy built frontend assets
-COPY --from=build /app/web/static/style.css web/static/style.css
-COPY --from=build /app/web/static/app.js web/static/app.js
-
-# Remove TS source from final image
-RUN rm -rf web/ts
 
 RUN mkdir -p /data
 
