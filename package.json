@@ -1,6 +1,7 @@
 {
   "private": true,
   "devDependencies": {
-    "esbuild": "^0.25"
+    "esbuild": "^0.25",
+    "tailwindcss": "^4"
   }
 }

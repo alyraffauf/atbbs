@@ -3,13 +3,13 @@ default: dev
 dev:
     #!/bin/sh
     trap 'kill 0' EXIT
-    ./tailwindcss -i web/static/input.css -o web/static/style.css --watch &
+    npx tailwindcss -i web/static/input.css -o web/static/style.css --watch &
     npx esbuild web/ts/main.ts --bundle --outfile=web/static/app.js --watch &
     QUART_DEBUG=1 uv run quart --app main:app run --reload &
     wait
 
 css:
-    ./tailwindcss -i web/static/input.css -o web/static/style.css --minify
+    npx tailwindcss -i web/static/input.css -o web/static/style.css --minify
 
 js:
     npx esbuild web/ts/main.ts --bundle --outfile=web/static/app.js --minify
