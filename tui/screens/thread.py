@@ -5,6 +5,7 @@ from textual.containers import VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, Footer
 
+from core import lexicon
 from core.models import BBS, Thread
 from tui.fetchers import delete_record, fetch_replies
 from tui.util import require_session
@@ -49,7 +50,7 @@ class ThreadScreen(Screen):
                 author_did=self.thread.author.did,
                 author_pds=self.thread.author.pds,
                 record_uri=self.thread.uri,
-                collection="xyz.atboards.thread",
+                collection=lexicon.THREAD,
                 attachments=self.thread.attachments,
             )
         yield Footer()
@@ -96,7 +97,7 @@ class ThreadScreen(Screen):
                     author_did=r.author.did,
                     author_pds=r.author.pds,
                     record_uri=r.uri,
-                    collection="xyz.atboards.reply",
+                    collection=lexicon.REPLY,
                     attachments=r.attachments,
                     quote_text=quote_text,
                 )
@@ -111,7 +112,7 @@ class ThreadScreen(Screen):
     @work(exclusive=True)
     async def _do_refresh(self) -> None:
         for post in self.query(Post):
-            if post.collection == "xyz.atboards.reply":
+            if post.collection == lexicon.REPLY:
                 await post.remove()
         try:
             await self.query_one("#next-page", Button).remove()
@@ -149,7 +150,7 @@ class ThreadScreen(Screen):
                     author_did=r.author.did,
                     author_pds=r.author.pds,
                     record_uri=r.uri,
-                    collection="xyz.atboards.reply",
+                    collection=lexicon.REPLY,
                     attachments=r.attachments,
                     quote_text=quote_text,
                 )
@@ -173,7 +174,7 @@ class ThreadScreen(Screen):
         focused = self.focused
         if (
             isinstance(focused, Post)
-            and focused.collection == "xyz.atboards.reply"
+            and focused.collection == lexicon.REPLY
             and focused.record_uri
         ):
             quote = self._replies_map.get(focused.record_uri)
@@ -212,7 +213,7 @@ class ThreadScreen(Screen):
             self.notify("Failed to delete.", severity="error")
             return
 
-        if post.collection == "xyz.atboards.thread":
+        if post.collection == lexicon.THREAD:
             self.app.pop_screen()
         else:
             await post.remove()

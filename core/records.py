@@ -5,6 +5,7 @@ Framework-agnostic. Used by both web and TUI.
 
 import httpx
 
+from core import lexicon
 from core.constellation import get_replies, get_threads
 from core.filters import filter_moderated
 from core.models import BBS, Board, Reply, Thread
@@ -19,7 +20,7 @@ async def hydrate_threads(
     cursor: str | None = None,
 ) -> tuple[list[Thread], str | None]:
     """Fetch and hydrate threads for a board."""
-    board_uri = f"at://{bbs.identity.did}/xyz.atboards.board/{board.slug}"
+    board_uri = f"at://{bbs.identity.did}/{lexicon.BOARD}/{board.slug}"
     backlinks = await get_threads(client, board_uri, cursor=cursor)
     records = await get_records_batch(client, backlinks.records)
     records = filter_moderated(records, bbs.site.banned_dids, bbs.site.hidden_posts)
@@ -223,7 +224,7 @@ async def create_thread_record(
 ) -> httpx.Response:
     """Create a thread record in the user's repo."""
     record = {
-        "$type": "xyz.atboards.thread",
+        "$type": lexicon.THREAD,
         "board": board_uri,
         "title": title,
         "body": body,
@@ -237,7 +238,7 @@ async def create_thread_record(
         "com.atproto.repo.createRecord",
         {
             "repo": session["did"],
-            "collection": "xyz.atboards.thread",
+            "collection": lexicon.THREAD,
             "record": record,
         },
         session_updater,
@@ -255,7 +256,7 @@ async def create_reply_record(
 ) -> httpx.Response:
     """Create a reply record in the user's repo."""
     record = {
-        "$type": "xyz.atboards.reply",
+        "$type": lexicon.REPLY,
         "subject": thread_uri,
         "body": body,
         "createdAt": now_iso(),
@@ -270,7 +271,7 @@ async def create_reply_record(
         "com.atproto.repo.createRecord",
         {
             "repo": session["did"],
-            "collection": "xyz.atboards.reply",
+            "collection": lexicon.REPLY,
             "record": record,
         },
         session_updater,
@@ -314,7 +315,7 @@ async def fetch_inbox(
     try:
         resp = await client.get(
             f"{pds_url}/xrpc/com.atproto.repo.listRecords",
-            params={"repo": did, "collection": "xyz.atboards.thread", "limit": 100},
+            params={"repo": did, "collection": lexicon.THREAD, "limit": 100},
         )
         resp.raise_for_status()
         thread_records = resp.json().get("records", [])
@@ -364,7 +365,7 @@ async def fetch_inbox(
     try:
         resp = await client.get(
             f"{pds_url}/xrpc/com.atproto.repo.listRecords",
-            params={"repo": did, "collection": "xyz.atboards.reply", "limit": 100},
+            params={"repo": did, "collection": lexicon.REPLY, "limit": 100},
         )
         resp.raise_for_status()
         reply_records = resp.json().get("records", [])
@@ -378,7 +379,7 @@ async def fetch_inbox(
             backlinks = await get_backlinks(
                 client,
                 subject=reply_uri,
-                source="xyz.atboards.reply:quote",
+                source=f"{lexicon.REPLY}:quote",
                 limit=50,
             )
             if not backlinks.records:

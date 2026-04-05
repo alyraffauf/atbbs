@@ -1,5 +1,6 @@
 import httpx
 
+from core import lexicon
 from core.models import BacklinkRef, BacklinksResponse
 
 BASE_URL = "https://constellation.microcosm.blue/xrpc"
@@ -46,7 +47,7 @@ async def get_threads(
     return await get_backlinks(
         client,
         subject=board_uri,
-        source="xyz.atboards.thread:board",
+        source=f"{lexicon.THREAD}:board",
         limit=limit,
         cursor=cursor,
     )
@@ -62,7 +63,7 @@ async def get_news(
     return await get_backlinks(
         client,
         subject=site_uri,
-        source="xyz.atboards.news:site",
+        source=f"{lexicon.NEWS}:site",
         limit=limit,
         cursor=cursor,
     )
@@ -78,7 +79,7 @@ async def get_replies(
     return await get_backlinks(
         client,
         subject=thread_uri,
-        source="xyz.atboards.reply:subject",
+        source=f"{lexicon.REPLY}:subject",
         limit=limit,
         cursor=cursor,
     )

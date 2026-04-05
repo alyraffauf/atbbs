@@ -21,7 +21,7 @@ from core.slingshot import resolve_identity
 from tui.local_server import wait_for_callback
 
 
-OAUTH_SCOPE = "atproto transition:generic collection:xyz.atboards.site collection:xyz.atboards.board collection:xyz.atboards.news collection:xyz.atboards.thread collection:xyz.atboards.reply"
+from core.lexicon import OAUTH_SCOPE
 CALLBACK_PORT = 23847
 
 

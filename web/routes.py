@@ -9,6 +9,7 @@ from core.models import (
     NoBBSError,
     Thread,
 )
+from core import lexicon
 from core.records import hydrate_replies, hydrate_threads
 from core.resolver import resolve_bbs
 from core.slingshot import get_record, resolve_identity, resolve_identities_batch
@@ -79,7 +80,7 @@ async def discover():
     try:
         resp = await client.get(
             "https://ufos-api.microcosm.blue/records",
-            params={"collection": "xyz.atboards.site", "limit": 50},
+            params={"collection": lexicon.SITE, "limit": 50},
         )
         if resp.status_code == 200:
             raw = resp.json()
@@ -208,7 +209,7 @@ async def thread(handle: str, did: str, tid: str):
         return banned
 
     try:
-        thread_record = await get_record(client, did, "xyz.atboards.thread", tid)
+        thread_record = await get_record(client, did, lexicon.THREAD, tid)
         thread_author = await resolve_identity(client, did)
     except httpx.HTTPStatusError:
         return await error("Thread not found.")
@@ -261,7 +262,7 @@ async def api_replies(did: str, tid: str):
         return {"replies": [], "cursor": None}
 
     # Build a minimal Thread object for hydrate_replies
-    thread_uri = f"at://{did}/xyz.atboards.thread/{tid}"
+    thread_uri = f"at://{did}/{lexicon.THREAD}/{tid}"
     from core.models import MiniDoc
 
     dummy_thread = Thread(

@@ -2,6 +2,7 @@
 
 from quart import Blueprint, current_app, redirect, render_template, request
 
+from core import lexicon
 from core.util import now_iso
 from web.helpers import get_user
 from web.routes_write import _authed_pds_post, authed_delete_record
@@ -15,7 +16,7 @@ async def _has_bbs(user: dict) -> bool:
     try:
         from core.slingshot import get_record
 
-        await get_record(client, user["did"], "xyz.atboards.site", "self")
+        await get_record(client, user["did"], lexicon.SITE, "self")
         return True
     except Exception:
         return False
@@ -34,7 +35,7 @@ async def account():
             from core.slingshot import get_record
 
             record = await get_record(
-                current_app.http_client, user["did"], "xyz.atboards.site", "self"
+                current_app.http_client, user["did"], lexicon.SITE, "self"
             )
             bbs_name = record.value.get("name", user["handle"])
         except Exception:
@@ -56,7 +57,7 @@ async def delete_bbs():
     from core.slingshot import get_record
 
     try:
-        existing = await get_record(client, user["did"], "xyz.atboards.site", "self")
+        existing = await get_record(client, user["did"], lexicon.SITE, "self")
         board_slugs = existing.value.get("boards", [])
     except Exception:
         return redirect("/account")
@@ -64,27 +65,27 @@ async def delete_bbs():
     # Delete board records
     for slug in board_slugs:
         try:
-            await authed_delete_record(user, "xyz.atboards.board", slug)
+            await authed_delete_record(user, lexicon.BOARD, slug)
         except Exception:
             pass
 
     # Delete news records (via Constellation backlinks)
     from core.constellation import get_news
 
-    site_uri = f"at://{user['did']}/xyz.atboards.site/self"
+    site_uri = f"at://{user['did']}/{lexicon.SITE}/self"
     try:
         backlinks = await get_news(client, site_uri)
         for ref in backlinks.records:
             if ref.did == user["did"]:
                 try:
-                    await authed_delete_record(user, "xyz.atboards.news", ref.rkey)
+                    await authed_delete_record(user, lexicon.NEWS, ref.rkey)
                 except Exception:
                     pass
     except Exception:
         pass
 
     # Delete site record
-    await authed_delete_record(user, "xyz.atboards.site", "self")
+    await authed_delete_record(user, lexicon.SITE, "self")
 
     return redirect("/account")
 
@@ -122,10 +123,10 @@ async def create_bbs():
             "com.atproto.repo.putRecord",
             {
                 "repo": user["did"],
-                "collection": "xyz.atboards.board",
+                "collection": lexicon.BOARD,
                 "rkey": slug,
                 "record": {
-                    "$type": "xyz.atboards.board",
+                    "$type": lexicon.BOARD,
                     "name": board_name,
                     "description": board_desc,
                     "createdAt": now,
@@ -139,10 +140,10 @@ async def create_bbs():
         "com.atproto.repo.putRecord",
         {
             "repo": user["did"],
-            "collection": "xyz.atboards.site",
+            "collection": lexicon.SITE,
             "rkey": "self",
             "record": {
-                "$type": "xyz.atboards.site",
+                "$type": lexicon.SITE,
                 "name": name,
                 "description": description,
                 "intro": intro,
@@ -231,7 +232,7 @@ async def moderate_bbs():
     from core.slingshot import get_record
 
     try:
-        existing = await get_record(client, user["did"], "xyz.atboards.site", "self")
+        existing = await get_record(client, user["did"], lexicon.SITE, "self")
         site_value = existing.value
     except Exception:
         return redirect("/account/moderate")
@@ -245,7 +246,7 @@ async def moderate_bbs():
         "com.atproto.repo.putRecord",
         {
             "repo": user["did"],
-            "collection": "xyz.atboards.site",
+            "collection": lexicon.SITE,
             "rkey": "self",
             "record": site_value,
         },
@@ -288,7 +289,7 @@ async def edit_bbs():
     from core.slingshot import get_record
 
     try:
-        existing = await get_record(client, user["did"], "xyz.atboards.site", "self")
+        existing = await get_record(client, user["did"], lexicon.SITE, "self")
         created_at = existing.value.get("createdAt", now)
         existing_banned = existing.value.get("bannedDids", [])
         existing_hidden = existing.value.get("hiddenPosts", [])
@@ -306,10 +307,10 @@ async def edit_bbs():
             "com.atproto.repo.putRecord",
             {
                 "repo": user["did"],
-                "collection": "xyz.atboards.board",
+                "collection": lexicon.BOARD,
                 "rkey": slug,
                 "record": {
-                    "$type": "xyz.atboards.board",
+                    "$type": lexicon.BOARD,
                     "name": board_name,
                     "description": board_desc,
                     "createdAt": now,
@@ -323,10 +324,10 @@ async def edit_bbs():
         "com.atproto.repo.putRecord",
         {
             "repo": user["did"],
-            "collection": "xyz.atboards.site",
+            "collection": lexicon.SITE,
             "rkey": "self",
             "record": {
-                "$type": "xyz.atboards.site",
+                "$type": lexicon.SITE,
                 "name": name,
                 "description": description,
                 "intro": intro,
@@ -354,7 +355,7 @@ async def create_news(handle: str):
     if not title or not body:
         return redirect(f"/bbs/{handle}")
 
-    site_uri = f"at://{user['did']}/xyz.atboards.site/self"
+    site_uri = f"at://{user['did']}/{lexicon.SITE}/self"
     now = now_iso()
 
     await _authed_pds_post(
@@ -362,9 +363,9 @@ async def create_news(handle: str):
         "com.atproto.repo.createRecord",
         {
             "repo": user["did"],
-            "collection": "xyz.atboards.news",
+            "collection": lexicon.NEWS,
             "record": {
-                "$type": "xyz.atboards.news",
+                "$type": lexicon.NEWS,
                 "site": site_uri,
                 "title": title,
                 "body": body,
@@ -382,7 +383,7 @@ async def delete_news(handle: str, tid: str):
     if not user or user["handle"] != handle:
         return redirect(f"/bbs/{handle}")
 
-    await authed_delete_record(user, "xyz.atboards.news", tid)
+    await authed_delete_record(user, lexicon.NEWS, tid)
 
     return redirect(f"/bbs/{handle}")
 
@@ -399,7 +400,7 @@ async def ban_user(handle: str, did_to_ban: str):
     from core.slingshot import get_record
 
     try:
-        existing = await get_record(client, user["did"], "xyz.atboards.site", "self")
+        existing = await get_record(client, user["did"], lexicon.SITE, "self")
         site_value = existing.value
     except Exception:
         return redirect(request.referrer or f"/bbs/{handle}")
@@ -417,7 +418,7 @@ async def ban_user(handle: str, did_to_ban: str):
         "com.atproto.repo.putRecord",
         {
             "repo": user["did"],
-            "collection": "xyz.atboards.site",
+            "collection": lexicon.SITE,
             "rkey": "self",
             "record": site_value,
         },
@@ -442,7 +443,7 @@ async def hide_post(handle: str):
     from core.slingshot import get_record
 
     try:
-        existing = await get_record(client, user["did"], "xyz.atboards.site", "self")
+        existing = await get_record(client, user["did"], lexicon.SITE, "self")
         site_value = existing.value
     except Exception:
         return redirect(request.referrer or f"/bbs/{handle}")
@@ -458,7 +459,7 @@ async def hide_post(handle: str):
         "com.atproto.repo.putRecord",
         {
             "repo": user["did"],
-            "collection": "xyz.atboards.site",
+            "collection": lexicon.SITE,
             "rkey": "self",
             "record": site_value,
         },

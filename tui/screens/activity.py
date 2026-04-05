@@ -64,6 +64,7 @@ class ActivityScreen(Screen):
     @work(exclusive=True)
     async def _navigate(self, item: dict) -> None:
         from core.resolver import resolve_bbs
+        from core import lexicon
         from core.slingshot import get_record, resolve_identity
         from core.models import Thread
 
@@ -76,7 +77,7 @@ class ActivityScreen(Screen):
         try:
             bbs = await resolve_bbs(client, handle)
             rec = await get_record(
-                client, thread_did, "xyz.atboards.thread", thread_tid
+                client, thread_did, lexicon.THREAD, thread_tid
             )
             author = await resolve_identity(client, thread_did)
             thread = Thread(

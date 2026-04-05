@@ -6,6 +6,7 @@ from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import Footer, Input, ListItem, ListView, Static
 
+from core import lexicon
 from core.models import BBSNotFoundError, NetworkError, NoBBSError
 from core.resolver import resolve_bbs
 from core.slingshot import resolve_identities_batch
@@ -106,7 +107,7 @@ class HomeScreen(Screen):
         try:
             resp = await client.get(
                 "https://ufos-api.microcosm.blue/records",
-                params={"collection": "xyz.atboards.site", "limit": 50},
+                params={"collection": lexicon.SITE, "limit": 50},
             )
             if resp.status_code != 200:
                 return

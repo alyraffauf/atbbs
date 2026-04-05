@@ -17,7 +17,7 @@ from core.slingshot import resolve_identity
 
 bp = Blueprint("auth", __name__)
 
-OAUTH_SCOPE = "atproto transition:generic collection:xyz.atboards.site collection:xyz.atboards.board collection:xyz.atboards.news collection:xyz.atboards.thread collection:xyz.atboards.reply"
+from core.lexicon import OAUTH_SCOPE
 
 
 def _compute_client_id() -> tuple[str, str]:

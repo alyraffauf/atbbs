@@ -2,6 +2,7 @@
 
 from quart import Blueprint, current_app, redirect, request
 
+from core import lexicon
 from core.records import upload_blob
 from core.util import now_iso
 from web.helpers import get_user, session_updater
@@ -56,7 +57,7 @@ async def create_thread(handle: str, slug: str):
     if bbs.site.is_banned(user["did"]):
         return redirect(f"/bbs/{handle}/board/{slug}")
 
-    board_uri = f"at://{bbs.identity.did}/xyz.atboards.board/{slug}"
+    board_uri = f"at://{bbs.identity.did}/{lexicon.BOARD}/{slug}"
 
     # Handle file attachments
     attachments = []
@@ -80,7 +81,7 @@ async def create_thread(handle: str, slug: str):
                 ), 400
 
     record = {
-        "$type": "xyz.atboards.thread",
+        "$type": lexicon.THREAD,
         "board": board_uri,
         "title": title,
         "body": body,
@@ -94,7 +95,7 @@ async def create_thread(handle: str, slug: str):
         "com.atproto.repo.createRecord",
         {
             "repo": user["did"],
-            "collection": "xyz.atboards.thread",
+            "collection": lexicon.THREAD,
             "record": record,
         },
     )
@@ -115,7 +116,7 @@ async def create_reply(handle: str, did: str, tid: str):
     if not body:
         return redirect(f"/bbs/{handle}/thread/{did}/{tid}")
 
-    thread_uri = f"at://{did}/xyz.atboards.thread/{tid}"
+    thread_uri = f"at://{did}/{lexicon.THREAD}/{tid}"
 
     # Handle file attachments
     client = current_app.http_client
@@ -140,7 +141,7 @@ async def create_reply(handle: str, did: str, tid: str):
                 ), 400
 
     record = {
-        "$type": "xyz.atboards.reply",
+        "$type": lexicon.REPLY,
         "subject": thread_uri,
         "body": body,
         "createdAt": now_iso(),
@@ -155,7 +156,7 @@ async def create_reply(handle: str, did: str, tid: str):
         "com.atproto.repo.createRecord",
         {
             "repo": user["did"],
-            "collection": "xyz.atboards.reply",
+            "collection": lexicon.REPLY,
             "record": record,
         },
     )
@@ -170,7 +171,7 @@ async def delete_thread(handle: str, did: str, tid: str):
     if not user or user["did"] != did:
         return redirect(f"/bbs/{handle}/thread/{did}/{tid}")
 
-    await authed_delete_record(user, "xyz.atboards.thread", tid)
+    await authed_delete_record(user, lexicon.THREAD, tid)
     return redirect(f"/bbs/{handle}")
 
 
@@ -180,5 +181,5 @@ async def delete_reply(handle: str, did: str, tid: str, reply_tid: str):
     if not user:
         return redirect(f"/bbs/{handle}/thread/{did}/{tid}")
 
-    await authed_delete_record(user, "xyz.atboards.reply", reply_tid)
+    await authed_delete_record(user, lexicon.REPLY, reply_tid)
     return redirect(f"/bbs/{handle}/thread/{did}/{tid}")
