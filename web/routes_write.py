@@ -56,8 +56,11 @@ async def create_thread(handle: str, slug: str):
     for f in files:
         if f.filename:
             data = f.read()
-            blob_ref = await upload_blob(client, user, data, f.content_type or "application/octet-stream", session_updater)
-            attachments.append({"file": blob_ref, "name": f.filename})
+            try:
+                blob_ref = await upload_blob(client, user, data, f.content_type or "application/octet-stream", session_updater)
+                attachments.append({"file": blob_ref, "name": f.filename})
+            except Exception:
+                return await render_template("error.html", message=f"Failed to upload {f.filename}. The file may be too large."), 400
 
     record = {
         "$type": "xyz.atboards.thread",
@@ -100,8 +103,11 @@ async def create_reply(handle: str, did: str, tid: str):
     for f in files:
         if f.filename:
             data = f.read()
-            blob_ref = await upload_blob(client, user, data, f.content_type or "application/octet-stream", session_updater)
-            attachments.append({"file": blob_ref, "name": f.filename})
+            try:
+                blob_ref = await upload_blob(client, user, data, f.content_type or "application/octet-stream", session_updater)
+                attachments.append({"file": blob_ref, "name": f.filename})
+            except Exception:
+                return await render_template("error.html", message=f"Failed to upload {f.filename}. The file may be too large."), 400
 
     record = {
         "$type": "xyz.atboards.reply",
