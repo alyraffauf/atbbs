@@ -6,6 +6,7 @@ import {
   resolveIdentitiesBatch,
   parseAtUri,
 } from "../lib/atproto";
+import { THREAD, REPLY } from "../lib/lexicon";
 
 interface InboxItem {
   type: string;
@@ -16,9 +17,6 @@ interface InboxItem {
   created_at: string;
   bbs_handle: string;
 }
-
-const THREAD_COLLECTION = "xyz.atboards.thread";
-const REPLY_COLLECTION = "xyz.atboards.reply";
 const SCAN_LIMIT = 50;
 const BACKLINK_LIMIT = 50;
 
@@ -72,7 +70,7 @@ async function fetchThreadReplies(
   try {
     const backlinks = await getBacklinks(
       threadUri,
-      `${REPLY_COLLECTION}:subject`,
+      `${REPLY}:subject`,
       BACKLINK_LIMIT,
     );
     if (!backlinks.records.length) return [];
@@ -110,7 +108,7 @@ async function fetchReplyQuotes(
   try {
     const backlinks = await getBacklinks(
       replyUri,
-      `${REPLY_COLLECTION}:quote`,
+      `${REPLY}:quote`,
       BACKLINK_LIMIT,
     );
     if (!backlinks.records.length) return [];
@@ -149,8 +147,8 @@ async function loadInbox(
   try {
     // Fetch thread and reply records concurrently
     const [threadRecords, replyRecords] = await Promise.all([
-      listRecords(pdsUrl, did, THREAD_COLLECTION, SCAN_LIMIT),
-      listRecords(pdsUrl, did, REPLY_COLLECTION, SCAN_LIMIT),
+      listRecords(pdsUrl, did, THREAD, SCAN_LIMIT),
+      listRecords(pdsUrl, did, REPLY, SCAN_LIMIT),
     ]);
 
     // Batch-resolve BBS handles

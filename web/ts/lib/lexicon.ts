@@ -1,0 +1,10 @@
+/**
+ * AT Protocol collection names for atboards lexicons.
+ * Mirrors core/lexicon.py.
+ */
+
+export const SITE = "xyz.atboards.site";
+export const BOARD = "xyz.atboards.board";
+export const NEWS = "xyz.atboards.news";
+export const THREAD = "xyz.atboards.thread";
+export const REPLY = "xyz.atboards.reply";

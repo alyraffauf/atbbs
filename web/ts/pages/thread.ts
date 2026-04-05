@@ -1,5 +1,11 @@
 import { escapeHtml, relativeDate, formatFullDate, getData } from "../lib/util";
-import { createPaginatedLoader } from "../lib/pagination";
+import {
+  getBacklinks,
+  getRecordsBatch,
+  resolveIdentitiesBatch,
+  parseAtUri,
+} from "../lib/atproto";
+import { THREAD, REPLY } from "../lib/lexicon";
 
 interface Attachment {
   file: { ref: { $link: string } };
@@ -100,12 +106,99 @@ function renderReply(
   </div>`;
 }
 
+async function loadReplies(
+  threadDid: string,
+  threadTid: string,
+  handle: string,
+  userDid: string,
+  sysopDid: string,
+  bannedDids: Set<string>,
+  hiddenPosts: Set<string>,
+) {
+  const container = document.getElementById("replies")!;
+  const loading = document.getElementById("replies-loading");
+  const threadUri = `at://${threadDid}/${THREAD}/${threadTid}`;
+
+  try {
+    const backlinks = await getBacklinks(
+      threadUri,
+      `${REPLY}:subject`,
+      50,
+    );
+
+    if (!backlinks.records.length) {
+      if (loading) loading.remove();
+      if (!userDid) {
+        container.innerHTML = '<p class="text-neutral-500">No replies yet.</p>';
+      }
+      return;
+    }
+
+    const records = await getRecordsBatch(backlinks.records);
+
+    // Filter moderated
+    const filtered = records.filter(
+      (r) =>
+        !bannedDids.has(parseAtUri(r.uri).did) &&
+        !hiddenPosts.has(r.uri),
+    );
+
+    const dids = filtered.map((r) => parseAtUri(r.uri).did);
+    const authors = await resolveIdentitiesBatch(dids);
+
+    const replies: ReplyItem[] = filtered
+      .filter((r) => parseAtUri(r.uri).did in authors)
+      .map((r) => {
+        const parsed = parseAtUri(r.uri);
+        const author = authors[parsed.did];
+        return {
+          uri: r.uri,
+          did: parsed.did,
+          rkey: parsed.rkey,
+          handle: author.handle,
+          pds_url: author.pds ?? "",
+          body: (r.value.body as string) ?? "",
+          created_at: (r.value.createdAt as string) ?? "",
+          attachments: (r.value.attachments as Attachment[]) ?? [],
+          quote: (r.value.quote as string) ?? null,
+        };
+      })
+      .sort((a, b) => a.created_at.localeCompare(b.created_at));
+
+    // Store for quote lookup
+    for (const r of replies) {
+      allReplies[r.uri] = r;
+    }
+
+    if (loading) loading.remove();
+
+    for (const r of replies) {
+      container.insertAdjacentHTML(
+        "beforeend",
+        renderReply(r, handle, threadDid, threadTid, userDid, sysopDid),
+      );
+    }
+
+    if (container.children.length === 0 && !userDid) {
+      container.innerHTML = '<p class="text-neutral-500">No replies yet.</p>';
+    }
+  } catch {
+    if (loading) loading.textContent = "Could not fetch replies.";
+  }
+}
+
 export function initThread() {
   const threadDid = getData("replies", "threadDid");
   const threadTid = getData("replies", "threadTid");
   const handle = getData("replies", "handle");
   const userDid = getData("replies", "userDid");
   const sysopDid = getData("replies", "sysopDid");
+  const bannedDids = new Set(
+    (getData("replies", "bannedDids") || "").split(",").filter(Boolean),
+  );
+  const hiddenPosts = new Set(
+    (getData("replies", "hiddenPosts") || "").split(",").filter(Boolean),
+  );
 
   // Quote clear button
   document.getElementById("quote-clear")?.addEventListener("click", clearQuote);
@@ -118,25 +211,5 @@ export function initThread() {
     }
   });
 
-  createPaginatedLoader<ReplyItem>({
-    fetchUrl: (cursor) => {
-      let url = `/api/replies/${threadDid}/${threadTid}?handle=${encodeURIComponent(handle)}`;
-      if (cursor) url += `&cursor=${encodeURIComponent(cursor)}`;
-      return url;
-    },
-    containerId: "replies",
-    loadingId: "replies-loading",
-    nextContainerId: "replies-next",
-    loadMoreId: "load-more",
-    dataKey: "replies",
-    emptyMessage: userDid ? undefined : "No replies yet.",
-    onData: (data) => {
-      const replies = data.replies as ReplyItem[];
-      for (const r of replies) {
-        allReplies[r.uri] = r;
-      }
-    },
-    renderItem: (r) =>
-      renderReply(r, handle, threadDid, threadTid, userDid, sysopDid),
-  });
+  loadReplies(threadDid, threadTid, handle, userDid, sysopDid, bannedDids, hiddenPosts);
 }
