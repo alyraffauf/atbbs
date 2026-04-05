@@ -54,23 +54,11 @@
     const slug = "{{ board.slug }}";
     let nextCursor = null;
 
-    function formatDate(iso) {
-        const d = new Date(iso);
-        const pad = n => String(n).padStart(2, '0');
-        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    }
-
-    function escapeHtml(s) {
-        const el = document.createElement('span');
-        el.textContent = s;
-        return el.innerHTML;
-    }
-
     function renderThread(t) {
         const a = document.createElement('a');
         a.href = `/bbs/${handle}/thread/${t.did}/${t.rkey}`;
         a.className = "flex items-baseline justify-between gap-4 px-3 py-2.5 -mx-3 rounded hover:bg-neutral-900 group";
-        a.innerHTML = `<span class="text-neutral-300 group-hover:text-white truncate">${escapeHtml(t.title)}</span><span class="shrink-0 text-xs text-neutral-500">${escapeHtml(t.handle)} · ${formatDate(t.created_at)}</span>`;
+        a.innerHTML = `<span class="text-neutral-300 group-hover:text-white truncate">${escapeHtml(t.title)}</span><span class="shrink-0 text-xs text-neutral-500">${escapeHtml(t.handle)} · ${relativeDate(t.created_at)}</span>`;
         return a;
     }
 

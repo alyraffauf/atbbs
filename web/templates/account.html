@@ -73,18 +73,6 @@
 
     let nextCursor = null;
 
-    function formatDate(iso) {
-        const d = new Date(iso);
-        const pad = n => String(n).padStart(2, '0');
-        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    }
-
-    function escapeHtml(s) {
-        const el = document.createElement('span');
-        el.textContent = s;
-        return el.innerHTML;
-    }
-
     function loadInbox(cursor) {
         let url = '/api/inbox';
         if (cursor) url += `?cursor=${encodeURIComponent(cursor)}`;
@@ -106,7 +94,7 @@
                     el.href = `/bbs/${handle}/thread/${threadDid}/${threadRkey}`;
                     el.className = "block border border-neutral-800/50 rounded p-4 mb-2 hover:bg-neutral-900";
                     const label = m.type === 'quote' ? 'quoted your reply' : 'on: ' + escapeHtml(m.thread_title);
-                    el.innerHTML = `<div class="flex items-baseline justify-between mb-1"><span class="text-neutral-300">${escapeHtml(m.handle)}</span><span class="text-xs text-neutral-500">${formatDate(m.created_at)}</span></div><p class="text-xs text-neutral-500 mb-1">${label}</p><p class="text-neutral-400">${escapeHtml(m.body)}</p>`;
+                    el.innerHTML = `<div class="flex items-baseline justify-between mb-1"><span class="text-neutral-300">${escapeHtml(m.handle)}</span><span class="text-xs text-neutral-500">${relativeDate(m.created_at)}</span></div><p class="text-xs text-neutral-500 mb-1">${label}</p><p class="text-neutral-400">${escapeHtml(m.body)}</p>`;
                     container.appendChild(el);
                 });
 
