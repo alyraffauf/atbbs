@@ -119,17 +119,22 @@ async def login():
     dpop_private_jwk_json = dpop_key.as_json(is_private=True)
 
     # Send PAR
-    pkce_verifier, state, dpop_nonce, par_resp = await send_par_request(
-        client=client,
-        authserver_url=authserver_url,
-        authserver_meta=authserver_meta,
-        login_hint=handle,
-        client_id=client_id,
-        redirect_uri=redirect_uri,
-        scope=OAUTH_SCOPE,
-        client_secret_jwk=_client_secret_jwk(),
-        dpop_private_jwk=dpop_key,
-    )
+    try:
+        pkce_verifier, state, dpop_nonce, par_resp = await send_par_request(
+            client=client,
+            authserver_url=authserver_url,
+            authserver_meta=authserver_meta,
+            login_hint=handle,
+            client_id=client_id,
+            redirect_uri=redirect_uri,
+            scope=OAUTH_SCOPE,
+            client_secret_jwk=_client_secret_jwk(),
+            dpop_private_jwk=dpop_key,
+        )
+    except Exception:
+        return await render_template(
+            "login.html", error="Could not reach your PDS. Try again."
+        )
 
     # Save auth request state
     store.save_auth_request(
