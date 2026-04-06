@@ -3,6 +3,7 @@
  */
 
 import { fetchJson } from "./api";
+import { BACKLINK_LIMIT } from "./lexicon";
 
 const SLINGSHOT = "https://slingshot.microcosm.blue/xrpc";
 const CONSTELLATION = "https://constellation.microcosm.blue/xrpc";
@@ -83,7 +84,7 @@ export async function getRecordsBatch(
 export async function getBacklinks(
   subject: string,
   source: string,
-  limit = 25,
+  limit = BACKLINK_LIMIT,
   cursor?: string,
 ): Promise<BacklinksResponse> {
   let url = `${CONSTELLATION}/blue.microcosm.links.getBacklinks?subject=${encodeURIComponent(subject)}&source=${encodeURIComponent(source)}&limit=${limit}`;
@@ -120,7 +121,7 @@ export async function fetchAndHydrate(
     hiddenPosts?: Set<string>;
   },
 ): Promise<FetchAndHydrateResult> {
-  const limit = opts?.limit ?? 50;
+  const limit = opts?.limit ?? BACKLINK_LIMIT;
 
   const backlinks = await getBacklinks(subject, source, limit, opts?.cursor);
   if (!backlinks.records.length) return { records: [], cursor: null };
