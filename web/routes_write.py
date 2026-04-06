@@ -80,7 +80,7 @@ async def create_thread(handle: str, slug: str):
             except Exception:
                 return await render_template(
                     "error.html",
-                    message=f"Failed to upload {f.filename}. The file may be too large.",
+                    message=f"Failed to upload {f.filename}.",
                 ), 400
 
     record = {
@@ -140,7 +140,7 @@ async def create_reply(handle: str, did: str, tid: str):
             except Exception:
                 return await render_template(
                     "error.html",
-                    message=f"Failed to upload {f.filename}. The file may be too large.",
+                    message=f"Failed to upload {f.filename}.",
                 ), 400
 
     record = {
