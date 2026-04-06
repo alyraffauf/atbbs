@@ -23,6 +23,10 @@ async def _has_bbs(user: dict) -> bool:
         return False
 
 
+async def error(message: str, status: int = 500):
+    return await render_template("error.html", message=message), status
+
+
 @bp.route("/account")
 async def account():
     user = await get_user()
@@ -86,7 +90,10 @@ async def delete_bbs():
         pass
 
     # Delete site record
-    await authed_delete_record(user, lexicon.SITE, "self")
+    try:
+        await authed_delete_record(user, lexicon.SITE, "self")
+    except Exception:
+        return await error("Could not delete BBS.")
 
     return redirect("/account")
 
@@ -115,46 +122,49 @@ async def create_bbs():
 
     now = now_iso()
 
-    # Create board records
-    for i, slug in enumerate(board_slugs):
-        board_name = board_names[i] if i < len(board_names) else slug
-        board_desc = board_descs[i].strip() if i < len(board_descs) else ""
+    try:
+        # Create board records
+        for i, slug in enumerate(board_slugs):
+            board_name = board_names[i] if i < len(board_names) else slug
+            board_desc = board_descs[i].strip() if i < len(board_descs) else ""
+            await _authed_pds_post(
+                user,
+                "com.atproto.repo.putRecord",
+                {
+                    "repo": user["did"],
+                    "collection": lexicon.BOARD,
+                    "rkey": slug,
+                    "record": {
+                        "$type": lexicon.BOARD,
+                        "name": board_name,
+                        "description": board_desc,
+                        "createdAt": now,
+                    },
+                },
+            )
+
+        # Create site record
         await _authed_pds_post(
             user,
             "com.atproto.repo.putRecord",
             {
                 "repo": user["did"],
-                "collection": lexicon.BOARD,
-                "rkey": slug,
+                "collection": lexicon.SITE,
+                "rkey": "self",
                 "record": {
-                    "$type": lexicon.BOARD,
-                    "name": board_name,
-                    "description": board_desc,
+                    "$type": lexicon.SITE,
+                    "name": name,
+                    "description": description,
+                    "intro": intro,
+                    "boards": board_slugs,
+                    "bannedDids": [],
+                    "hiddenPosts": [],
                     "createdAt": now,
                 },
             },
         )
-
-    # Create site record
-    await _authed_pds_post(
-        user,
-        "com.atproto.repo.putRecord",
-        {
-            "repo": user["did"],
-            "collection": lexicon.SITE,
-            "rkey": "self",
-            "record": {
-                "$type": lexicon.SITE,
-                "name": name,
-                "description": description,
-                "intro": intro,
-                "boards": board_slugs,
-                "bannedDids": [],
-                "hiddenPosts": [],
-                "createdAt": now,
-            },
-        },
-    )
+    except Exception:
+        return await error("Could not create BBS.")
 
     return redirect(f"/bbs/{user['handle']}")
 
@@ -179,13 +189,23 @@ async def moderate_bbs():
 
         banned_handles = {}
         if bbs.site.banned_dids:
-            authors = await resolve_identities_batch(client, list(bbs.site.banned_dids))
-            banned_handles = {did: authors[did].handle for did in authors}
+            try:
+                authors = await resolve_identities_batch(
+                    client, list(bbs.site.banned_dids)
+                )
+                banned_handles = {did: authors[did].handle for did in authors}
+            except Exception:
+                banned_handles = {did: did for did in bbs.site.banned_dids}
 
         hidden_posts = []
         if bbs.site.hidden_posts:
-            hidden_dids = list({AtUri.parse(uri).did for uri in bbs.site.hidden_posts})
-            hidden_authors = await resolve_identities_batch(client, hidden_dids)
+            try:
+                hidden_dids = list(
+                    {AtUri.parse(uri).did for uri in bbs.site.hidden_posts}
+                )
+                hidden_authors = await resolve_identities_batch(client, hidden_dids)
+            except Exception:
+                hidden_authors = {}
 
             for uri in bbs.site.hidden_posts:
                 did = AtUri.parse(uri).did
@@ -207,7 +227,7 @@ async def moderate_bbs():
                             "uri": uri,
                             "handle": handle,
                             "title": "",
-                            "body": parts[-1] if parts else uri,
+                            "body": uri,
                         }
                     )
 
@@ -235,16 +255,19 @@ async def moderate_bbs():
     site_value["hiddenPosts"] = hidden_uris
     site_value["updatedAt"] = now_iso()
 
-    await _authed_pds_post(
-        user,
-        "com.atproto.repo.putRecord",
-        {
-            "repo": user["did"],
-            "collection": lexicon.SITE,
-            "rkey": "self",
-            "record": site_value,
-        },
-    )
+    try:
+        await _authed_pds_post(
+            user,
+            "com.atproto.repo.putRecord",
+            {
+                "repo": user["did"],
+                "collection": lexicon.SITE,
+                "rkey": "self",
+                "record": site_value,
+            },
+        )
+    except Exception:
+        return await error("Could not save moderation changes.")
 
     return redirect("/account/moderate")
 
@@ -292,47 +315,50 @@ async def edit_bbs():
         existing_banned = []
         existing_hidden = []
 
-    # Upsert board records
-    for i, slug in enumerate(board_slugs):
-        board_name = board_names[i] if i < len(board_names) else slug
-        board_desc = board_descs[i].strip() if i < len(board_descs) else ""
+    try:
+        # Upsert board records
+        for i, slug in enumerate(board_slugs):
+            board_name = board_names[i] if i < len(board_names) else slug
+            board_desc = board_descs[i].strip() if i < len(board_descs) else ""
+            await _authed_pds_post(
+                user,
+                "com.atproto.repo.putRecord",
+                {
+                    "repo": user["did"],
+                    "collection": lexicon.BOARD,
+                    "rkey": slug,
+                    "record": {
+                        "$type": lexicon.BOARD,
+                        "name": board_name,
+                        "description": board_desc,
+                        "createdAt": now,
+                    },
+                },
+            )
+
+        # Update site record
         await _authed_pds_post(
             user,
             "com.atproto.repo.putRecord",
             {
                 "repo": user["did"],
-                "collection": lexicon.BOARD,
-                "rkey": slug,
+                "collection": lexicon.SITE,
+                "rkey": "self",
                 "record": {
-                    "$type": lexicon.BOARD,
-                    "name": board_name,
-                    "description": board_desc,
-                    "createdAt": now,
+                    "$type": lexicon.SITE,
+                    "name": name,
+                    "description": description,
+                    "intro": intro,
+                    "boards": board_slugs,
+                    "bannedDids": existing_banned,
+                    "hiddenPosts": existing_hidden,
+                    "createdAt": created_at,
+                    "updatedAt": now,
                 },
             },
         )
-
-    # Update site record
-    await _authed_pds_post(
-        user,
-        "com.atproto.repo.putRecord",
-        {
-            "repo": user["did"],
-            "collection": lexicon.SITE,
-            "rkey": "self",
-            "record": {
-                "$type": lexicon.SITE,
-                "name": name,
-                "description": description,
-                "intro": intro,
-                "boards": board_slugs,
-                "bannedDids": existing_banned,
-                "hiddenPosts": existing_hidden,
-                "createdAt": created_at,
-                "updatedAt": now,
-            },
-        },
-    )
+    except Exception:
+        return await error("Could not update BBS.")
 
     return redirect(f"/bbs/{user['handle']}")
 
@@ -352,21 +378,24 @@ async def create_news(handle: str):
     site_uri = str(AtUri(user["did"], lexicon.SITE, "self"))
     now = now_iso()
 
-    await _authed_pds_post(
-        user,
-        "com.atproto.repo.createRecord",
-        {
-            "repo": user["did"],
-            "collection": lexicon.NEWS,
-            "record": {
-                "$type": lexicon.NEWS,
-                "site": site_uri,
-                "title": title,
-                "body": body,
-                "createdAt": now,
+    try:
+        await _authed_pds_post(
+            user,
+            "com.atproto.repo.createRecord",
+            {
+                "repo": user["did"],
+                "collection": lexicon.NEWS,
+                "record": {
+                    "$type": lexicon.NEWS,
+                    "site": site_uri,
+                    "title": title,
+                    "body": body,
+                    "createdAt": now,
+                },
             },
-        },
-    )
+        )
+    except Exception:
+        return await error("Could not post news.")
 
     return redirect(f"/bbs/{handle}")
 
@@ -377,7 +406,10 @@ async def delete_news(handle: str, tid: str):
     if not user or user["handle"] != handle:
         return redirect(f"/bbs/{handle}")
 
-    await authed_delete_record(user, lexicon.NEWS, tid)
+    try:
+        await authed_delete_record(user, lexicon.NEWS, tid)
+    except Exception:
+        return await error("Could not delete news.")
 
     return redirect(f"/bbs/{handle}")
 
@@ -407,16 +439,19 @@ async def ban_user(handle: str, did_to_ban: str):
     # Update site record
     site_value["bannedDids"] = banned
     site_value["updatedAt"] = now_iso()
-    await _authed_pds_post(
-        user,
-        "com.atproto.repo.putRecord",
-        {
-            "repo": user["did"],
-            "collection": lexicon.SITE,
-            "rkey": "self",
-            "record": site_value,
-        },
-    )
+    try:
+        await _authed_pds_post(
+            user,
+            "com.atproto.repo.putRecord",
+            {
+                "repo": user["did"],
+                "collection": lexicon.SITE,
+                "rkey": "self",
+                "record": site_value,
+            },
+        )
+    except Exception:
+        return await error("Could not ban user.")
 
     return redirect(request.referrer or f"/bbs/{handle}")
 
@@ -448,15 +483,18 @@ async def hide_post(handle: str):
 
     site_value["hiddenPosts"] = hidden
     site_value["updatedAt"] = now_iso()
-    await _authed_pds_post(
-        user,
-        "com.atproto.repo.putRecord",
-        {
-            "repo": user["did"],
-            "collection": lexicon.SITE,
-            "rkey": "self",
-            "record": site_value,
-        },
-    )
+    try:
+        await _authed_pds_post(
+            user,
+            "com.atproto.repo.putRecord",
+            {
+                "repo": user["did"],
+                "collection": lexicon.SITE,
+                "rkey": "self",
+                "record": site_value,
+            },
+        )
+    except Exception:
+        return await error("Could not hide post.")
 
     return redirect(request.referrer or f"/bbs/{handle}")
