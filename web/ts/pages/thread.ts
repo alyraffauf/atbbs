@@ -60,7 +60,7 @@ function renderActions(
   }
   if (userDid && userDid === r.did) {
     actions.push(
-      `<form method="post" action="/bbs/${handle}/thread/${threadDid}/${threadTid}/reply/${r.rkey}/delete" class="inline" onsubmit="return confirm('Delete this reply?')"><button type="submit" class="text-xs text-neutral-500 hover:text-red-400">delete</button></form>`,
+      `<form method="post" action="/bbs/${handle}/thread/${threadDid}/${threadTid}/reply/${r.rkey}/delete" class="inline"><button type="submit" class="text-xs text-neutral-500 hover:text-red-400">delete</button></form>`,
     );
   }
   if (userDid && userDid === sysopDid && userDid !== r.did) {
@@ -267,11 +267,31 @@ export function initThread() {
   }
 
   document.getElementById("quote-clear")?.addEventListener("click", clearQuote);
-  document.getElementById("replies")?.addEventListener("click", (e) => {
+  const repliesEl = document.getElementById("replies")!;
+  repliesEl.addEventListener("click", (e) => {
     const btn = (e.target as HTMLElement).closest(
       ".quote-btn",
     ) as HTMLElement | null;
     if (btn) quoteReply(btn.dataset.uri!, btn.dataset.handle!);
+  });
+
+  // Intercept delete reply forms — remove from DOM instead of full redirect
+  repliesEl.addEventListener("submit", async (e) => {
+    const form = (e.target as HTMLElement).closest("form") as HTMLFormElement;
+    if (!form?.action.includes("/delete") || !confirm("Delete this reply?"))
+      return;
+    e.preventDefault();
+
+    try {
+      await fetch(form.action, {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        redirect: "manual",
+      });
+      form.closest(".reply-card")?.remove();
+    } catch {
+      window.location.reload();
+    }
   });
 
   // Intercept reply form — post via fetch, then load last page + append
