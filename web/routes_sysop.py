@@ -418,7 +418,7 @@ async def delete_news(handle: str, tid: str):
 
 
 @bp.route("/bbs/<handle>/ban/<did_to_ban>", methods=["POST"])
-async def ban_user(handle: str, did_to_ban: str):
+async def ban_user_by_did(handle: str, did_to_ban: str):
     user = await get_user()
     if not user or user["handle"] != handle:
         return redirect(request.referrer or f"/bbs/{handle}")
@@ -431,6 +431,37 @@ async def ban_user(handle: str, did_to_ban: str):
         return await error("Could not ban user.")
 
     return redirect(request.referrer or f"/bbs/{handle}")
+
+
+@bp.route("/bbs/<handle>/ban", methods=["POST"])
+async def ban_user(handle: str):
+    user = await get_user()
+    if not user or user["handle"] != handle:
+        return redirect("/account/moderate")
+
+    form = await request.form
+    identifier = form.get("identifier", "").strip()
+    if not identifier:
+        return redirect("/account/moderate")
+
+    client = current_app.http_client
+
+    # Resolve handle to DID if needed
+    if not identifier.startswith("did:"):
+        from core.slingshot import resolve_identity
+
+        try:
+            identity = await resolve_identity(client, identifier)
+            identifier = identity.did
+        except Exception:
+            return await error("Could not resolve that handle.", 400)
+
+    try:
+        await create_ban_record(client, user, identifier, session_updater)
+    except Exception:
+        return await error("Could not ban user.")
+
+    return redirect("/account/moderate")
 
 
 @bp.route("/bbs/<handle>/hide", methods=["POST"])

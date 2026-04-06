@@ -19,10 +19,10 @@
             </div>
             {% endfor %}
         </div>
-        <div class="flex gap-2">
-            <input type="text" id="ban-handle-input" placeholder="handle to ban" class="flex-1 bg-neutral-900 border border-neutral-800 rounded px-3 py-2 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-neutral-600">
-            <button type="button" id="add-ban" class="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 px-3 py-2 rounded text-xs">ban</button>
-        </div>
+        <form method="post" action="/bbs/{{ handle }}/ban" class="flex gap-2">
+            <input type="text" name="identifier" placeholder="handle to ban" class="flex-1 bg-neutral-900 border border-neutral-800 rounded px-3 py-2 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-neutral-600">
+            <button type="submit" class="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 px-3 py-2 rounded text-xs">ban</button>
+        </form>
     </div>
 
     <div>
@@ -64,24 +64,5 @@
         form.submit();
     });
 
-    document.getElementById("add-ban").addEventListener("click", async function() {
-        const input = document.getElementById("ban-handle-input");
-        const handle = input.value.trim();
-        if (!handle) return;
-
-        try {
-            const resp = await fetch(`/api/resolve/${encodeURIComponent(handle)}`);
-            const data = await resp.json();
-            if (!data.did) { alert("Could not resolve handle."); return; }
-
-            const form = document.createElement("form");
-            form.method = "post";
-            form.action = `/bbs/{{ handle }}/ban/${data.did}`;
-            document.body.appendChild(form);
-            form.submit();
-        } catch (e) {
-            alert("Could not resolve handle.");
-        }
-    });
 </script>
 {% endblock %}

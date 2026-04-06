@@ -42,15 +42,6 @@ async def login_page():
     return await render_template("login.html")
 
 
-@bp.route("/api/resolve/<handle>")
-async def api_resolve(handle: str):
-    client = current_app.http_client
-    try:
-        identity = await resolve_identity(client, handle)
-        return {"did": identity.did, "handle": identity.handle}
-    except Exception:
-        return {"did": None, "handle": None}
-
 
 @bp.route("/api/discover")
 async def discover():
