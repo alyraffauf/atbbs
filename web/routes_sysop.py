@@ -197,7 +197,7 @@ async def create_bbs():
     return redirect(f"/bbs/{user['handle']}")
 
 
-@bp.route("/account/moderate", methods=["GET", "POST"])
+@bp.route("/account/moderate")
 async def moderate_bbs():
     user = await get_user()
     if not user:
@@ -205,96 +205,109 @@ async def moderate_bbs():
 
     client = current_app.http_client
 
-    if request.method == "GET":
+    try:
+        from core.resolver import resolve_bbs
+
+        bbs = await resolve_bbs(client, user["handle"])
+    except Exception:
+        return redirect("/account/create")
+
+    from core.slingshot import resolve_identities_batch, get_record_by_uri
+
+    # Fetch ban/hide records to get rkeys for delete actions
+    ban_records = await list_pds_records(
+        client, user["pds_url"], user["did"], lexicon.BAN
+    )
+    ban_rkeys = {r["value"]["did"]: r["uri"].split("/")[-1] for r in ban_records}
+
+    banned_handles = {}
+    if bbs.site.banned_dids:
         try:
-            from core.resolver import resolve_bbs
-
-            bbs = await resolve_bbs(client, user["handle"])
+            authors = await resolve_identities_batch(
+                client, list(bbs.site.banned_dids)
+            )
+            banned_handles = {did: authors[did].handle for did in authors}
         except Exception:
-            return redirect("/account/create")
+            banned_handles = {did: did for did in bbs.site.banned_dids}
 
-        from core.slingshot import resolve_identities_batch, get_record_by_uri
+    hidden_records = await list_pds_records(
+        client, user["pds_url"], user["did"], lexicon.HIDE
+    )
+    hide_rkeys = {r["value"]["uri"]: r["uri"].split("/")[-1] for r in hidden_records}
 
-        banned_handles = {}
-        if bbs.site.banned_dids:
+    hidden_posts = []
+    if bbs.site.hidden_posts:
+        try:
+            hidden_dids = list(
+                {AtUri.parse(uri).did for uri in bbs.site.hidden_posts}
+            )
+            hidden_authors = await resolve_identities_batch(client, hidden_dids)
+        except Exception:
+            hidden_authors = {}
+
+        for uri in bbs.site.hidden_posts:
+            did = AtUri.parse(uri).did
+            handle = hidden_authors[did].handle if did in hidden_authors else did
+
             try:
-                authors = await resolve_identities_batch(
-                    client, list(bbs.site.banned_dids)
+                record = await get_record_by_uri(client, uri)
+                hidden_posts.append(
+                    {
+                        "uri": uri,
+                        "handle": handle,
+                        "title": record.value.get("title", ""),
+                        "body": record.value.get("body", "")[:100],
+                    }
                 )
-                banned_handles = {did: authors[did].handle for did in authors}
             except Exception:
-                banned_handles = {did: did for did in bbs.site.banned_dids}
-
-        hidden_posts = []
-        if bbs.site.hidden_posts:
-            try:
-                hidden_dids = list(
-                    {AtUri.parse(uri).did for uri in bbs.site.hidden_posts}
+                hidden_posts.append(
+                    {
+                        "uri": uri,
+                        "handle": handle,
+                        "title": "",
+                        "body": uri,
+                    }
                 )
-                hidden_authors = await resolve_identities_batch(client, hidden_dids)
-            except Exception:
-                hidden_authors = {}
 
-            for uri in bbs.site.hidden_posts:
-                did = AtUri.parse(uri).did
-                handle = hidden_authors[did].handle if did in hidden_authors else did
+    return await render_template(
+        "sysop_moderate.html",
+        bbs=bbs,
+        handle=user["handle"],
+        banned_handles=banned_handles,
+        ban_rkeys=ban_rkeys,
+        hidden_posts=hidden_posts,
+        hide_rkeys=hide_rkeys,
+    )
 
-                try:
-                    record = await get_record_by_uri(client, uri)
-                    hidden_posts.append(
-                        {
-                            "uri": uri,
-                            "handle": handle,
-                            "title": record.value.get("title", ""),
-                            "body": record.value.get("body", "")[:100],
-                        }
-                    )
-                except Exception:
-                    hidden_posts.append(
-                        {
-                            "uri": uri,
-                            "handle": handle,
-                            "title": "",
-                            "body": uri,
-                        }
-                    )
 
-        return await render_template(
-            "sysop_moderate.html",
-            bbs=bbs,
-            banned_handles=banned_handles,
-            hidden_posts=hidden_posts,
-        )
-
-    # POST — save moderation changes by diffing against current records
-    form = await request.form
-    desired_bans = {d.strip() for d in form.getlist("banned_did") if d.strip()}
-    desired_hidden = {u.strip() for u in form.getlist("hidden_uri") if u.strip()}
+@bp.route("/bbs/<handle>/unban/<rkey>", methods=["POST"])
+async def unban_user(handle: str, rkey: str):
+    user = await get_user()
+    if not user or user["handle"] != handle:
+        return redirect("/account/moderate")
 
     try:
-        ban_records = await list_pds_records(
-            client, user["pds_url"], user["did"], lexicon.BAN
-        )
-        hidden_records = await list_pds_records(
-            client, user["pds_url"], user["did"], lexicon.HIDE
+        await delete_record(
+            current_app.http_client, user, lexicon.BAN, rkey, session_updater
         )
     except Exception:
-        return await error("Could not fetch current moderation state.")
+        return await error("Could not unban user.")
 
-    ban_by_did = {r["value"]["did"]: r["uri"].split("/")[-1] for r in ban_records}
-    hidden_by_uri = {r["value"]["uri"]: r["uri"].split("/")[-1] for r in hidden_records}
+    return redirect("/account/moderate")
+
+
+@bp.route("/bbs/<handle>/unhide/<rkey>", methods=["POST"])
+async def unhide_post(handle: str, rkey: str):
+    user = await get_user()
+    if not user or user["handle"] != handle:
+        return redirect("/account/moderate")
 
     try:
-        for did in desired_bans - ban_by_did.keys():
-            await create_ban_record(client, user, did, session_updater)
-        for did in ban_by_did.keys() - desired_bans:
-            await delete_record(client, user, lexicon.BAN, ban_by_did[did], session_updater)
-        for uri in desired_hidden - hidden_by_uri.keys():
-            await create_hidden_record(client, user, uri, session_updater)
-        for uri in hidden_by_uri.keys() - desired_hidden:
-            await delete_record(client, user, lexicon.HIDE, hidden_by_uri[uri], session_updater)
+        await delete_record(
+            current_app.http_client, user, lexicon.HIDE, rkey, session_updater
+        )
     except Exception:
-        return await error("Could not save moderation changes.")
+        return await error("Could not unhide post.")
 
     return redirect("/account/moderate")
 
