@@ -1,4 +1,5 @@
 import os
+from importlib.metadata import version
 
 import httpx
 from quart import Quart
@@ -25,6 +26,7 @@ def create_app(
     app.config["PUBLIC_URL"] = public_url or os.environ.get(
         "PUBLIC_URL", "http://localhost:8000"
     )
+    app.config["VERSION"] = version("atbbs")
 
     # Session store
     db_path = os.path.join(data_dir, "atbbs.db")
