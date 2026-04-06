@@ -102,7 +102,7 @@ function renderReply(
   userDid: string,
   sysopDid: string,
 ): string {
-  return `<div class="reply-card border border-neutral-800/50 rounded p-4">
+  return `<div class="reply-card border border-neutral-800/50 rounded p-4" data-uri="${r.uri}">
     <div class="flex items-baseline justify-between mb-2">
       <div class="flex items-baseline gap-2">
         <span class="text-neutral-300">${escapeHtml(r.handle)}</span>
@@ -204,60 +204,6 @@ function hideNavs() {
   }
 }
 
-async function loadReplyPage(
-  page: number,
-  threadDid: string,
-  threadTid: string,
-  handle: string,
-  userDid: string,
-  sysopDid: string,
-  focusReply?: string,
-) {
-  const container = document.getElementById("replies")!;
-  const loading = document.getElementById("replies-loading");
-
-  try {
-    let url = `/api/replies/${threadDid}/${threadTid}?handle=${encodeURIComponent(handle)}&page=${page}`;
-    if (focusReply) url += `&reply=${encodeURIComponent(focusReply)}`;
-    const data = await fetchJson<RepliesResponse>(url);
-
-    if (loading) loading.remove();
-
-    for (const r of data.replies) {
-      allReplies[r.uri] = r;
-    }
-
-    for (const r of data.replies) {
-      container.insertAdjacentHTML(
-        "beforeend",
-        renderReply(r, handle, threadDid, threadTid, userDid, sysopDid),
-      );
-    }
-
-    if (data.total_pages > 1) {
-      const goToPage = (p: number) => {
-        container.innerHTML =
-          '<p id="replies-loading" class="text-neutral-500">Loading replies...</p>';
-        hideNavs();
-        const url = new URL(window.location.href);
-        url.searchParams.set("page", String(p));
-        history.pushState(null, "", url.toString());
-        loadReplyPage(p, threadDid, threadTid, handle, userDid, sysopDid);
-        document
-          .getElementById("replies-nav-top")
-          ?.scrollIntoView({ behavior: "smooth" });
-      };
-      updateNavs(data.page, data.total_pages, goToPage);
-    }
-
-    if (container.children.length === 0 && !userDid) {
-      container.innerHTML = '<p class="text-neutral-500">No replies yet.</p>';
-    }
-  } catch {
-    if (loading) loading.textContent = "Could not fetch replies.";
-  }
-}
-
 // --- Init ---
 
 export function initThread() {
@@ -267,6 +213,59 @@ export function initThread() {
   const userDid = getData("replies", "userDid");
   const sysopDid = getData("replies", "sysopDid");
 
+  // Shared page loader that tracks last-loaded state
+  let lastPage = 1;
+  let lastTotalPages = 1;
+
+  const goToPage = (p: number) => {
+    const container = document.getElementById("replies")!;
+    container.innerHTML =
+      '<p id="replies-loading" class="text-neutral-500">Loading replies...</p>';
+    hideNavs();
+    const url = new URL(window.location.href);
+    url.searchParams.set("page", String(p));
+    history.pushState(null, "", url.toString());
+    loadPage(p);
+    document
+      .getElementById("replies-nav-top")
+      ?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  async function loadPage(page: number, focusReply?: string) {
+    const container = document.getElementById("replies")!;
+    const loading = document.getElementById("replies-loading");
+
+    try {
+      let url = `/api/replies/${threadDid}/${threadTid}?handle=${encodeURIComponent(handle)}&page=${page}`;
+      if (focusReply) url += `&reply=${encodeURIComponent(focusReply)}`;
+      const data = await fetchJson<RepliesResponse>(url);
+
+      lastPage = data.page;
+      lastTotalPages = data.total_pages;
+
+      if (loading) loading.remove();
+
+      for (const r of data.replies) allReplies[r.uri] = r;
+      for (const r of data.replies) {
+        container.insertAdjacentHTML(
+          "beforeend",
+          renderReply(r, handle, threadDid, threadTid, userDid, sysopDid),
+        );
+      }
+
+      if (data.total_pages > 1) {
+        updateNavs(data.page, data.total_pages, goToPage);
+      }
+
+      if (container.children.length === 0 && !userDid) {
+        container.innerHTML =
+          '<p class="text-neutral-500">No replies yet.</p>';
+      }
+    } catch {
+      if (loading) loading.textContent = "Could not fetch replies.";
+    }
+  }
+
   document.getElementById("quote-clear")?.addEventListener("click", clearQuote);
   document.getElementById("replies")?.addEventListener("click", (e) => {
     const btn = (e.target as HTMLElement).closest(
@@ -275,18 +274,113 @@ export function initThread() {
     if (btn) quoteReply(btn.dataset.uri!, btn.dataset.handle!);
   });
 
+  // Intercept reply form — post via fetch, then load last page + append
+  const replyForm = document.querySelector(
+    'form[action$="/reply"]',
+  ) as HTMLFormElement | null;
+  if (replyForm && userDid) {
+    const userHandle = getData("replies", "userHandle") || userDid;
+    const userPds = getData("replies", "userPds");
+
+    replyForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(replyForm);
+      const body = (formData.get("body") as string)?.trim();
+      if (!body) return;
+
+      const submitBtn = replyForm.querySelector(
+        'button[type="submit"]',
+      ) as HTMLButtonElement;
+      submitBtn.disabled = true;
+      submitBtn.textContent = "posting...";
+
+      try {
+        const resp = await fetch(replyForm.action, {
+          method: "POST",
+          body: formData,
+          headers: { Accept: "application/json" },
+          redirect: "manual",
+        });
+
+        if (resp.type === "opaqueredirect" || !resp.ok) {
+          window.location.reload();
+          return;
+        }
+
+        const result = (await resp.json()) as {
+          uri: string;
+          attachments: Attachment[];
+        };
+        const rkey = result.uri.split("/").pop()!;
+
+        const optimistic: ReplyItem = {
+          uri: result.uri,
+          did: userDid,
+          rkey,
+          handle: userHandle,
+          pds_url: userPds,
+          body,
+          created_at: new Date().toISOString(),
+          attachments: result.attachments || [],
+          quote: (formData.get("quote") as string) || null,
+        };
+        allReplies[result.uri] = optimistic;
+
+        // If not on the last page, navigate there first
+        if (lastPage !== lastTotalPages) {
+          const container = document.getElementById("replies")!;
+          container.innerHTML = "";
+          hideNavs();
+          await loadPage(lastTotalPages);
+        }
+
+        // Append if not already rendered by loadPage
+        const container = document.getElementById("replies")!;
+        if (!container.querySelector(`[data-uri="${result.uri}"]`)) {
+          const noReplies = container.querySelector("p.text-neutral-500");
+          if (noReplies?.textContent === "No replies yet.") noReplies.remove();
+          container.insertAdjacentHTML(
+            "beforeend",
+            renderReply(
+              optimistic,
+              handle,
+              threadDid,
+              threadTid,
+              userDid,
+              sysopDid,
+            ),
+          );
+        }
+
+        // Reset form
+        (
+          replyForm.querySelector("#reply-body") as HTMLTextAreaElement
+        ).value = "";
+        (replyForm.querySelector("#quote-uri") as HTMLInputElement).value = "";
+        replyForm.querySelector("#quote-preview")?.classList.add("hidden");
+        const fileInput = replyForm.querySelector(
+          'input[type="file"]',
+        ) as HTMLInputElement | null;
+        if (fileInput) {
+          fileInput.value = "";
+          const span = fileInput.nextElementSibling;
+          if (span) span.textContent = "";
+        }
+
+        container.lastElementChild?.scrollIntoView({ behavior: "smooth" });
+      } catch {
+        window.location.reload();
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "reply";
+      }
+    });
+  }
+
   const params = new URLSearchParams(window.location.search);
   const initialPage = parseInt(params.get("page") ?? "1", 10);
   const focusReply = params.get("reply") ?? undefined;
-  loadReplyPage(
-    initialPage,
-    threadDid,
-    threadTid,
-    handle,
-    userDid,
-    sysopDid,
-    focusReply,
-  );
+  loadPage(initialPage, focusReply);
 
   window.addEventListener("popstate", () => {
     const p = parseInt(
@@ -297,6 +391,6 @@ export function initThread() {
     container.innerHTML =
       '<p id="replies-loading" class="text-neutral-500">Loading replies...</p>';
     hideNavs();
-    loadReplyPage(p, threadDid, threadTid, handle, userDid, sysopDid);
+    loadPage(p);
   });
 }

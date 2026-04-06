@@ -1,6 +1,6 @@
 """Write routes — creating threads and replies."""
 
-from quart import Blueprint, current_app, redirect, request
+from quart import Blueprint, current_app, jsonify, redirect, request
 
 from core import lexicon
 from core.models import AtUri, AuthError
@@ -130,6 +130,14 @@ async def create_reply(handle: str, did: str, tid: str):
         session_updater=session_updater,
     )
     resp.raise_for_status()
+
+    if request.headers.get("Accept") == "application/json":
+        data = resp.json()
+        return jsonify({
+            "uri": data["uri"],
+            "cid": data["cid"],
+            "attachments": attachments or [],
+        })
 
     return redirect(f"/bbs/{handle}/thread/{did}/{tid}")
 

@@ -50,6 +50,8 @@
      data-thread-tid="{{ thread.uri.split('/')[-1] }}"
      data-handle="{{ handle }}"
      data-user-did="{{ g.user.did if g.user else '' }}"
+     data-user-handle="{{ g.user.handle if g.user else '' }}"
+     data-user-pds="{{ g.user.pds_url if g.user else '' }}"
      data-sysop-did="{{ bbs.identity.did }}">
     <p id="replies-loading" class="text-neutral-500">Loading replies...</p>
 </div>
