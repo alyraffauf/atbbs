@@ -14,6 +14,7 @@ from core.models import (
 )
 from core import lexicon
 from core.constellation import get_news
+from core.records import list_pds_records
 from core.slingshot import get_record, get_records_batch, resolve_identity
 
 
@@ -36,16 +37,22 @@ async def resolve_bbs(client: httpx.AsyncClient, handle: str) -> BBS:
     sv = site_record.value
     site_uri = str(AtUri(identity.did, lexicon.SITE, "self"))
 
-    # Fetch boards and news backlinks concurrently
+    # Fetch boards, news, bans, and hidden posts concurrently
     board_slugs = sv["boards"]
     board_tasks = [
         get_record(client, identity.did, lexicon.BOARD, slug) for slug in board_slugs
     ]
     news_task = get_news(client, site_uri)
+    ban_task = list_pds_records(client, identity.pds, identity.did, lexicon.BAN)
+    hidden_task = list_pds_records(client, identity.pds, identity.did, lexicon.HIDE)
 
-    results = await asyncio.gather(*board_tasks, news_task, return_exceptions=True)
-    board_records = results[:-1]
-    news_result = results[-1]
+    results = await asyncio.gather(
+        *board_tasks, news_task, ban_task, hidden_task, return_exceptions=True
+    )
+    board_records = results[: len(board_slugs)]
+    news_result = results[len(board_slugs)]
+    ban_result = results[len(board_slugs) + 1]
+    hidden_result = results[len(board_slugs) + 2]
 
     boards = [
         Board(
@@ -77,13 +84,21 @@ async def resolve_bbs(client: httpx.AsyncClient, handle: str) -> BBS:
     ]
     news.sort(key=lambda n: n.created_at, reverse=True)
 
+    # Build ban/hidden sets from standalone records
+    banned_dids: set[str] = set()
+    if not isinstance(ban_result, BaseException):
+        banned_dids = {r["value"]["did"] for r in ban_result}
+    hidden_posts: set[str] = set()
+    if not isinstance(hidden_result, BaseException):
+        hidden_posts = {r["value"]["uri"] for r in hidden_result}
+
     site = Site(
         name=sv["name"],
         description=sv["description"],
         intro=sv["intro"],
         boards=boards,
-        banned_dids=set(sv.get("bannedDids", [])),
-        hidden_posts=set(sv.get("hiddenPosts", [])),
+        banned_dids=banned_dids,
+        hidden_posts=hidden_posts,
         created_at=sv.get("createdAt", ""),
         updated_at=sv.get("updatedAt"),
     )

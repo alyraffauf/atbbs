@@ -362,6 +362,82 @@ async def delete_record(
     return resp
 
 
+async def list_pds_records(
+    client: httpx.AsyncClient,
+    pds_url: str,
+    did: str,
+    collection: str,
+    limit: int = 100,
+) -> list[dict]:
+    """Fetch all records of a collection from a PDS via listRecords."""
+    records = []
+    cursor = None
+    while True:
+        params = {"repo": did, "collection": collection, "limit": limit}
+        if cursor:
+            params["cursor"] = cursor
+        resp = await client.get(
+            f"{pds_url}/xrpc/com.atproto.repo.listRecords", params=params
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        records.extend(data.get("records", []))
+        cursor = data.get("cursor")
+        if not cursor:
+            break
+    return records
+
+
+async def create_ban_record(
+    client: httpx.AsyncClient,
+    session: dict,
+    banned_did: str,
+    session_updater=None,
+) -> httpx.Response:
+    """Create a ban record in the sysop's repo."""
+    return await pds_post(
+        client,
+        session,
+        "com.atproto.repo.createRecord",
+        {
+            "repo": session["did"],
+            "collection": lexicon.BAN,
+            "record": {
+                "$type": lexicon.BAN,
+                "did": banned_did,
+                "createdAt": now_iso(),
+            },
+        },
+        session_updater,
+    )
+
+
+
+async def create_hidden_record(
+    client: httpx.AsyncClient,
+    session: dict,
+    post_uri: str,
+    session_updater=None,
+) -> httpx.Response:
+    """Create a hidden post record in the sysop's repo."""
+    return await pds_post(
+        client,
+        session,
+        "com.atproto.repo.createRecord",
+        {
+            "repo": session["did"],
+            "collection": lexicon.HIDE,
+            "record": {
+                "$type": lexicon.HIDE,
+                "uri": post_uri,
+                "createdAt": now_iso(),
+            },
+        },
+        session_updater,
+    )
+
+
+
 async def put_board_record(
     client: httpx.AsyncClient,
     session: dict,

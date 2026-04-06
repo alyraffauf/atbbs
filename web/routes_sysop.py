@@ -5,8 +5,11 @@ from quart import Blueprint, current_app, redirect, render_template, request
 from core import lexicon
 from core.models import AtUri, AuthError
 from core.records import (
+    create_ban_record,
+    create_hidden_record,
     create_news_record,
     delete_record,
+    list_pds_records,
     put_board_record,
     put_site_record,
 )
@@ -108,6 +111,21 @@ async def delete_bbs():
     except Exception:
         failed.append("news lookup")
 
+    # Delete ban and hidden records
+    for collection in (lexicon.BAN, lexicon.HIDE):
+        try:
+            records = await list_pds_records(
+                client, user["pds_url"], user["did"], collection
+            )
+            for r in records:
+                rkey = r["uri"].split("/")[-1]
+                try:
+                    await delete_record(client, user, collection, rkey, session_updater)
+                except Exception:
+                    failed.append(f"{collection}/{rkey}")
+        except Exception:
+            failed.append(f"{collection} lookup")
+
     if failed:
         return await error(
             f"Could not delete: {', '.join(failed)}. Site record was not deleted."
@@ -169,8 +187,6 @@ async def create_bbs():
                 "description": description,
                 "intro": intro,
                 "boards": board_slugs,
-                "bannedDids": [],
-                "hiddenPosts": [],
                 "createdAt": now,
             },
             session_updater,
@@ -250,25 +266,33 @@ async def moderate_bbs():
             hidden_posts=hidden_posts,
         )
 
-    # POST — save moderation changes
+    # POST — save moderation changes by diffing against current records
     form = await request.form
-    banned_dids = [d.strip() for d in form.getlist("banned_did") if d.strip()]
-    hidden_uris = [u.strip() for u in form.getlist("hidden_uri") if u.strip()]
-
-    from core.slingshot import get_record
+    desired_bans = {d.strip() for d in form.getlist("banned_did") if d.strip()}
+    desired_hidden = {u.strip() for u in form.getlist("hidden_uri") if u.strip()}
 
     try:
-        existing = await get_record(client, user["did"], lexicon.SITE, "self")
-        site_value = existing.value
+        ban_records = await list_pds_records(
+            client, user["pds_url"], user["did"], lexicon.BAN
+        )
+        hidden_records = await list_pds_records(
+            client, user["pds_url"], user["did"], lexicon.HIDE
+        )
     except Exception:
-        return redirect("/account/moderate")
+        return await error("Could not fetch current moderation state.")
 
-    site_value["bannedDids"] = banned_dids
-    site_value["hiddenPosts"] = hidden_uris
-    site_value["updatedAt"] = now_iso()
+    ban_by_did = {r["value"]["did"]: r["uri"].split("/")[-1] for r in ban_records}
+    hidden_by_uri = {r["value"]["uri"]: r["uri"].split("/")[-1] for r in hidden_records}
 
     try:
-        await put_site_record(client, user, site_value, session_updater)
+        for did in desired_bans - ban_by_did.keys():
+            await create_ban_record(client, user, did, session_updater)
+        for did in ban_by_did.keys() - desired_bans:
+            await delete_record(client, user, lexicon.BAN, ban_by_did[did], session_updater)
+        for uri in desired_hidden - hidden_by_uri.keys():
+            await create_hidden_record(client, user, uri, session_updater)
+        for uri in hidden_by_uri.keys() - desired_hidden:
+            await delete_record(client, user, lexicon.HIDE, hidden_by_uri[uri], session_updater)
     except Exception:
         return await error("Could not save moderation changes.")
 
@@ -311,12 +335,8 @@ async def edit_bbs():
     try:
         existing = await get_record(client, user["did"], lexicon.SITE, "self")
         created_at = existing.value.get("createdAt", now)
-        existing_banned = existing.value.get("bannedDids", [])
-        existing_hidden = existing.value.get("hiddenPosts", [])
     except Exception:
         created_at = now
-        existing_banned = []
-        existing_hidden = []
 
     try:
         # Upsert board records
@@ -337,8 +357,6 @@ async def edit_bbs():
                 "description": description,
                 "intro": intro,
                 "boards": board_slugs,
-                "bannedDids": existing_banned,
-                "hiddenPosts": existing_hidden,
                 "createdAt": created_at,
                 "updatedAt": now,
             },
@@ -396,27 +414,10 @@ async def ban_user(handle: str, did_to_ban: str):
     if not user or user["handle"] != handle:
         return redirect(request.referrer or f"/bbs/{handle}")
 
-    client = current_app.http_client
-
-    # Fetch existing site record
-    from core.slingshot import get_record
-
     try:
-        existing = await get_record(client, user["did"], lexicon.SITE, "self")
-        site_value = existing.value
-    except Exception:
-        return redirect(request.referrer or f"/bbs/{handle}")
-
-    # Add DID to ban list if not already there
-    banned = site_value.get("bannedDids", [])
-    if did_to_ban not in banned:
-        banned.append(did_to_ban)
-
-    # Update site record
-    site_value["bannedDids"] = banned
-    site_value["updatedAt"] = now_iso()
-    try:
-        await put_site_record(client, user, site_value, session_updater)
+        await create_ban_record(
+            current_app.http_client, user, did_to_ban, session_updater
+        )
     except Exception:
         return await error("Could not ban user.")
 
@@ -434,24 +435,10 @@ async def hide_post(handle: str):
     if not post_uri:
         return redirect(request.referrer or f"/bbs/{handle}")
 
-    client = current_app.http_client
-
-    from core.slingshot import get_record
-
     try:
-        existing = await get_record(client, user["did"], lexicon.SITE, "self")
-        site_value = existing.value
-    except Exception:
-        return redirect(request.referrer or f"/bbs/{handle}")
-
-    hidden = site_value.get("hiddenPosts", [])
-    if post_uri not in hidden:
-        hidden.append(post_uri)
-
-    site_value["hiddenPosts"] = hidden
-    site_value["updatedAt"] = now_iso()
-    try:
-        await put_site_record(client, user, site_value, session_updater)
+        await create_hidden_record(
+            current_app.http_client, user, post_uri, session_updater
+        )
     except Exception:
         return await error("Could not hide post.")
 
