@@ -42,37 +42,6 @@ async def login_page():
     return await render_template("login.html")
 
 
-
-@bp.route("/api/discover")
-async def discover():
-    client = current_app.http_client
-    bbses = []
-    try:
-        resp = await client.get(
-            "https://ufos-api.microcosm.blue/records",
-            params={"collection": lexicon.SITE, "limit": 50},
-        )
-        if resp.status_code == 200:
-            raw = resp.json()
-            if len(raw) > 5:
-                raw = random.sample(raw, 5)
-            dids = [r["did"] for r in raw]
-            authors = await resolve_identities_batch(client, dids)
-            for r in raw:
-                did = r["did"]
-                if did in authors:
-                    bbses.append(
-                        {
-                            "handle": authors[did].handle,
-                            "name": r["record"].get("name", ""),
-                            "description": r["record"].get("description", ""),
-                        }
-                    )
-    except Exception:
-        pass
-    return {"bbses": bbses}
-
-
 @bp.route("/bbs/<handle>")
 async def site(handle: str):
     client = current_app.http_client
