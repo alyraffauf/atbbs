@@ -4,6 +4,8 @@ from textual.screen import Screen
 from textual.widgets import Footer, Static
 from textual import work
 
+from tui.screens.thread import ThreadScreen
+from tui.widgets.breadcrumb import Breadcrumb
 from tui.widgets.post import Post
 
 
@@ -18,8 +20,6 @@ class ActivityScreen(Screen):
         self._items: list[dict] = []
 
     def compose(self) -> ComposeResult:
-        from tui.widgets.breadcrumb import Breadcrumb
-
         yield Breadcrumb(
             ("@bbs", 1),
             ("inbox", 0),
@@ -89,8 +89,6 @@ class ActivityScreen(Screen):
                 updated_at=rec.value.get("updatedAt"),
                 attachments=rec.value.get("attachments"),
             )
-            from tui.screens.thread import ThreadScreen
-
             self.app.push_screen(ThreadScreen(bbs, handle, thread))
         except Exception:
             self.notify("Could not open thread.", severity="error")

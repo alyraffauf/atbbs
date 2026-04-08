@@ -6,8 +6,11 @@ from textual.widgets import Button, Footer, ListItem, ListView, Static
 
 from core.models import BBS, Board
 from core.records import hydrate_threads as fetch_threads
+from tui.screens.compose import ComposeThreadScreen
+from tui.screens.thread import ThreadScreen
 from tui.util import require_session
 from tui.util import format_datetime
+from tui.widgets.breadcrumb import Breadcrumb
 
 
 class BoardScreen(Screen):
@@ -32,8 +35,6 @@ class BoardScreen(Screen):
         self.page = 0
 
     def compose(self) -> ComposeResult:
-        from tui.widgets.breadcrumb import Breadcrumb
-
         yield Breadcrumb(
             ("@bbs", 2),
             (self.bbs.site.name, 1),
@@ -94,8 +95,6 @@ class BoardScreen(Screen):
         # Find thread by URI
         thread = next((t for t in self.threads if t.uri == uri), None)
         if thread:
-            from tui.screens.thread import ThreadScreen
-
             self.app.push_screen(ThreadScreen(self.bbs, self.handle, thread))
 
     def refresh_data(self) -> None:
@@ -111,6 +110,4 @@ class BoardScreen(Screen):
     def action_new_thread(self) -> None:
         if not require_session(self):
             return
-        from tui.screens.compose import ComposeThreadScreen
-
         self.app.push_screen(ComposeThreadScreen(self.bbs, self.handle, self.board))

@@ -22,6 +22,8 @@ from tui.local_server import wait_for_callback
 
 
 from core.lexicon import OAUTH_SCOPE
+from tui.paths import DATA_DIR
+from tui.widgets.breadcrumb import Breadcrumb
 
 CALLBACK_PORT = 23847
 
@@ -30,8 +32,6 @@ class LoginScreen(Screen):
     BINDINGS = [("escape", "app.pop_screen", "back")]
 
     def compose(self) -> ComposeResult:
-        from tui.widgets.breadcrumb import Breadcrumb
-
         yield Breadcrumb(
             ("@bbs", 1),
             ("log in", 0),
@@ -71,8 +71,6 @@ class LoginScreen(Screen):
             return
 
         # Load client secrets from TUI data dir
-        from tui.app import DATA_DIR
-
         secrets = load_secrets(DATA_DIR)
         client_secret_jwk = json.loads(secrets["client_secret_jwk"])
 

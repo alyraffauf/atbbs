@@ -12,6 +12,7 @@ from core.models import AtUri
 from core.models import AuthError
 from core.records import create_thread_record, create_reply_record, upload_blob
 from tui.util import require_session
+from tui.widgets.breadcrumb import Breadcrumb
 
 
 async def _upload_file(screen, file_path: str, session: dict) -> list[dict] | None:
@@ -53,8 +54,6 @@ class ComposeThreadScreen(Screen):
         self.board = board
 
     def compose(self) -> ComposeResult:
-        from tui.widgets.breadcrumb import Breadcrumb
-
         yield Breadcrumb(
             ("@bbs", 3),
             (self.bbs.site.name, 2),
@@ -132,8 +131,6 @@ class ComposeReplyScreen(Screen):
         self.thread = thread
 
     def compose(self) -> ComposeResult:
-        from tui.widgets.breadcrumb import Breadcrumb
-
         yield Breadcrumb(
             ("@bbs", 3),
             (self.bbs.site.name, 2),

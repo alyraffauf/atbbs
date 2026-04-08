@@ -10,6 +10,7 @@ from core import lexicon
 from core.models import BBSNotFoundError, NetworkError, NoBBSError
 from core.resolver import resolve_bbs
 from core.slingshot import resolve_identities_batch
+from tui.screens.site import SiteScreen
 
 
 class HomeScreen(Screen):
@@ -95,8 +96,6 @@ class HomeScreen(Screen):
         if session and bbs.site.is_banned(session.get("did")):
             self.notify("You have been banned from this BBS.", severity="error")
             return
-
-        from tui.screens.site import SiteScreen
 
         self.app.push_screen(SiteScreen(bbs, handle))
         self.query_one("#handle-input", Input).value = ""

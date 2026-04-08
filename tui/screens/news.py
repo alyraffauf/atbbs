@@ -4,6 +4,7 @@ from textual.screen import Screen
 from textual.widgets import Footer
 
 from core.models import BBS, News
+from tui.widgets.breadcrumb import Breadcrumb
 from tui.widgets.post import Post
 
 
@@ -17,8 +18,6 @@ class NewsScreen(Screen):
         self.news = news
 
     def compose(self) -> ComposeResult:
-        from tui.widgets.breadcrumb import Breadcrumb
-
         yield Breadcrumb(
             ("@bbs", 2),
             (self.bbs.site.name, 1),

@@ -8,7 +8,9 @@ from textual.widgets import Footer, Static
 from core import lexicon
 from core.models import AtUri, AuthError, BBS, Thread
 from core.records import delete_record, hydrate_replies as fetch_replies
+from tui.screens.compose import ComposeReplyScreen
 from tui.util import require_session
+from tui.widgets.breadcrumb import Breadcrumb
 from tui.widgets.post import Post
 
 
@@ -39,8 +41,6 @@ class ThreadScreen(Screen):
         board_name = next(
             (b.name for b in self.bbs.site.boards if b.slug == board_slug), board_slug
         )
-        from tui.widgets.breadcrumb import Breadcrumb
-
         yield Breadcrumb(
             ("@bbs", 3),
             (self.bbs.site.name, 2),
@@ -167,8 +167,6 @@ class ThreadScreen(Screen):
             and focused.record_uri
         ):
             quote = self._replies_map.get(focused.record_uri)
-
-        from tui.screens.compose import ComposeReplyScreen
 
         self.app.push_screen(
             ComposeReplyScreen(self.bbs, self.handle, self.thread, quote=quote)

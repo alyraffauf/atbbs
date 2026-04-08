@@ -1,7 +1,6 @@
 import os
 
 import httpx
-from platformdirs import user_data_dir
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 
@@ -10,7 +9,10 @@ from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Static
 
+from tui.paths import DATA_DIR
+from tui.screens.activity import ActivityScreen
 from tui.screens.home import HomeScreen
+from tui.screens.login import LoginScreen
 
 
 class LogoutConfirmScreen(Screen):
@@ -47,9 +49,6 @@ class LogoutConfirmScreen(Screen):
             self.app.do_logout()
         else:
             self.app.pop_screen()
-
-
-DATA_DIR = os.environ.get("ATBBS_DATA_DIR", user_data_dir("atbbs"))
 
 
 class AtbbsApp(App):
@@ -99,8 +98,6 @@ class AtbbsApp(App):
         if self.user_session:
             self.push_screen(LogoutConfirmScreen())
         else:
-            from tui.screens.login import LoginScreen
-
             self.push_screen(LoginScreen())
 
     def do_logout(self) -> None:
@@ -116,8 +113,6 @@ class AtbbsApp(App):
         if not self.user_session:
             self.notify("Log in to see your messages.", severity="warning")
             return
-        from tui.screens.activity import ActivityScreen
-
         self.push_screen(ActivityScreen())
 
     def action_refresh(self) -> None:

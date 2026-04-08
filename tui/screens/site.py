@@ -6,7 +6,10 @@ from textual import work
 
 from core.models import BBS
 from core.resolver import resolve_bbs
+from tui.screens.board import BoardScreen
+from tui.screens.news import NewsScreen
 from tui.util import format_datetime
+from tui.widgets.breadcrumb import Breadcrumb
 
 
 class SiteScreen(Screen):
@@ -18,8 +21,6 @@ class SiteScreen(Screen):
         self.handle = handle
 
     def compose(self) -> ComposeResult:
-        from tui.widgets.breadcrumb import Breadcrumb
-
         yield Breadcrumb(
             ("@bbs", 1),
             (self.handle, 0),
@@ -75,14 +76,10 @@ class SiteScreen(Screen):
             slug = event.item.name
             board = next((b for b in self.bbs.site.boards if b.slug == slug), None)
             if board:
-                from tui.screens.board import BoardScreen
-
                 self.app.push_screen(BoardScreen(self.bbs, self.handle, board))
         elif event.list_view.id == "news-list":
             idx = int(event.item.name)
             if 0 <= idx < len(self.bbs.news):
-                from tui.screens.news import NewsScreen
-
                 self.app.push_screen(
                     NewsScreen(self.bbs, self.handle, self.bbs.news[idx])
                 )
