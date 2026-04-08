@@ -221,8 +221,10 @@ class ThreadScreen(Screen):
     async def _do_save(self, post: Post) -> None:
         from pathlib import Path
 
-        downloads = Path.home() / "Downloads"
-        downloads.mkdir(exist_ok=True)
+        from platformdirs import user_downloads_dir
+
+        downloads = Path(user_downloads_dir())
+        downloads.mkdir(parents=True, exist_ok=True)
 
         client = self.app.http_client
         for att in post.attachments:
