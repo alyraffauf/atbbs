@@ -84,23 +84,16 @@ class AtbbsApp(App):
     def _restore_session(self) -> None:
         """Load the stored session. The TUI is single-user: if stale extra
         rows exist from a previous version, keep the newest and drop the rest."""
-        import sqlite3
-
         try:
-            con = sqlite3.connect(self.session_store.db_path)
-            con.row_factory = sqlite3.Row
-            rows = con.execute(
-                "SELECT * FROM oauth_session ORDER BY rowid DESC"
-            ).fetchall()
-            con.close()
-            if not rows:
-                return
-            self.user_session = dict(rows[0])
-            self.sub_title = self.user_session.get("handle", "")
-            for extra in rows[1:]:
-                self.session_store.delete_session(extra["did"])
+            sessions = self.session_store.list_sessions()
         except Exception:
-            pass
+            return
+        if not sessions:
+            return
+        self.user_session = sessions[0]
+        self.sub_title = self.user_session.get("handle", "")
+        for extra in sessions[1:]:
+            self.session_store.delete_session(extra["did"])
 
     def action_login(self) -> None:
         if self.user_session:

@@ -98,6 +98,20 @@ class SessionStore:
         con.close()
         return dict(row) if row else None
 
+    def list_sessions(self) -> list[dict]:
+        """Return all stored sessions, newest first (by insertion order)."""
+        con = self._connect()
+        rows = con.execute(
+            "SELECT * FROM oauth_session ORDER BY rowid DESC"
+        ).fetchall()
+        con.close()
+        return [dict(r) for r in rows]
+
+    def get_active_session(self) -> dict | None:
+        """Return the most recently stored session, if any."""
+        sessions = self.list_sessions()
+        return sessions[0] if sessions else None
+
     ALLOWED_FIELDS = {
         "dpop_pds_nonce",
         "dpop_authserver_nonce",
