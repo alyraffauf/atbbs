@@ -61,8 +61,6 @@ class AtbbsApp(App):
         Binding("ctrl+r", "refresh", "refresh", show=False),
         Binding("ctrl+t", "inbox", "messages", show=False),
     ]
-    SCREENS = {"home": HomeScreen}
-
     def __init__(self, dial: str | None = None):
         super().__init__()
         self._dial = dial
@@ -122,11 +120,6 @@ class AtbbsApp(App):
         from tui.screens.activity import ActivityScreen
 
         self.push_screen(ActivityScreen())
-
-    def watch_screen(self) -> None:
-        """Update title when returning from login."""
-        if self.user_session:
-            self.sub_title = self.user_session.get("handle", "")
 
     def action_refresh(self) -> None:
         screen = self.screen
