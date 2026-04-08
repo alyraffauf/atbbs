@@ -82,17 +82,23 @@ class AtbbsApp(App):
             home.connect(self._dial)
 
     def _restore_session(self) -> None:
-        """Load the most recent session from the database."""
+        """Load the stored session. The TUI is single-user: if stale extra
+        rows exist from a previous version, keep the newest and drop the rest."""
         import sqlite3
 
         try:
             con = sqlite3.connect(self.session_store.db_path)
             con.row_factory = sqlite3.Row
-            row = con.execute("SELECT * FROM oauth_session LIMIT 1").fetchone()
+            rows = con.execute(
+                "SELECT * FROM oauth_session ORDER BY rowid DESC"
+            ).fetchall()
             con.close()
-            if row:
-                self.user_session = dict(row)
-                self.sub_title = self.user_session.get("handle", "")
+            if not rows:
+                return
+            self.user_session = dict(rows[0])
+            self.sub_title = self.user_session.get("handle", "")
+            for extra in rows[1:]:
+                self.session_store.delete_session(extra["did"])
         except Exception:
             pass
 
