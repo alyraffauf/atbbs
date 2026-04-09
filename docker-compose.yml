@@ -2,12 +2,7 @@ services:
   atbbs:
     build: .
     ports:
-      - "8000:8000"
-    volumes:
-      - atbbs-data:/data
+      - "8080:80"
     environment:
-      - PUBLIC_URL=http://127.0.0.1:8000
+      PUBLIC_URL: ${PUBLIC_URL:?Set PUBLIC_URL in .env or shell (e.g. https://atbbs.app)}
     restart: unless-stopped
-
-volumes:
-  atbbs-data:
