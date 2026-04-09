@@ -39,19 +39,19 @@ export default function BoardRowEditor({
               value={board.slug}
               onChange={(e) => updateField(i, "slug", e.target.value)}
               placeholder="slug"
-              className="!w-1/4"
+              className="w-1/4!"
             />
             <Input
               value={board.name}
               onChange={(e) => updateField(i, "name", e.target.value)}
               placeholder="Name"
-              className="!w-1/3"
+              className="w-1/3!"
             />
             <Input
               value={board.desc}
               onChange={(e) => updateField(i, "desc", e.target.value)}
               placeholder="Description"
-              className="!flex-1"
+              className="flex-1!"
             />
           </div>
         ))}
