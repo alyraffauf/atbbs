@@ -15,7 +15,7 @@ export function relativeDate(iso: string): string {
 }
 
 /** ISO datetime branded so it's assignable to atcute's `datetimeString` types. */
-export type IsoDatetime = `${number}-${number}-${number}T${string}`;
+type IsoDatetime = `${number}-${number}-${number}T${string}`;
 
 export function nowIso(): IsoDatetime {
   return new Date().toISOString() as IsoDatetime;

@@ -1,7 +1,4 @@
-/**
- * A windowed page-number bar: ← 1 … 4 5 [6] 7 8 … 12 →
- * Used by the thread reply pagination.
- */
+/** Windowed page-number bar for thread reply pagination. */
 
 const WINDOW = 2;
 

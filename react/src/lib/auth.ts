@@ -1,14 +1,5 @@
-/**
- * Auth: a module-level store + a `useAuth()` hook.
- *
- * - At module load we configure atcute's OAuth client (loopback in dev, the
- *   deployed client metadata in prod) and try to resume any saved session
- *   tracked by the "current did" pointer in localStorage.
- * - Loaders await `ensureAuthReady()` before reading. React components
- *   subscribe via `useAuth()` (no provider needed — useSyncExternalStore).
- * - Sessions are stored by atcute itself; we only remember which DID is the
- *   current one so we know what to resume on reload.
- */
+/** Browser OAuth for atbbs, backed by atcute. Components use useAuth();
+ *  route loaders await ensureAuthReady(). */
 
 import { useSyncExternalStore } from "react";
 import { Client } from "@atcute/client";
@@ -20,20 +11,13 @@ import {
   getSession,
   OAuthUserAgent,
 } from "@atcute/oauth-browser-client";
-import type {
-  ActorResolver,
-  ResolvedActor,
-} from "@atcute/identity-resolver";
+import type { ActorResolver, ResolvedActor } from "@atcute/identity-resolver";
 import type { ActorIdentifier } from "@atcute/lexicons/syntax";
 import { resolveIdentity } from "./atproto";
 
-// --- OAuth bootstrap ---
+// --- OAuth setup (runs once when this module loads) ---
 
-/**
- * Resolve handles via Slingshot's `blue.microcosm.identity.resolveMiniDoc`
- * (one round-trip → did, handle, pds), so login attempts don't leak through
- * bsky.app's appview.
- */
+/** Resolves handles via Slingshot so login attempts don't leak to Bluesky. */
 class SlingshotActorResolver implements ActorResolver {
   async resolve(actor: ActorIdentifier): Promise<ResolvedActor> {
     const doc = await resolveIdentity(actor);
@@ -54,7 +38,7 @@ configureOAuth({
   identityResolver: new SlingshotActorResolver(),
 });
 
-// --- Public types ---
+// --- Types ---
 
 export interface AuthUser {
   did: string;
@@ -64,23 +48,15 @@ export interface AuthUser {
 
 type Status = "loading" | "signedIn" | "signedOut";
 
-interface AuthSnapshot {
-  status: Status;
-  user: AuthUser | null;
-  agent: Client | null;
-}
-
-interface UseAuthResult extends AuthSnapshot {
-  login: (handle: string) => Promise<void>;
-  logout: () => Promise<void>;
-}
-
-// --- Module-level state ---
-
 type Did = `did:${string}:${string}`;
 
 const CURRENT_DID_KEY = "atbbs:current-did";
 const POST_LOGIN_KEY = "atbbs:post-login-redirect";
+
+// --- Module-level auth state ---
+//
+// Intentionally outside React so both components (useAuth) and route
+// loaders (ensureAuthReady/getCurrentUser) can read it.
 
 let status: Status = "loading";
 let currentUser: AuthUser | null = null;
@@ -89,20 +65,24 @@ let currentAgent: Client | null = null;
 let initPromise: Promise<void> | null = null;
 let callbackPromise: Promise<void> | null = null;
 
+// --- Change notification (for useSyncExternalStore) ---
+
 const listeners = new Set<() => void>();
-function notify() {
-  listeners.forEach((l) => l());
-}
-function subscribe(fn: () => void) {
-  listeners.add(fn);
-  return () => {
-    listeners.delete(fn);
-  };
+
+function notifyListeners() {
+  listeners.forEach((fn) => fn());
 }
 
-async function adoptUserAgent(agent: OAuthUserAgent): Promise<void> {
-  const rpc = new Client({ handler: agent });
-  const did = agent.sub;
+function subscribeToChanges(callback: () => void) {
+  listeners.add(callback);
+  return () => listeners.delete(callback);
+}
+
+// --- Internal helpers ---
+
+async function setSignedIn(oauthAgent: OAuthUserAgent) {
+  const rpc = new Client({ handler: oauthAgent });
+  const did = oauthAgent.sub;
 
   let handle: string = did;
   let pdsUrl = "";
@@ -111,66 +91,70 @@ async function adoptUserAgent(agent: OAuthUserAgent): Promise<void> {
     handle = doc.handle;
     pdsUrl = doc.pds ?? "";
   } catch {
-    // ignore — best-effort hydration
+    // best-effort — falls back to showing the raw DID
   }
 
   currentAgent = rpc;
   currentUser = { did, handle, pdsUrl };
   status = "signedIn";
+
   try {
     localStorage.setItem(CURRENT_DID_KEY, did);
   } catch {
-    // ignore
+    // storage full or blocked — non-fatal
   }
 }
 
-// --- Lifecycle ---
-
-/**
- * Idempotent: tries to resume the saved session on first call. Loaders
- * await this before inspecting auth state.
- */
-export function ensureAuthReady(): Promise<void> {
-  if (!initPromise) initPromise = restoreSession();
-  return initPromise;
+function setSignedOut() {
+  currentUser = null;
+  currentAgent = null;
+  status = "signedOut";
 }
+
+// --- Session restore (runs on page load) ---
 
 async function restoreSession(): Promise<void> {
   try {
     const did = localStorage.getItem(CURRENT_DID_KEY);
     if (!did) {
-      status = "signedOut";
+      setSignedOut();
       return;
     }
     const session = await getSession(did as Did, { allowStale: true });
-    await adoptUserAgent(new OAuthUserAgent(session));
+    await setSignedIn(new OAuthUserAgent(session));
   } catch (e) {
     console.warn("Could not resume OAuth session:", e);
-    status = "signedOut";
+    setSignedOut();
   } finally {
-    notify();
+    notifyListeners();
   }
 }
 
-// Kick off init at module load so loaders see something to await.
+/** Resolves once session restore has been attempted. */
+export function ensureAuthReady(): Promise<void> {
+  if (!initPromise) initPromise = restoreSession();
+  return initPromise;
+}
+
+// Start restoring immediately so it's already in flight by the time the
+// first loader fires.
 ensureAuthReady();
 
 export function getCurrentUser(): AuthUser | null {
   return currentUser;
 }
 
-// --- Login flow ---
+// --- Login ---
 
 async function login(handle: string): Promise<void> {
-  // Stash where to return to after the OAuth round-trip — but never to
-  // /login or /oauth/callback themselves, both of which would loop.
+  // Remember where to send the user after the OAuth round-trip, but
+  // never back to /login or /oauth/callback (that would loop).
   try {
     const here = window.location.pathname;
-    const dest =
-      here === "/login" || here.startsWith("/oauth/") ? "/" : here;
+    const dest = here === "/login" || here.startsWith("/oauth/") ? "/" : here;
     sessionStorage.setItem(POST_LOGIN_KEY, dest);
   } catch {
-    // ignore
+    // non-fatal
   }
 
   const url = await createAuthorizationUrl({
@@ -178,47 +162,49 @@ async function login(handle: string): Promise<void> {
     scope: import.meta.env.VITE_OAUTH_SCOPE,
   });
 
-  // Per atcute docs: small pause so localStorage flushes before navigation.
+  // Small pause so the browser flushes sessionStorage before navigating.
   await new Promise((r) => setTimeout(r, 200));
   window.location.assign(url);
 }
 
-/** One-shot: returns the path stashed before signIn(), then clears it. */
+/** Returns (and clears) the path we stashed before the OAuth redirect. */
 export function takePostLoginRedirect(): string | null {
   try {
-    const r = sessionStorage.getItem(POST_LOGIN_KEY);
+    const path = sessionStorage.getItem(POST_LOGIN_KEY);
     sessionStorage.removeItem(POST_LOGIN_KEY);
-    return r;
+    return path;
   } catch {
     return null;
   }
 }
 
-/**
- * Called by the OAuth callback page. Reads OAuth params (from query string
- * or hash — atproto auth servers use query, atcute's README mentions hash;
- * we accept either), scrubs them, exchanges for a session, and adopts it.
- * Idempotent (StrictMode-safe) via cached promise.
- */
+// --- OAuth callback ---
+
+/** Exchanges the OAuth code for a session. Safe to call twice (StrictMode). */
 export function completeAuthCallback(): Promise<void> {
   if (callbackPromise) return callbackPromise;
   callbackPromise = (async () => {
-    const search = new URLSearchParams(location.search);
-    const hash = new URLSearchParams(location.hash.slice(1));
+    const fromQuery = new URLSearchParams(location.search);
+    const fromHash = new URLSearchParams(location.hash.slice(1));
     const params =
-      search.get("code") || search.get("error") ? search : hash;
+      fromQuery.get("code") || fromQuery.get("error") ? fromQuery : fromHash;
+
     if (!params.get("code") && !params.get("error")) {
       throw new Error("OAuth callback missing code/error parameter");
     }
+
+    // Scrub the code from the URL so a refresh doesn't re-exchange.
     history.replaceState(null, "", location.pathname);
 
     const { session } = await finalizeAuthorization(params);
-    await adoptUserAgent(new OAuthUserAgent(session));
+    await setSignedIn(new OAuthUserAgent(session));
     initPromise = Promise.resolve();
-    notify();
+    notifyListeners();
   })();
   return callbackPromise;
 }
+
+// --- Logout ---
 
 async function logout(): Promise<void> {
   if (currentUser) {
@@ -231,31 +217,36 @@ async function logout(): Promise<void> {
       try {
         deleteStoredSession(currentUser.did as Did);
       } catch {
-        // ignore
+        // non-fatal
       }
     }
     try {
       localStorage.removeItem(CURRENT_DID_KEY);
     } catch {
-      // ignore
+      // non-fatal
     }
   }
-  currentUser = null;
-  currentAgent = null;
-  status = "signedOut";
-  notify();
+  setSignedOut();
+  notifyListeners();
 }
 
 // --- React hook ---
 
-// Cached snapshot — useSyncExternalStore relies on Object.is to detect change,
-// so we must return a NEW object reference whenever any field changes
-// (mutating in place would silently break re-renders).
+interface AuthSnapshot {
+  status: Status;
+  user: AuthUser | null;
+  agent: Client | null;
+}
+
+// useSyncExternalStore compares snapshots with Object.is, so we must
+// return a NEW object whenever any field changes. If we mutated the same
+// object in place, React would never see the change.
 let cachedSnapshot: AuthSnapshot = {
   status,
   user: currentUser,
   agent: currentAgent,
 };
+
 function getSnapshot(): AuthSnapshot {
   if (
     cachedSnapshot.status !== status ||
@@ -267,7 +258,11 @@ function getSnapshot(): AuthSnapshot {
   return cachedSnapshot;
 }
 
-export function useAuth(): UseAuthResult {
-  const snap = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  return { ...snap, login, logout };
+export function useAuth() {
+  const snapshot = useSyncExternalStore(
+    subscribeToChanges,
+    getSnapshot,
+    getSnapshot,
+  );
+  return { ...snapshot, login, logout };
 }

@@ -1,8 +1,4 @@
-/**
- * Route loaders. Each one returns a plain data object that the matching
- * page reads via useLoaderData(). Nested routes use useRouteLoaderData("bbs")
- * to grab the parent loader's BBS without re-fetching.
- */
+/** Route loaders. Pages read these via useLoaderData(). */
 
 import { redirect, type LoaderFunctionArgs } from "react-router-dom";
 import { ensureAuthReady, getCurrentUser } from "../lib/auth";
@@ -19,15 +15,7 @@ import {
   type ATRecord,
   type BacklinkRef,
 } from "../lib/atproto";
-import {
-  SITE,
-  THREAD,
-  REPLY,
-  BAN,
-  HIDE,
-  BOARD,
-  NEWS,
-} from "../lib/lexicon";
+import { SITE, THREAD, REPLY, BAN, HIDE, BOARD } from "../lib/lexicon";
 import { makeAtUri, parseAtUri } from "../lib/util";
 import type {
   XyzAtboardsThread,
@@ -35,6 +23,15 @@ import type {
   XyzAtboardsBan,
   XyzAtboardsHide,
 } from "../lexicons";
+
+// --- Auth guard (shared by all protected loaders) ---
+
+async function requireAuth() {
+  await ensureAuthReady();
+  const user = getCurrentUser();
+  if (!user) throw redirect("/login");
+  return user;
+}
 
 // --- BBS parent ---
 
@@ -58,6 +55,41 @@ export interface ThreadItem {
   createdAt: string;
 }
 
+/** Fetch one page of threads for a board, hydrated and filtered. */
+export async function hydrateThreadPage(
+  bbs: BBS,
+  slug: string,
+  cursor?: string,
+): Promise<{ threads: ThreadItem[]; cursor: string | null }> {
+  const boardUri = makeAtUri(bbs.identity.did, BOARD, slug);
+  const backlinks = await getBacklinks(boardUri, `${THREAD}:board`, 50, cursor);
+  const records = await getRecordsBatch(backlinks.records);
+  const filtered = records.filter((r) => {
+    const { did } = parseAtUri(r.uri);
+    return !bbs.site.bannedDids.has(did) && !bbs.site.hiddenPosts.has(r.uri);
+  });
+  const authors = await resolveIdentitiesBatch(
+    filtered.map((r) => parseAtUri(r.uri).did),
+  );
+  const threads: ThreadItem[] = filtered
+    .filter((r) => parseAtUri(r.uri).did in authors)
+    .map((r: ATRecord) => {
+      const { did, rkey } = parseAtUri(r.uri);
+      const v = r.value as unknown as XyzAtboardsThread.Main;
+      return {
+        uri: r.uri,
+        did,
+        rkey,
+        handle: authors[did].handle,
+        title: v.title,
+        body: v.body,
+        createdAt: v.createdAt,
+      };
+    })
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return { threads, cursor: backlinks.cursor ?? null };
+}
+
 export async function boardLoader({ params }: LoaderFunctionArgs) {
   const handle = params.handle!;
   const slug = params.slug!;
@@ -65,41 +97,8 @@ export async function boardLoader({ params }: LoaderFunctionArgs) {
   const board = bbs.site.boards.find((b) => b.slug === slug);
   if (!board) throw new Response("Board not found", { status: 404 });
 
-  const boardUri = makeAtUri(bbs.identity.did, BOARD, slug);
-  const backlinks = await getBacklinks(boardUri, `${THREAD}:board`, 50);
-  const records = await getRecordsBatch(backlinks.records);
-  const filtered = records.filter((r) => {
-    const { did } = parseAtUri(r.uri);
-    if (bbs.site.bannedDids.has(did)) return false;
-    if (bbs.site.hiddenPosts.has(r.uri)) return false;
-    return true;
-  });
-  const dids = filtered.map((r) => parseAtUri(r.uri).did);
-  const authors = await resolveIdentitiesBatch(dids);
-  const threads: ThreadItem[] = filtered
-    .filter((r) => parseAtUri(r.uri).did in authors)
-    .map((r: ATRecord) => {
-      const p = parseAtUri(r.uri);
-      const v = r.value as unknown as XyzAtboardsThread.Main;
-      return {
-        uri: r.uri,
-        did: p.did,
-        rkey: p.rkey,
-        handle: authors[p.did].handle,
-        title: v.title,
-        body: v.body,
-        createdAt: v.createdAt,
-      };
-    })
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-
-  return {
-    handle,
-    bbs,
-    board,
-    threads,
-    cursor: backlinks.cursor ?? null,
-  };
+  const { threads, cursor } = await hydrateThreadPage(bbs, slug);
+  return { handle, bbs, board, threads, cursor };
 }
 
 // --- Thread ---
@@ -143,21 +142,7 @@ export async function threadLoader({ params }: LoaderFunctionArgs) {
   };
 
   const threadUri = makeAtUri(did, THREAD, tid);
-  // Constellation caps per-page limit. Page through with cursor until done.
-  const collected: BacklinkRef[] = [];
-  let cursor: string | undefined;
-  for (let i = 0; i < 20; i++) {
-    const page = await getBacklinks(
-      threadUri,
-      `${REPLY}:subject`,
-      100,
-      cursor,
-    );
-    collected.push(...page.records);
-    if (!page.cursor) break;
-    cursor = page.cursor;
-  }
-  const allRefs = collected.reverse(); // oldest first
+  const allRefs = await collectAllReplyRefs(threadUri);
 
   return { handle, bbs, thread, allRefs };
 }
@@ -174,10 +159,21 @@ export interface InboxItem {
   createdAt: string;
 }
 
+/** Collect all reply refs, paginating Constellation in chunks of 100. */
+async function collectAllReplyRefs(threadUri: string): Promise<BacklinkRef[]> {
+  const collected: BacklinkRef[] = [];
+  let cursor: string | undefined;
+  for (let i = 0; i < 20; i++) {
+    const page = await getBacklinks(threadUri, `${REPLY}:subject`, 100, cursor);
+    collected.push(...page.records);
+    if (!page.cursor) break;
+    cursor = page.cursor;
+  }
+  return collected.reverse(); // oldest first
+}
+
 export async function accountLoader() {
-  await ensureAuthReady();
-  const user = getCurrentUser();
-  if (!user) throw redirect("/login");
+  const user = await requireAuth();
 
   // Probe site record (fast — keep awaited so the page can render with it)
   let hasBBS = false;
@@ -263,16 +259,11 @@ async function fetchInbox(
 // --- Sysop ---
 
 export async function requireAuthLoader() {
-  await ensureAuthReady();
-  const user = getCurrentUser();
-  if (!user) throw redirect("/login");
-  return { user };
+  return { user: await requireAuth() };
 }
 
 export async function sysopEditLoader() {
-  await ensureAuthReady();
-  const user = getCurrentUser();
-  if (!user) throw redirect("/login");
+  const user = await requireAuth();
   try {
     const bbs = await resolveBBS(user.handle);
     return { user, bbs };
@@ -289,9 +280,7 @@ export interface HiddenInfo {
 }
 
 export async function sysopModerateLoader() {
-  await ensureAuthReady();
-  const user = getCurrentUser();
-  if (!user) throw redirect("/login");
+  const user = await requireAuth();
 
   let bbs: BBS;
   try {
@@ -349,5 +338,3 @@ export async function sysopModerateLoader() {
   return { user, bbs, banRkeys, bannedHandles, hideRkeys, hidden };
 }
 
-// Quiet "unused" lints if a future bundler trims dead imports
-void NEWS;

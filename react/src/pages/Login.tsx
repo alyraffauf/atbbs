@@ -15,7 +15,6 @@ export default function Login() {
     setBusy(true);
     try {
       await login(handle.trim());
-      // login() redirects, so we usually don't return here
     } catch (err: any) {
       setError(err?.message ?? "Login failed.");
       setBusy(false);

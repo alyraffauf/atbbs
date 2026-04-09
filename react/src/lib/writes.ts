@@ -1,7 +1,4 @@
-/**
- * Authenticated PDS write helpers. Take an atcute Client (from useAuth().agent).
- * Record shapes come from generated types in src/lexicons/.
- */
+/** Authenticated PDS write helpers using an atcute Client from useAuth().agent. */
 
 import type { Client } from "@atcute/client";
 import { SITE, BOARD, NEWS, THREAD, REPLY, BAN, HIDE } from "./lexicon";
@@ -17,10 +14,9 @@ import type {
   XyzAtboardsHide,
 } from "../lexicons";
 
-// --- Lexicon value types (drop $type — record helpers add it themselves) ---
+// --- Lexicon value types ---
 
-// Thread and reply each define their own #attachment subtype with a distinct
-// $type literal. Strip $type so a single Attachment value works for both.
+// Strip $type so a single Attachment value works for both thread and reply.
 type Attachment = Omit<XyzAtboardsThread.Attachment, "$type">;
 
 type ThreadValue = Omit<XyzAtboardsThread.Main, "$type">;
@@ -39,10 +35,6 @@ interface BlobRef {
 }
 
 // --- Type assertions for atcute's strict template-string types ---
-//
-// atcute's lexicon validators brand strings as `did:${string}:${string}`,
-// `${string}.${string}.${string}` (NSID), branded ResourceUri, etc. Our
-// callers pass plain strings; we cast at the boundary in one place.
 
 type Did = `did:${string}:${string}`;
 type Nsid = `${string}.${string}.${string}`;

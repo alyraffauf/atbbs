@@ -50,9 +50,7 @@ export default function Home() {
           });
         }
         setDiscovered(items);
-      } catch {
-        // optional
-      }
+      } catch {}
     })();
   }, []);
 

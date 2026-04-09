@@ -26,6 +26,7 @@ import {
 import type { BBSLoaderData, ThreadObj } from "../router/loaders";
 import PageNav from "../components/PageNav";
 import ReplyCard, { type Reply } from "../components/ReplyCard";
+import ComposeForm from "../components/ComposeForm";
 
 interface LoaderData {
   handle: string;
@@ -198,22 +199,24 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
       )}
 
       {user && (
-        <ReplyForm
+        <ComposeForm
+          className="mt-6 border border-neutral-800 rounded p-4"
+          onSubmit={onReply}
           body={body}
           onBodyChange={setBody}
+          bodyPlaceholder="Write a reply..."
+          bodyRows={3}
           files={files}
           onFilesChange={setFiles}
           quote={quote}
           onClearQuote={() => setQuote(null)}
+          submitLabel="reply"
           posting={posting}
-          onSubmit={onReply}
         />
       )}
     </>
   );
 }
-
-// --- Sub-views ---
 
 function buildBreadcrumb(
   bbs: BBSLoaderData["bbs"],
@@ -312,74 +315,4 @@ function ThreadHeader({
   );
 }
 
-function ReplyForm({
-  body,
-  onBodyChange,
-  files,
-  onFilesChange,
-  quote,
-  onClearQuote,
-  posting,
-  onSubmit,
-}: {
-  body: string;
-  onBodyChange: (s: string) => void;
-  files: FileList | null;
-  onFilesChange: (f: FileList | null) => void;
-  quote: { uri: string; handle: string } | null;
-  onClearQuote: () => void;
-  posting: boolean;
-  onSubmit: (e: SyntheticEvent) => void;
-}) {
-  return (
-    <form
-      onSubmit={onSubmit}
-      className="mt-6 border border-neutral-800 rounded p-4"
-    >
-      {quote && (
-        <div className="text-xs text-neutral-500 mb-2">
-          <span>quoting {quote.handle}</span>
-          <button
-            type="button"
-            onClick={onClearQuote}
-            className="text-neutral-500 hover:text-red-400 ml-2"
-          >
-            x
-          </button>
-        </div>
-      )}
-      <textarea
-        value={body}
-        onChange={(e) => onBodyChange(e.target.value)}
-        placeholder="Write a reply..."
-        required
-        rows={3}
-        className="w-full bg-neutral-900 border border-neutral-800 rounded px-3 py-2 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-neutral-600 resize-y mb-3"
-      />
-      <label className="text-xs text-neutral-500 hover:text-neutral-300 cursor-pointer block mb-3">
-        attach files
-        <input
-          type="file"
-          multiple
-          onChange={(e) => onFilesChange(e.target.files)}
-          className="hidden"
-        />
-        <span className="text-neutral-400 ml-2">
-          {files && files.length
-            ? Array.from(files)
-                .map((f) => f.name)
-                .join(", ")
-            : ""}
-        </span>
-      </label>
-      <button
-        type="submit"
-        disabled={posting}
-        className="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 px-4 py-2 rounded"
-      >
-        {posting ? "posting..." : "reply"}
-      </button>
-    </form>
-  );
-}
 

@@ -1,7 +1,4 @@
-/**
- * Client-side port of core/resolver.py: handle -> fully resolved BBS.
- * Reads via Slingshot/Constellation; no auth required.
- */
+/** Resolve a handle to a fully hydrated BBS via Slingshot/Constellation. */
 
 import {
   getRecord,

@@ -1,36 +1,15 @@
-/**
- * State machine for the thread page's reply list.
- *
- * Owns three concerns that are awkward to mix in the page component:
- *
- *   - **Pagination.** A page index synced bidirectionally with `?page=` so
- *     browser back/forward walks pages.
- *
- *   - **Hydration.** Slingshot reads for the visible page only — not all 1000
- *     refs at once.
- *
- *   - **Optimistic updates.** New replies show up immediately even if
- *     Slingshot/Constellation hasn't indexed them yet, and deleted replies
- *     vanish without waiting for a loader revalidation.
- *
- * Returns a stable surface the page renders without knowing any of this:
- *
- *     const { page, setPage, totalPages, replies, loading,
- *             addOptimisticReply, removeReply } = useThreadReplies(loaded);
- */
+/** Manages pagination, record fetching, and optimistic updates for a
+ *  thread's reply list. */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import {
-  getRecordsBatch,
-  resolveIdentitiesBatch,
-} from "../lib/atproto";
-import type { BBS } from "../lib/bbs";
+import { getRecordsBatch, resolveIdentitiesBatch } from "../lib/atproto";
 import { parseAtUri } from "../lib/util";
+import type { BBS } from "../lib/bbs";
 import type { XyzAtboardsReply } from "../lexicons";
 import type { Reply } from "../components/ReplyCard";
 
-export const REPLIES_PER_PAGE = 10;
+const REPLIES_PER_PAGE = 10;
 
 interface BacklinkRef {
   did: string;
@@ -38,7 +17,7 @@ interface BacklinkRef {
   rkey: string;
 }
 
-interface ThreadLoaderShape {
+interface ThreadLoaderData {
   bbs: BBS;
   allRefs: BacklinkRef[];
 }
@@ -47,127 +26,149 @@ function refToUri(ref: BacklinkRef): string {
   return `at://${ref.did}/${ref.collection}/${ref.rkey}`;
 }
 
-function findFocusPage(refs: BacklinkRef[], focusUri: string | null): number | null {
-  if (!focusUri) return null;
-  for (let i = 0; i < refs.length; i++) {
-    if (refToUri(refs[i]) === focusUri) {
-      return Math.floor(i / REPLIES_PER_PAGE) + 1;
-    }
-  }
-  return null;
+function pageForReply(
+  refs: BacklinkRef[],
+  replyUri: string | null,
+): number | null {
+  if (!replyUri) return null;
+  const index = refs.findIndex((r) => refToUri(r) === replyUri);
+  return index >= 0 ? Math.floor(index / REPLIES_PER_PAGE) + 1 : null;
 }
 
-export function useThreadReplies(loaded: ThreadLoaderShape) {
+function clampPage(page: number, totalRefs: number): number {
+  const totalPages = Math.max(1, Math.ceil(totalRefs / REPLIES_PER_PAGE));
+  return Math.max(1, Math.min(page, totalPages));
+}
+
+// --- Hook ---
+
+export function useThreadReplies(loaded: ThreadLoaderData) {
   const { bbs, allRefs } = loaded;
   const [params, setParams] = useSearchParams();
 
-  // Optimistic overlay: new replies pending indexing, and deletions pending
-  // a loader revalidation. Both keyed by uri so dedupe is trivial.
+  // --- Optimistic state ---
+  //
+  // PDS writes land instantly but Constellation lags behind; track
+  // in-flight mutations here so the UI stays responsive.
+
   const [pendingAdds, setPendingAdds] = useState<
     Record<string, { ref: BacklinkRef; item: Reply }>
   >({});
-  const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
+  const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(
+    new Set(),
+  );
 
-  // Layer the overlays on top of the loader's refs. Prune-effect below
-  // guarantees pendingAdds never contains a uri that allRefs already has,
-  // so concatenation is safe (no dupes).
-  const loadedKey = allRefs.map((r) => r.rkey).join("|");
+  // Combine the loader's refs with our local overlay. The prune effect
+  // below keeps pendingAdds from growing stale.
+  const loaderFingerprint = allRefs.map((r) => r.rkey).join("|");
+
   const refs = useMemo(() => {
     const base = allRefs.filter((r) => !pendingDeletes.has(refToUri(r)));
     const adds = Object.values(pendingAdds).map((p) => p.ref);
     return [...base, ...adds];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadedKey, pendingAdds, pendingDeletes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on
+    // loaderFingerprint (string) rather than allRefs (unstable reference)
+  }, [loaderFingerprint, pendingAdds, pendingDeletes]);
 
-  // Once the loader has caught up (allRefs contains an optimistic uri), drop
-  // it from pendingAdds. Done in its own effect rather than inside hydrate
-  // so the merge logic is purely a display concern.
+  // When the loader refreshes and allRefs now includes a reply we added
+  // optimistically, drop it from pendingAdds so the loader is the source
+  // of truth going forward.
   useEffect(() => {
     setPendingAdds((prev) => {
-      const knownUris = new Set(allRefs.map(refToUri));
+      const loaderUris = new Set(allRefs.map(refToUri));
       let changed = false;
       const next: typeof prev = {};
-      for (const [uri, pending] of Object.entries(prev)) {
-        if (knownUris.has(uri)) {
+      for (const [uri, entry] of Object.entries(prev)) {
+        if (loaderUris.has(uri)) {
           changed = true;
-          continue;
+        } else {
+          next[uri] = entry;
         }
-        next[uri] = pending;
       }
       return changed ? next : prev;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadedKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- same reason
+  }, [loaderFingerprint]);
 
-  const totalPages = Math.max(1, Math.ceil(refs.length / REPLIES_PER_PAGE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(refs.length / REPLIES_PER_PAGE),
+  );
 
-  // Initial page: honor ?page= or ?reply= focus, clamped.
+  // --- Pagination ---
+
   const [page, setPage] = useState<number>(() => {
     const fromUrl = parseInt(params.get("page") ?? "1", 10);
-    const focused = findFocusPage(allRefs, params.get("reply"));
-    const initial = focused ?? fromUrl;
-    const total = Math.max(1, Math.ceil(allRefs.length / REPLIES_PER_PAGE));
-    return Math.max(1, Math.min(initial, total));
+    const fromFocus = pageForReply(allRefs, params.get("reply"));
+    return clampPage(fromFocus ?? fromUrl, allRefs.length);
   });
 
-  // page → URL (for shareable links + browser history)
+  // Keep the URL in sync when the user changes page (e.g. via PageNav).
   useEffect(() => {
-    const cur = parseInt(params.get("page") ?? "1", 10);
-    if (cur === page) return;
+    const urlPage = parseInt(params.get("page") ?? "1", 10);
+    if (urlPage === page) return;
     setParams((prev) => {
       const next = new URLSearchParams(prev);
       if (page === 1) next.delete("page");
       else next.set("page", String(page));
       return next;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when
+    // `page` changes, not when params object identity changes
   }, [page]);
 
-  // URL → page (for browser back/forward)
+  // Keep the page in sync when the user hits Back/Forward.
   const urlPage = parseInt(params.get("page") ?? "1", 10);
   useEffect(() => {
     if (urlPage !== page) setPage(urlPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlPage]);
 
-  // Hydrate the visible slice.
+  // --- Hydration ---
+
   const [replies, setReplies] = useState<Reply[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const hydrate = useCallback(
-    async (currentRefs: BacklinkRef[], p: number) => {
+  const fetchVisiblePage = useCallback(
+    async (currentRefs: BacklinkRef[], currentPage: number) => {
       setLoading(true);
-      const start = (p - 1) * REPLIES_PER_PAGE;
+
+      const start = (currentPage - 1) * REPLIES_PER_PAGE;
       const slice = currentRefs.slice(start, start + REPLIES_PER_PAGE);
+
       if (!slice.length) {
         setReplies([]);
         setLoading(false);
         return;
       }
 
+      // Fetch records from Slingshot.
       const records = await getRecordsBatch(slice);
+
+      // Drop moderated content.
       const visible = records.filter((r) => {
         const { did } = parseAtUri(r.uri);
-        if (bbs.site.bannedDids.has(did)) return false;
-        if (bbs.site.hiddenPosts.has(r.uri)) return false;
-        return true;
+        return (
+          !bbs.site.bannedDids.has(did) && !bbs.site.hiddenPosts.has(r.uri)
+        );
       });
 
+      // Resolve author handles.
       const dids = visible.map((r) => parseAtUri(r.uri).did);
       const authors = await resolveIdentitiesBatch(dids);
 
+      // Build Reply objects.
       const items: Reply[] = visible
         .filter((r) => parseAtUri(r.uri).did in authors)
         .map((r) => {
           const { did, rkey } = parseAtUri(r.uri);
-          const author = authors[did];
           const v = r.value as unknown as XyzAtboardsReply.Main;
           return {
             uri: r.uri,
             did,
             rkey,
-            handle: author.handle,
-            pds: author.pds ?? "",
+            handle: authors[did].handle,
+            pds: authors[did].pds ?? "",
             body: v.body,
             createdAt: v.createdAt,
             quote: v.quote ?? null,
@@ -175,61 +176,60 @@ export function useThreadReplies(loaded: ThreadLoaderShape) {
           };
         });
 
-      // For any optimistic add whose ref lands in this page, display it if
-      // upstream hasn't returned the record yet. Pruning pendingAdds is the
-      // loader-watch effect's job — we only handle display here.
-      const haveUris = new Set(items.map((i) => i.uri));
+      // Merge in optimistic adds that Slingshot hasn't caught up to yet.
+      const fetchedUris = new Set(items.map((i) => i.uri));
       const sliceUris = new Set(slice.map(refToUri));
       for (const [uri, pending] of Object.entries(pendingAdds)) {
-        if (haveUris.has(uri)) continue;
-        if (sliceUris.has(uri)) items.push(pending.item);
+        if (!fetchedUris.has(uri) && sliceUris.has(uri)) {
+          items.push(pending.item);
+        }
       }
-      items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
+      items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
       setReplies(items);
       setLoading(false);
     },
-    // pendingAdds is captured deliberately so the merge sees the latest set.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pendingAdds
+    // is included so the merge step always sees the latest optimistic set
     [bbs, pendingAdds],
   );
 
-  // Re-hydrate when ref count or page changes (but not on every render).
+  // Re-fetch whenever the visible page or the underlying ref list changes.
   const refsLength = refs.length;
   useEffect(() => {
-    hydrate(refs, page);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refsLength, page, loadedKey]);
+    fetchVisiblePage(refs, page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on
+    // stable scalars, not the refs array reference or callback identity
+  }, [refsLength, page, loaderFingerprint]);
 
-  /** Push an optimistic new reply, navigate to its page, and append immediately. */
+  // --- Public actions ---
+
   const addOptimisticReply = useCallback(
     (item: Reply) => {
       const ref = parseAtUri(item.uri);
       setPendingAdds((prev) => ({ ...prev, [item.uri]: { ref, item } }));
-      const newTotal = Math.max(
+
+      const newTotalPages = Math.max(
         1,
         Math.ceil((refs.length + 1) / REPLIES_PER_PAGE),
       );
-      if (page === newTotal) {
+      if (page === newTotalPages) {
+        // Already on the last page — just append.
         setReplies((prev) =>
           [...prev, item].sort((a, b) =>
             a.createdAt.localeCompare(b.createdAt),
           ),
         );
       } else {
-        setPage(newTotal);
+        // Jump to the (new) last page so the reply is visible.
+        setPage(newTotalPages);
       }
     },
     [refs.length, page],
   );
 
-  /** Mark a reply as deleted: hide it locally and remember to skip it. */
   const removeReply = useCallback((uri: string) => {
-    setPendingDeletes((prev) => {
-      const next = new Set(prev);
-      next.add(uri);
-      return next;
-    });
+    setPendingDeletes((prev) => new Set(prev).add(uri));
     setReplies((prev) => prev.filter((r) => r.uri !== uri));
   }, []);
 

@@ -1,7 +1,4 @@
-/**
- * Read-side wrappers for Slingshot and Constellation (no auth needed).
- * Lifted directly from web/ts/lib/atproto.ts.
- */
+/** Read-side wrappers for Slingshot and Constellation (no auth needed). */
 
 import { parseAtUri } from "./util";
 
@@ -171,7 +168,6 @@ export async function listRecords(
 ): Promise<{ uri: string; cid: string; value: Record<string, unknown> }[]> {
   const all: ListRecordsResponse["records"] = [];
   let cursor: string | undefined;
-  // paginate
   while (true) {
     let url = `${pdsUrl}/xrpc/com.atproto.repo.listRecords?repo=${encodeURIComponent(did)}&collection=${encodeURIComponent(collection)}&limit=${limit}`;
     if (cursor) url += `&cursor=${encodeURIComponent(cursor)}`;

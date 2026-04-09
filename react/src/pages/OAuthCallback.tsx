@@ -2,11 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { completeAuthCallback, takePostLoginRedirect } from "../lib/auth";
 
-/**
- * Lands here after the auth server redirects back. completeAuthCallback()
- * reads the OAuth params, scrubs the URL, exchanges them for a session, and
- * adopts it.
- */
+/** Handles the OAuth redirect: exchanges params for a session. */
 export default function OAuthCallback() {
   const nav = useNavigate();
   const [error, setError] = useState<string | null>(null);

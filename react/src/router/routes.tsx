@@ -29,11 +29,7 @@ import {
   sysopModerateLoader,
 } from "./loaders";
 
-/**
- * `errorElement` lives on every loader-bearing child route so failures are
- * caught at that level and rendered inside the layout's outlet, leaving the
- * header/footer chrome intact.
- */
+// errorElement on each child keeps failures inside the layout's outlet.
 const routes: RouteObject[] = [
   {
     element: <Layout />,
