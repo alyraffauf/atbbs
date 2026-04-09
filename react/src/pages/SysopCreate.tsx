@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type SyntheticEvent } from "react";
 import { useNavigate, useLoaderData } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { putBoard, putSite } from "../lib/writes";
@@ -25,7 +25,7 @@ export default function SysopCreate() {
   const [error, setError] = useState<string | null>(null);
   useTitle("Create BBS — atbbs");
 
-  async function onSubmit(e: FormEvent) {
+  async function onSubmit(e: SyntheticEvent) {
     e.preventDefault();
     if (!agent) return;
     const cleanBoards = boards

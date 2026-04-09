@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type SyntheticEvent } from "react";
 import { Link, useRevalidator, useRouteLoaderData } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
@@ -26,7 +26,7 @@ export default function BBSPage() {
 
   const isSysop = user && user.did === bbs.identity.did;
 
-  async function postNews(e: FormEvent) {
+  async function postNews(e: SyntheticEvent) {
     e.preventDefault();
     if (!agent) return;
     const siteUri = makeAtUri(bbs.identity.did, SITE, "self");

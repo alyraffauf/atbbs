@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type SyntheticEvent } from "react";
 import {
   Link,
   useLoaderData,
@@ -98,7 +98,7 @@ export default function BoardPage() {
     }
   }
 
-  async function onCreate(e: FormEvent) {
+  async function onCreate(e: SyntheticEvent) {
     e.preventDefault();
     if (!agent || !user) {
       alert("Not signed in.");

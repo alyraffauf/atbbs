@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type SyntheticEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { resolveIdentitiesBatch } from "../lib/atproto";
 import { SITE } from "../lib/lexicon";
@@ -22,7 +22,7 @@ export default function Home() {
   const [discovered, setDiscovered] = useState<Discovered[]>([]);
   useTitle("atbbs");
 
-  function onSubmit(e: FormEvent) {
+  function onSubmit(e: SyntheticEvent) {
     e.preventDefault();
     const h = handle.trim();
     if (h) nav(`/bbs/${encodeURIComponent(h)}`);

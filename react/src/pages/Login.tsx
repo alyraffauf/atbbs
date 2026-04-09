@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type SyntheticEvent } from "react";
 import { useAuth } from "../lib/auth";
 import { useTitle } from "../hooks/useTitle";
 
@@ -9,7 +9,7 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   useTitle("Login — atbbs");
 
-  async function onSubmit(e: FormEvent) {
+  async function onSubmit(e: SyntheticEvent) {
     e.preventDefault();
     setError(null);
     setBusy(true);

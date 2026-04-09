@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type SyntheticEvent } from "react";
 import {
   useLoaderData,
   useNavigate,
@@ -80,7 +80,7 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
   const repliesByUri: Record<string, Reply> = {};
   for (const r of replies) repliesByUri[r.uri] = r;
 
-  async function onReply(e: FormEvent) {
+  async function onReply(e: SyntheticEvent) {
     e.preventDefault();
     if (!agent || !user) return;
     setPosting(true);
@@ -329,7 +329,7 @@ function ReplyForm({
   quote: { uri: string; handle: string } | null;
   onClearQuote: () => void;
   posting: boolean;
-  onSubmit: (e: FormEvent) => void;
+  onSubmit: (e: SyntheticEvent) => void;
 }) {
   return (
     <form
