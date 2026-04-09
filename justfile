@@ -8,7 +8,7 @@ tui:
 
 fmt:
     uv format
-    cd web && npx prettier --write src/
+    cd web && npx --yes prettier --write src/
 
 lex:
     cd web && npm run lex

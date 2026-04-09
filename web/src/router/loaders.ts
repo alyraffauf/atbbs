@@ -193,10 +193,7 @@ export async function accountLoader() {
   return { user, hasBBS, bbsName, items: itemsPromise };
 }
 
-async function fetchInbox(
-  did: string,
-  pdsUrl: string,
-): Promise<InboxItem[]> {
+async function fetchInbox(did: string, pdsUrl: string): Promise<InboxItem[]> {
   const SCAN_LIMIT = 50;
   const [threads, replies] = await Promise.all([
     listRecords(pdsUrl, did, THREAD, SCAN_LIMIT),
@@ -337,4 +334,3 @@ export async function sysopModerateLoader() {
 
   return { user, bbs, banRkeys, bannedHandles, hideRkeys, hidden };
 }
-

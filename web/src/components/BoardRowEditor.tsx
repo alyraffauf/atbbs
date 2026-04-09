@@ -15,11 +15,7 @@ export default function BoardRowEditor({
   boards,
   onChange,
 }: BoardRowEditorProps) {
-  function updateField(
-    index: number,
-    field: keyof BoardRow,
-    value: string,
-  ) {
+  function updateField(index: number, field: keyof BoardRow, value: string) {
     const next = boards.map((b, i) =>
       i === index ? { ...b, [field]: value } : b,
     );

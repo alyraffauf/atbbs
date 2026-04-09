@@ -16,7 +16,10 @@ export default function BBSPage() {
   const [newsTitle, setNewsTitle] = useState("");
   const [newsBody, setNewsBody] = useState("");
 
-  useBreadcrumb([{ label: bbs.site.name, to: `/bbs/${handle}` }], [bbs, handle]);
+  useBreadcrumb(
+    [{ label: bbs.site.name, to: `/bbs/${handle}` }],
+    [bbs, handle],
+  );
   useTitle(`${bbs.site.name} — atbbs`);
 
   if (user && bbs.site.bannedDids.has(user.did))

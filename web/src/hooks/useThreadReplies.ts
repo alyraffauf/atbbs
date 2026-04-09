@@ -54,9 +54,7 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
   const [pendingAdds, setPendingAdds] = useState<
     Record<string, { ref: BacklinkRef; item: Reply }>
   >({});
-  const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(
-    new Set(),
-  );
+  const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
 
   // Combine the loader's refs with our local overlay. The prune effect
   // below keeps pendingAdds from growing stale.
@@ -90,10 +88,7 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- same reason
   }, [loaderFingerprint]);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(refs.length / REPLIES_PER_PAGE),
-  );
+  const totalPages = Math.max(1, Math.ceil(refs.length / REPLIES_PER_PAGE));
 
   // --- Pagination ---
 

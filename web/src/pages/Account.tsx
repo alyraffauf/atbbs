@@ -1,15 +1,7 @@
-import {
-  Await,
-  Link,
-  useLoaderData,
-  useRevalidator,
-} from "react-router-dom";
+import { Await, Link, useLoaderData, useRevalidator } from "react-router-dom";
 import { Suspense, useState } from "react";
 import { useAuth } from "../lib/auth";
-import {
-  getRecord,
-  listRecords,
-} from "../lib/atproto";
+import { getRecord, listRecords } from "../lib/atproto";
 import { BAN, BOARD, HIDE, NEWS, SITE } from "../lib/lexicon";
 import { parseAtUri, relativeDate } from "../lib/util";
 import { useTitle } from "../hooks/useTitle";
@@ -99,14 +91,12 @@ export default function Account() {
           onClick={() => setTab("bbs")}
           className={`py-2 border-b-2 ${tab === "bbs" ? "text-neutral-200 border-neutral-200" : "text-neutral-500 hover:text-neutral-300 border-transparent"}`}
         >
-          {hasBBS ? bbsName ?? "Your BBS" : "Your BBS"}
+          {hasBBS ? (bbsName ?? "Your BBS") : "Your BBS"}
         </button>
       </div>
 
       {tab === "inbox" && (
-        <Suspense
-          fallback={<p className="text-neutral-500">Loading...</p>}
-        >
+        <Suspense fallback={<p className="text-neutral-500">Loading...</p>}>
           <Await resolve={items}>
             {(resolved: InboxItem[]) => (
               <InboxList items={resolved} userHandle={user.handle} />

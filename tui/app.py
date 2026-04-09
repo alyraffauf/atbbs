@@ -60,6 +60,7 @@ class AtbbsApp(App):
         Binding("ctrl+r", "refresh", "refresh", show=False),
         Binding("ctrl+t", "inbox", "messages", show=False),
     ]
+
     def __init__(self, dial: str | None = None):
         super().__init__()
         self._dial = dial

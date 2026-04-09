@@ -19,7 +19,10 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
 export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   const { className, ...rest } = props;
   return (
-    <textarea className={`${inputStyles} resize-y ${className ?? ""}`} {...rest} />
+    <textarea
+      className={`${inputStyles} resize-y ${className ?? ""}`}
+      {...rest}
+    />
   );
 }
 

@@ -37,7 +37,11 @@ export default function SysopEdit() {
     e.preventDefault();
     if (!agent || !name.trim()) return;
     const cleanBoards = boards
-      .map((b) => ({ slug: b.slug.trim(), name: b.name.trim(), desc: b.desc.trim() }))
+      .map((b) => ({
+        slug: b.slug.trim(),
+        name: b.name.trim(),
+        desc: b.desc.trim(),
+      }))
       .filter((b) => b.slug);
     const now = nowIso();
     try {
@@ -66,15 +70,26 @@ export default function SysopEdit() {
       <form onSubmit={onSubmit} className="space-y-6">
         <div>
           <label className="block text-neutral-400 mb-1">BBS Name</label>
-          <Input required value={name} onChange={(e) => setName(e.target.value)} />
+          <Input
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
         </div>
         <div>
           <label className="block text-neutral-400 mb-1">Description</label>
-          <Input value={description} onChange={(e) => setDescription(e.target.value)} />
+          <Input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
         </div>
         <div>
           <label className="block text-neutral-400 mb-1">Welcome Message</label>
-          <Textarea rows={6} value={intro} onChange={(e) => setIntro(e.target.value)} />
+          <Textarea
+            rows={6}
+            value={intro}
+            onChange={(e) => setIntro(e.target.value)}
+          />
         </div>
         <BoardRowEditor boards={boards} onChange={setBoards} />
         <Button type="submit">save changes</Button>

@@ -101,9 +101,7 @@ class SessionStore:
     def list_sessions(self) -> list[dict]:
         """Return all stored sessions, newest first (by insertion order)."""
         con = self._connect()
-        rows = con.execute(
-            "SELECT * FROM oauth_session ORDER BY rowid DESC"
-        ).fetchall()
+        rows = con.execute("SELECT * FROM oauth_session ORDER BY rowid DESC").fetchall()
         con.close()
         return [dict(r) for r in rows]
 

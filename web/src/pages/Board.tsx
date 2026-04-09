@@ -13,7 +13,11 @@ import { makeAtUri, parseAtUri, relativeDate } from "../lib/util";
 import { BOARD } from "../lib/lexicon";
 import { createThread, uploadAttachments } from "../lib/writes";
 import ComposeForm from "../components/ComposeForm";
-import { hydrateThreadPage, type BBSLoaderData, type ThreadItem } from "../router/loaders";
+import {
+  hydrateThreadPage,
+  type BBSLoaderData,
+  type ThreadItem,
+} from "../router/loaders";
 import type { Board as BoardType } from "../lib/bbs";
 
 interface LoaderData {
@@ -78,7 +82,13 @@ export default function BoardPage() {
       const { BOARD: BOARD_COL } = await import("../lib/lexicon");
       const boardUri = makeAtUri(bbs.identity.did, BOARD_COL, board.slug);
       const attachments = await uploadAttachments(agent, files);
-      const resp = await createThread(agent, boardUri, title.trim(), body.trim(), attachments);
+      const resp = await createThread(
+        agent,
+        boardUri,
+        title.trim(),
+        body.trim(),
+        attachments,
+      );
       setTitle("");
       setBody("");
       setFiles(null);

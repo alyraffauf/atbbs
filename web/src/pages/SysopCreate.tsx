@@ -17,7 +17,11 @@ export default function SysopCreate() {
   const [description, setDescription] = useState("");
   const [intro, setIntro] = useState("");
   const [boards, setBoards] = useState<BoardRow[]>([
-    { slug: "general", name: "General Discussion", desc: "Whatever's on your mind." },
+    {
+      slug: "general",
+      name: "General Discussion",
+      desc: "Whatever's on your mind.",
+    },
   ]);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +31,11 @@ export default function SysopCreate() {
     e.preventDefault();
     if (!agent) return;
     const cleanBoards = boards
-      .map((b) => ({ slug: b.slug.trim(), name: b.name.trim(), desc: b.desc.trim() }))
+      .map((b) => ({
+        slug: b.slug.trim(),
+        name: b.name.trim(),
+        desc: b.desc.trim(),
+      }))
       .filter((b) => b.slug);
     if (!name.trim() || !cleanBoards.length) {
       setError("Name and at least one board are required.");

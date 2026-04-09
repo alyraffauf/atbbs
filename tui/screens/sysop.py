@@ -64,7 +64,12 @@ class SysopEditScreen(Screen):
         self.bbs = bbs
         self.handle = handle
         self._boards = [
-            {"slug": b.slug, "name": b.name, "description": b.description, "created_at": b.created_at}
+            {
+                "slug": b.slug,
+                "name": b.name,
+                "description": b.description,
+                "created_at": b.created_at,
+            }
             for b in bbs.site.boards
         ]
 
@@ -82,9 +87,15 @@ class SysopEditScreen(Screen):
             yield Input(value=self.bbs.site.description, id="edit-desc")
             yield Static("INTRO", classes="section-label")
             yield TextArea(self.bbs.site.intro, id="edit-intro", language=None)
-            yield Static("BOARDS (ctrl+n add, ctrl+d remove)", classes="section-label", id="boards-label")
+            yield Static(
+                "BOARDS (ctrl+n add, ctrl+d remove)",
+                classes="section-label",
+                id="boards-label",
+            )
             for b in self._boards:
-                yield Static(f"  {b['slug']}", classes="subtitle", id=f"board-label-{b['slug']}")
+                yield Static(
+                    f"  {b['slug']}", classes="subtitle", id=f"board-label-{b['slug']}"
+                )
                 yield Input(value=b["name"], id=f"board-name-{b['slug']}")
                 yield Input(value=b["description"], id=f"board-desc-{b['slug']}")
         yield Footer()
@@ -98,7 +109,9 @@ class SysopEditScreen(Screen):
         while any(b["slug"] == f"board-{i}" for b in self._boards):
             i += 1
         slug = f"board-{i}"
-        self._boards.append({"slug": slug, "name": slug, "description": "", "created_at": now_iso()})
+        self._boards.append(
+            {"slug": slug, "name": slug, "description": "", "created_at": now_iso()}
+        )
 
         scroll = self.query_one("#edit-scroll", VerticalScroll)
         label = Static(f"  {slug}", classes="subtitle", id=f"board-label-{slug}")
@@ -117,7 +130,11 @@ class SysopEditScreen(Screen):
         # Remove the last board
         board = self._boards.pop()
         slug = board["slug"]
-        for widget_id in (f"board-label-{slug}", f"board-name-{slug}", f"board-desc-{slug}"):
+        for widget_id in (
+            f"board-label-{slug}",
+            f"board-name-{slug}",
+            f"board-desc-{slug}",
+        ):
             try:
                 self.query_one(f"#{widget_id}").remove()
             except Exception:
@@ -168,7 +185,11 @@ class SysopEditScreen(Screen):
             for board in self.bbs.site.boards:
                 if board.slug not in current_slugs:
                     await delete_record(
-                        self.app.http_client, session, lexicon.BOARD, board.slug, updater
+                        self.app.http_client,
+                        session,
+                        lexicon.BOARD,
+                        board.slug,
+                        updater,
                     )
 
             # Update site record
@@ -261,9 +282,7 @@ class SysopModerateScreen(Screen):
         ban_list.clear()
         for did in banned_dids:
             label = banned_handles.get(did, did)
-            await ban_list.append(
-                ListItem(Static(f"  {label}"), name=f"ban:{did}")
-            )
+            await ban_list.append(ListItem(Static(f"  {label}"), name=f"ban:{did}"))
 
         # Fetch hide records
         try:
@@ -281,9 +300,7 @@ class SysopModerateScreen(Screen):
         hide_list = self.query_one("#hide-list", ListView)
         hide_list.clear()
         for uri in self._hide_rkeys:
-            await hide_list.append(
-                ListItem(Static(f"  {uri}"), name=f"hide:{uri}")
-            )
+            await hide_list.append(ListItem(Static(f"  {uri}"), name=f"hide:{uri}"))
 
         # Focus first list with items
         if banned_dids:
@@ -440,9 +457,7 @@ class SysopDeleteScreen(Screen):
         # Delete boards
         for board in self.bbs.site.boards:
             try:
-                await delete_record(
-                    client, session, lexicon.BOARD, board.slug, updater
-                )
+                await delete_record(client, session, lexicon.BOARD, board.slug, updater)
             except Exception:
                 failed.append(f"board/{board.slug}")
 
@@ -471,9 +486,7 @@ class SysopDeleteScreen(Screen):
                 for r in records:
                     rkey = AtUri.parse(r["uri"]).rkey
                     try:
-                        await delete_record(
-                            client, session, collection, rkey, updater
-                        )
+                        await delete_record(client, session, collection, rkey, updater)
                     except Exception:
                         failed.append(f"{collection}/{rkey}")
             except Exception:

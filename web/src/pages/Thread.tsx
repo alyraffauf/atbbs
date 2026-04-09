@@ -72,10 +72,7 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
   const [posting, setPosting] = useState(false);
 
   useTitle(`${thread.title} — ${bbs.site.name}`);
-  useBreadcrumb(
-    buildBreadcrumb(bbs, thread, handle),
-    [bbs, thread, handle],
-  );
+  useBreadcrumb(buildBreadcrumb(bbs, thread, handle), [bbs, thread, handle]);
 
   const isSysop = user && user.did === bbs.identity.did;
   const repliesByUri: Record<string, Reply> = {};
@@ -314,5 +311,3 @@ function ThreadHeader({
     </article>
   );
 }
-
-
