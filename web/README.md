@@ -106,13 +106,3 @@ For OAuth in dev, `BrowserOAuthClient` automatically falls back to a **loopback 
 5. We wrap that session in an `Agent` and stash `{did, handle, pdsUrl}` in context.
 6. Session/refresh tokens are persisted by the OAuth client in IndexedDB; reloads silently restore the session.
 
-## Visual parity
-
-Tailwind classes are copied verbatim from the Jinja templates; the dark neutral theme, Geist Mono font, hero SVG, header/footer layout, and `.reply-card`/`.reply-actions` hover behavior all carry over. Anything that looked a particular way in the Python app should look identical here.
-
-## Things that are intentionally different
-
-- The old write routes returned redirects; the SPA writes records directly via the Agent and updates state in-place (no full-page reloads except where the old TS already did them).
-- The thread page used to have a server-paginated reply API. Now it fetches all backlink refs once (limit 1000), then hydrates per-page client-side — same behavior as before, just no intermediate API.
-- News deletion / thread deletion / reply deletion happen via `agent.com.atproto.repo.deleteRecord` directly.
-- "Delete BBS" walks the user's repo client-side (boards, news, bans, hides, then site).

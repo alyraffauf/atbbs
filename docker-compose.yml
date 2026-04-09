@@ -1,9 +1,8 @@
 services:
   atbbs:
-    build:
-      context: .
-      args:
-        VITE_PUBLIC_URL: ${PUBLIC_URL:-http://127.0.0.1:8080}
+    build: .
     ports:
       - "8080:80"
+    environment:
+      PUBLIC_URL: ${PUBLIC_URL:?Set PUBLIC_URL in .env or shell (e.g. https://atbbs.app)}
     restart: unless-stopped

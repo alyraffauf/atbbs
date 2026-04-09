@@ -41,7 +41,6 @@ brew install alyraffauf/tap/atbbs
 ```bash
 atbbs                  # launch TUI
 atbbs dial aly.codes   # dial a BBS directly
-atbbs serve            # start the web server
 atbbs --help           # see all options
 ```
 
@@ -50,7 +49,7 @@ atbbs --help           # see all options
 ### Docker
 
 ```bash
-docker run -d -p 8000:8000 -v atbbs-data:/data -e PUBLIC_URL=https://your-domain.com ghcr.io/alyraffauf/atbbs:latest
+docker run -d -p 8080:80 -e PUBLIC_URL=https://your-domain.com ghcr.io/alyraffauf/atbbs:latest
 ```
 
 Or with Docker Compose:
@@ -58,10 +57,8 @@ Or with Docker Compose:
 ```bash
 git clone https://github.com/alyraffauf/atbbs.git
 cd atbbs
-docker compose up -d
+PUBLIC_URL=https://your-domain.com docker compose up -d
 ```
-
-Visit `http://localhost:8000`.
 
 ### From source
 
@@ -70,11 +67,12 @@ Requires [Node.js](https://nodejs.org/) and [just](https://just.systems/).
 ```bash
 git clone https://github.com/alyraffauf/atbbs.git
 cd atbbs
-npm install
+cd web && npm install && cd ..
 uv sync
 just dev     # run dev server with hot reload
 just fmt     # format code
-just build   # build docker image
+just build   # build for static deploy (set PUBLIC_URL)
+just docker  # build docker image
 ```
 
 ## Architecture
@@ -98,9 +96,7 @@ On first run, atbbs generates:
 - `secrets.json` — app secret key and OAuth client signing key
 - `atbbs.db` — SQLite database for OAuth sessions
 
-**Web app (Docker)**: Set `ATBBS_DATA_DIR` to control where these are stored (default: `/data`). Set `PUBLIC_URL` to your domain for OAuth callbacks.
-
-**Web app (CLI)**: Use `atbbs serve --data-dir` and `--public-url` to configure. Defaults to the platform data directory and `http://{host}:{port}`.
+**Web app (Docker)**: Set `PUBLIC_URL` to your domain for OAuth callbacks (required).
 
 **TUI**: Data is stored in `~/.local/share/atbbs/` (Linux), `~/Library/Application Support/atbbs/` (macOS), or `%APPDATA%/atbbs/` (Windows).
 
