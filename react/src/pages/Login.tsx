@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useAuth } from "../lib/auth";
-import { useTitle } from "../lib/util";
+import { useTitle } from "../hooks/useTitle";
 
 export default function Login() {
   const { login } = useAuth();

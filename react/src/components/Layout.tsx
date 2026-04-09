@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuth } from "../lib/auth";
-import { useBreadcrumbState } from "../lib/breadcrumb";
+import { useBreadcrumbState, type Crumb } from "../hooks/useBreadcrumb";
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -109,7 +109,7 @@ function Breadcrumbs() {
   const { crumbs } = useBreadcrumbState();
   if (!crumbs.length) return null;
   const out: ReactNode[] = [];
-  crumbs.forEach((c, i) => {
+  crumbs.forEach((c: Crumb, i: number) => {
     out.push(<span key={`s${i}`}>/</span>);
     const last = i === crumbs.length - 1;
     if (c.to && !last) {

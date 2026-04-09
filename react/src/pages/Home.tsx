@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { resolveIdentitiesBatch } from "../lib/atproto";
 import { SITE } from "../lib/lexicon";
-import { useTitle } from "../lib/util";
+import { useTitle } from "../hooks/useTitle";
 
 interface UFORecord {
   did: string;

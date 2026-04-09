@@ -14,6 +14,13 @@ import {
 } from "./atproto";
 import { SITE, BOARD, NEWS, BAN, HIDE } from "./lexicon";
 import { makeAtUri, parseAtUri } from "./util";
+import type {
+  XyzAtboardsSite,
+  XyzAtboardsBoard,
+  XyzAtboardsNews,
+  XyzAtboardsBan,
+  XyzAtboardsHide,
+} from "../lexicons";
 
 export class BBSNotFoundError extends Error {}
 export class NoBBSError extends Error {}
@@ -70,7 +77,7 @@ export async function resolveBBS(handle: string): Promise<BBS> {
     throw new NoBBSError(`${handle} isn't running a BBS.`);
   }
 
-  const sv = siteRecord.value as Record<string, any>;
+  const sv = siteRecord.value as unknown as XyzAtboardsSite.Main;
   const siteUri = makeAtUri(identity.did, SITE, "self");
   const boardSlugs: string[] = sv.boards ?? [];
 
@@ -87,7 +94,7 @@ export async function resolveBBS(handle: string): Promise<BBS> {
   const boards: Board[] = [];
   boardResults.forEach((r, i) => {
     if (r.status !== "fulfilled") return;
-    const v = r.value.value as any;
+    const v = r.value.value as unknown as XyzAtboardsBoard.Main;
     boards.push({
       slug: boardSlugs[i],
       name: v.name,
@@ -105,7 +112,7 @@ export async function resolveBBS(handle: string): Promise<BBS> {
     );
     const newsRecords = await getRecordsBatch(sysopRefs);
     news = newsRecords.map((r) => {
-      const v = r.value as any;
+      const v = r.value as unknown as XyzAtboardsNews.Main;
       return {
         tid: parseAtUri(r.uri).rkey,
         siteUri: v.site,
@@ -118,10 +125,10 @@ export async function resolveBBS(handle: string): Promise<BBS> {
   }
 
   const bannedDids = new Set(
-    banRecords.map((r) => (r.value as any).did as string),
+    banRecords.map((r) => (r.value as unknown as XyzAtboardsBan.Main).did),
   );
   const hiddenPosts = new Set(
-    hideRecords.map((r) => (r.value as any).uri as string),
+    hideRecords.map((r) => (r.value as unknown as XyzAtboardsHide.Main).uri),
   );
 
   return {

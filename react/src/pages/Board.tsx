@@ -6,7 +6,7 @@ import {
   useRouteLoaderData,
 } from "react-router-dom";
 import { useAuth } from "../lib/auth";
-import { useBreadcrumb } from "../lib/breadcrumb";
+import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import {
   getBacklinks,
   getRecordsBatch,
@@ -14,9 +14,10 @@ import {
   type ATRecord,
 } from "../lib/atproto";
 import { BOARD, THREAD } from "../lib/lexicon";
-import { makeAtUri, parseAtUri, relativeDate, useTitle } from "../lib/util";
+import { makeAtUri, parseAtUri, relativeDate } from "../lib/util";
+import { useTitle } from "../hooks/useTitle";
 import { createThread, uploadAttachments } from "../lib/writes";
-import type { BBSLoaderData, ThreadItem } from "../loaders";
+import type { BBSLoaderData, ThreadItem } from "../router/loaders";
 import type { Board as BoardType } from "../lib/bbs";
 
 interface LoaderData {
@@ -97,14 +98,28 @@ export default function BoardPage() {
 
   async function onCreate(e: FormEvent) {
     e.preventDefault();
-    if (!agent) return;
-    const boardUri = makeAtUri(bbs.identity.did, BOARD, board.slug);
-    const attachments = await uploadAttachments(agent, files);
-    await createThread(agent, boardUri, title.trim(), body.trim(), attachments);
-    setTitle("");
-    setBody("");
-    setFiles(null);
-    revalidator.revalidate();
+    if (!agent) {
+      alert("Not signed in.");
+      return;
+    }
+    try {
+      const boardUri = makeAtUri(bbs.identity.did, BOARD, board.slug);
+      const attachments = await uploadAttachments(agent, files);
+      await createThread(
+        agent,
+        boardUri,
+        title.trim(),
+        body.trim(),
+        attachments,
+      );
+      setTitle("");
+      setBody("");
+      setFiles(null);
+      revalidator.revalidate();
+    } catch (err: any) {
+      console.error("createThread failed:", err);
+      alert(`Failed to post: ${err?.message ?? err}`);
+    }
   }
 
   return (

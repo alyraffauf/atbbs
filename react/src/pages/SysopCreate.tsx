@@ -2,7 +2,8 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, useLoaderData } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { putBoard, putSite } from "../lib/writes";
-import { nowIso, useTitle } from "../lib/util";
+import { nowIso } from "../lib/util";
+import { useTitle } from "../hooks/useTitle";
 import type { AuthUser } from "../lib/auth";
 
 interface BoardRow {

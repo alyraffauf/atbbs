@@ -3,11 +3,11 @@ import { useLoaderData, useRevalidator } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { resolveIdentity } from "../lib/atproto";
 import { BAN, HIDE } from "../lib/lexicon";
-import { useTitle } from "../lib/util";
+import { useTitle } from "../hooks/useTitle";
 import { createBan, createHide, deleteRecord } from "../lib/writes";
 import type { BBS } from "../lib/bbs";
 import type { AuthUser } from "../lib/auth";
-import type { HiddenInfo } from "../loaders";
+import type { HiddenInfo } from "../router/loaders";
 
 interface LoaderData {
   user: AuthUser;

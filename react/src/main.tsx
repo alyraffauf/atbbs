@@ -1,8 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
-import { router } from "./routes";
-import { BreadcrumbProvider } from "./lib/breadcrumb";
+import { router } from "./router/routes";
+import { BreadcrumbProvider } from "./hooks/useBreadcrumb";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(

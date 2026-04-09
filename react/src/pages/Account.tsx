@@ -11,9 +11,10 @@ import {
   listRecords,
 } from "../lib/atproto";
 import { BAN, BOARD, HIDE, NEWS, SITE } from "../lib/lexicon";
-import { parseAtUri, relativeDate, useTitle } from "../lib/util";
+import { parseAtUri, relativeDate } from "../lib/util";
+import { useTitle } from "../hooks/useTitle";
 import { deleteRecord } from "../lib/writes";
-import type { InboxItem } from "../loaders";
+import type { InboxItem } from "../router/loaders";
 import type { AuthUser } from "../lib/auth";
 
 interface LoaderData {

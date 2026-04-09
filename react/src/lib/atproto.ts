@@ -20,7 +20,7 @@ export interface BacklinkRef {
   rkey: string;
 }
 
-export interface BacklinksResponse {
+interface BacklinksResponse {
   total: number;
   records: BacklinkRef[];
   cursor?: string;
@@ -100,7 +100,7 @@ export async function getBacklinks(
   return fetchJson<BacklinksResponse>(url);
 }
 
-export interface HydratedRecord {
+interface HydratedRecord {
   uri: string;
   did: string;
   rkey: string;
@@ -109,7 +109,7 @@ export interface HydratedRecord {
   value: Record<string, unknown>;
 }
 
-export interface FetchAndHydrateResult {
+interface FetchAndHydrateResult {
   records: HydratedRecord[];
   cursor: string | null;
 }

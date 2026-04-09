@@ -1,14 +1,15 @@
 import { useState, type FormEvent } from "react";
 import { Link, useRevalidator, useRouteLoaderData } from "react-router-dom";
 import { useAuth } from "../lib/auth";
-import { useBreadcrumb } from "../lib/breadcrumb";
+import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { createNews, deleteRecord } from "../lib/writes";
 import { NEWS, SITE } from "../lib/lexicon";
-import { makeAtUri, useTitle } from "../lib/util";
+import { makeAtUri } from "../lib/util";
+import { useTitle } from "../hooks/useTitle";
 import Localtime from "../components/Localtime";
-import type { BBSLoaderData } from "../loaders";
+import type { BBSLoaderData } from "../router/loaders";
 
-export default function SitePage() {
+export default function BBSPage() {
   const { handle, bbs } = useRouteLoaderData("bbs") as BBSLoaderData;
   const { user, agent } = useAuth();
   const revalidator = useRevalidator();

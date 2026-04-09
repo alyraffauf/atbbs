@@ -5,8 +5,8 @@
  */
 
 import { redirect, type LoaderFunctionArgs } from "react-router-dom";
-import { ensureAuthReady, getCurrentUser } from "./lib/auth";
-import { resolveBBS, type BBS } from "./lib/bbs";
+import { ensureAuthReady, getCurrentUser } from "../lib/auth";
+import { resolveBBS, type BBS } from "../lib/bbs";
 import {
   getRecord,
   getRecordByUri,
@@ -17,7 +17,8 @@ import {
   resolveIdentity,
   fetchAndHydrate,
   type ATRecord,
-} from "./lib/atproto";
+  type BacklinkRef,
+} from "../lib/atproto";
 import {
   SITE,
   THREAD,
@@ -26,8 +27,14 @@ import {
   HIDE,
   BOARD,
   NEWS,
-} from "./lib/lexicon";
-import { makeAtUri, parseAtUri } from "./lib/util";
+} from "../lib/lexicon";
+import { makeAtUri, parseAtUri } from "../lib/util";
+import type {
+  XyzAtboardsThread,
+  XyzAtboardsReply,
+  XyzAtboardsBan,
+  XyzAtboardsHide,
+} from "../lexicons";
 
 // --- BBS parent ---
 
@@ -73,7 +80,7 @@ export async function boardLoader({ params }: LoaderFunctionArgs) {
     .filter((r) => parseAtUri(r.uri).did in authors)
     .map((r: ATRecord) => {
       const p = parseAtUri(r.uri);
-      const v = r.value as any;
+      const v = r.value as unknown as XyzAtboardsThread.Main;
       return {
         uri: r.uri,
         did: p.did,
@@ -120,7 +127,7 @@ export async function threadLoader({ params }: LoaderFunctionArgs) {
     getRecord(did, THREAD, tid),
     resolveIdentity(did),
   ]);
-  const tv = tr.value as any;
+  const tv = tr.value as unknown as XyzAtboardsThread.Main;
   const boardSlug = parseAtUri(tv.board).rkey;
   const thread: ThreadObj = {
     uri: tr.uri,
@@ -132,12 +139,25 @@ export async function threadLoader({ params }: LoaderFunctionArgs) {
     body: tv.body,
     createdAt: tv.createdAt,
     boardSlug,
-    attachments: tv.attachments,
+    attachments: tv.attachments as ThreadObj["attachments"],
   };
 
   const threadUri = makeAtUri(did, THREAD, tid);
-  const bl = await getBacklinks(threadUri, `${REPLY}:subject`, 1000);
-  const allRefs = [...bl.records].reverse(); // oldest first
+  // Constellation caps per-page limit. Page through with cursor until done.
+  const collected: BacklinkRef[] = [];
+  let cursor: string | undefined;
+  for (let i = 0; i < 20; i++) {
+    const page = await getBacklinks(
+      threadUri,
+      `${REPLY}:subject`,
+      100,
+      cursor,
+    );
+    collected.push(...page.records);
+    if (!page.cursor) break;
+    cursor = page.cursor;
+  }
+  const allRefs = collected.reverse(); // oldest first
 
   return { handle, bbs, thread, allRefs };
 }
@@ -165,7 +185,8 @@ export async function accountLoader() {
   try {
     const r = await getRecord(user.did, SITE, "self");
     hasBBS = true;
-    bbsName = ((r.value as any).name as string) ?? user.handle;
+    const sv = r.value as unknown as { name?: string };
+    bbsName = sv.name ?? user.handle;
   } catch {
     // no site
   }
@@ -188,7 +209,7 @@ async function fetchInbox(
 
   const results = await Promise.all([
     ...threads.map(async (tr) => {
-      const v = tr.value as any;
+      const v = tr.value as unknown as XyzAtboardsThread.Main;
       try {
         const { records } = await fetchAndHydrate(tr.uri, `${REPLY}:subject`, {
           limit: 50,
@@ -208,7 +229,7 @@ async function fetchInbox(
       }
     }),
     ...replies.map(async (rr) => {
-      const v = rr.value as any;
+      const v = rr.value as unknown as XyzAtboardsReply.Main;
       try {
         const { records } = await fetchAndHydrate(rr.uri, `${REPLY}:quote`, {
           limit: 50,
@@ -281,8 +302,10 @@ export async function sysopModerateLoader() {
 
   const banRecs = await listRecords(user.pdsUrl, user.did, BAN);
   const banRkeys: Record<string, string> = {};
-  for (const r of banRecs)
-    banRkeys[(r.value as any).did as string] = parseAtUri(r.uri).rkey;
+  for (const r of banRecs) {
+    const v = r.value as unknown as XyzAtboardsBan.Main;
+    banRkeys[v.did] = parseAtUri(r.uri).rkey;
+  }
 
   let bannedHandles: Record<string, string> = {};
   if (bbs.site.bannedDids.size) {
@@ -297,8 +320,10 @@ export async function sysopModerateLoader() {
 
   const hideRecs = await listRecords(user.pdsUrl, user.did, HIDE);
   const hideRkeys: Record<string, string> = {};
-  for (const r of hideRecs)
-    hideRkeys[(r.value as any).uri as string] = parseAtUri(r.uri).rkey;
+  for (const r of hideRecs) {
+    const v = r.value as unknown as XyzAtboardsHide.Main;
+    hideRkeys[v.uri] = parseAtUri(r.uri).rkey;
+  }
 
   const hidden: HiddenInfo[] = [];
   for (const uri of bbs.site.hiddenPosts) {
@@ -309,7 +334,7 @@ export async function sysopModerateLoader() {
     } catch {}
     try {
       const rec = await getRecordByUri(uri);
-      const v = rec.value as any;
+      const v = rec.value as unknown as { title?: string; body?: string };
       hidden.push({
         uri,
         handle,

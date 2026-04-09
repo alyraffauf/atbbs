@@ -11,24 +11,24 @@ export interface Crumb {
   to?: string;
 }
 
-interface Ctx {
+interface BreadcrumbContextValue {
   crumbs: Crumb[];
-  setCrumbs: (c: Crumb[]) => void;
+  setCrumbs: (crumbs: Crumb[]) => void;
 }
 
-const BreadcrumbCtx = createContext<Ctx | null>(null);
+const BreadcrumbContext = createContext<BreadcrumbContextValue | null>(null);
 
 export function BreadcrumbProvider({ children }: { children: ReactNode }) {
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
   return (
-    <BreadcrumbCtx.Provider value={{ crumbs, setCrumbs }}>
+    <BreadcrumbContext.Provider value={{ crumbs, setCrumbs }}>
       {children}
-    </BreadcrumbCtx.Provider>
+    </BreadcrumbContext.Provider>
   );
 }
 
-export function useBreadcrumbState(): Ctx {
-  const ctx = useContext(BreadcrumbCtx);
+export function useBreadcrumbState(): BreadcrumbContextValue {
+  const ctx = useContext(BreadcrumbContext);
   if (!ctx) throw new Error("BreadcrumbProvider missing");
   return ctx;
 }

@@ -14,20 +14,11 @@ export function relativeDate(iso: string): string {
   return formatFullDate(iso);
 }
 
-import { useEffect } from "react";
+/** ISO datetime branded so it's assignable to atcute's `datetimeString` types. */
+export type IsoDatetime = `${number}-${number}-${number}T${string}`;
 
-export function useTitle(title: string) {
-  useEffect(() => {
-    const prev = document.title;
-    document.title = title;
-    return () => {
-      document.title = prev;
-    };
-  }, [title]);
-}
-
-export function nowIso(): string {
-  return new Date().toISOString();
+export function nowIso(): IsoDatetime {
+  return new Date().toISOString() as IsoDatetime;
 }
 
 export function parseAtUri(uri: string): {
@@ -39,6 +30,10 @@ export function parseAtUri(uri: string): {
   return { did: parts[2], collection: parts[3], rkey: parts[4] };
 }
 
-export function makeAtUri(did: string, collection: string, rkey: string): string {
+export function makeAtUri(
+  did: string,
+  collection: string,
+  rkey: string,
+): string {
   return `at://${did}/${collection}/${rkey}`;
 }
