@@ -111,7 +111,7 @@ class Post(Widget, can_focus=True):
         if self._title:
             yield Static(self._title, classes="post-title", markup=False)
         if self._quote_text:
-            yield Static(self._quote_text, classes="post-quote", markup=False)
+            yield Markdown(self._quote_text, classes="post-quote")
         yield Markdown(self._body, classes="post-body")
         for att in self.attachments:
             name = att.get("name", "file")

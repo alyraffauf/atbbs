@@ -211,13 +211,22 @@ Post Markdown {
 }
 
 Post MarkdownH1,
-Post MarkdownH2,
-Post MarkdownH3,
-Post MarkdownH4 {
+Post MarkdownH2 {
     content-align: left middle;
     color: #e5e5e5;
     background: transparent;
+    border: none;
     margin: 1 0 0 0;
+    text-style: bold;
+}
+
+Post MarkdownH3,
+Post MarkdownH4 {
+    content-align: left middle;
+    color: #a3a3a3;
+    background: transparent;
+    margin: 1 0 0 0;
+    text-style: bold;
 }
 
 Post MarkdownBlockQuote {
