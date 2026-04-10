@@ -109,10 +109,12 @@ export default function Home() {
                   to={`/bbs/${encodeURIComponent(d.handle)}`}
                   className="flex items-baseline gap-3 px-3 py-2 -mx-3 rounded hover:bg-neutral-900 group"
                 >
-                  <span className="text-neutral-200 group-hover:text-white">
+                  <span className="text-neutral-200 group-hover:text-white break-words">
                     {d.name}
                   </span>
-                  <span className="text-neutral-500">{d.desc}</span>
+                  <span className="text-neutral-500 hidden sm:inline">
+                    {d.desc}
+                  </span>
                 </Link>
               ))}
             </div>
