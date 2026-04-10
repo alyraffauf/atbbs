@@ -13,7 +13,8 @@ const PLACEHOLDERS = [
 
 // Props for HandleInput. Extends standard <input> props so callers can
 // pass things like `required`, `disabled`, `id`, etc.
-interface HandleInputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface HandleInputProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, "onChange" | "value"> {
   value: string;
   onChange: (v: string) => void;
 }
