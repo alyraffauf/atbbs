@@ -1,5 +1,6 @@
 import { useEffect, useState, type SyntheticEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import HandleInput from "../components/HandleInput";
 import { resolveIdentitiesBatch } from "../lib/atproto";
 import { SITE } from "../lib/lexicon";
 import { useTitle } from "../hooks/useTitle";
@@ -82,13 +83,11 @@ export default function Home() {
       <div className="border-t border-neutral-800 py-4">
         <h2 className="text-neutral-300 mb-4">Dial a BBS</h2>
         <form onSubmit={onSubmit} className="flex gap-2 mb-6">
-          <input
-            type="text"
+          <HandleInput
             value={handle}
-            onChange={(e) => setHandle(e.target.value)}
-            placeholder="handle.example.com"
+            onChange={setHandle}
             required
-            className="flex-1 bg-neutral-900 border border-neutral-800 rounded px-3 py-2 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
+            className="flex-1"
           />
           <button
             type="submit"
@@ -109,7 +108,7 @@ export default function Home() {
                   to={`/bbs/${encodeURIComponent(d.handle)}`}
                   className="flex items-baseline gap-3 px-3 py-2 -mx-3 rounded hover:bg-neutral-900 group"
                 >
-                  <span className="text-neutral-200 group-hover:text-white break-words">
+                  <span className="text-neutral-200 group-hover:text-white wrap-break-word">
                     {d.name}
                   </span>
                   <span className="text-neutral-500 hidden sm:inline">

@@ -3,6 +3,7 @@ import { useLoaderData, useRevalidator } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { resolveIdentity } from "../lib/atproto";
 import { BAN, HIDE } from "../lib/lexicon";
+import HandleInput from "../components/HandleInput";
 import { useTitle } from "../hooks/useTitle";
 import { createBan, createHide, deleteRecord } from "../lib/writes";
 import type { BBS } from "../lib/bbs";
@@ -107,12 +108,10 @@ export default function SysopModerate() {
             ))}
           </div>
           <div className="flex gap-2">
-            <input
-              type="text"
+            <HandleInput
               value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="handle to ban"
-              className="flex-1 bg-neutral-900 border border-neutral-800 rounded px-3 py-2 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
+              onChange={setIdentifier}
+              className="flex-1"
             />
             <button
               onClick={ban}

@@ -1,6 +1,7 @@
 import { useState, type SyntheticEvent } from "react";
 import { useAuth } from "../lib/auth";
 import { useTitle } from "../hooks/useTitle";
+import HandleInput from "../components/HandleInput";
 
 export default function Login() {
   const { login } = useAuth();
@@ -29,13 +30,11 @@ export default function Login() {
       </p>
       {error && <p className="text-red-400 mb-4">{error}</p>}
       <form onSubmit={onSubmit} className="flex gap-2 max-w-md">
-        <input
-          type="text"
+        <HandleInput
           value={handle}
-          onChange={(e) => setHandle(e.target.value)}
-          placeholder="your-handle.bsky.social"
+          onChange={setHandle}
           required
-          className="flex-1 bg-neutral-900 border border-neutral-800 rounded px-3 py-2 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
+          className="flex-1"
         />
         <button
           type="submit"
