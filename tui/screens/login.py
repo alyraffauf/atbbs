@@ -9,6 +9,8 @@ from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import Footer, Input, Static
 
+from tui.widgets.handle_input import HandleInput
+
 from core.auth.config import load_secrets
 from core.auth.oauth import (
     exchange_code,
@@ -39,7 +41,7 @@ class LoginScreen(Screen):
                 "Sign in with your atproto handle. A browser window will open.",
                 classes="subtitle",
             )
-            yield Input(placeholder="your-handle.bsky.social", id="login-handle")
+            yield HandleInput(id="login-handle")
         yield Footer()
 
     def on_mount(self) -> None:

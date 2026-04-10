@@ -6,6 +6,8 @@ from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import Footer, Input, ListItem, ListView, Static
 
+from tui.widgets.handle_input import HandleInput
+
 from core import lexicon
 from core.models import BBSNotFoundError, NetworkError, NoBBSError
 from core.resolver import resolve_bbs
@@ -47,7 +49,7 @@ class HomeScreen(Screen):
             )
             yield Static("")
             yield Static("Dial a BBS", classes="title")
-            yield Input(placeholder="handle.example.com", id="handle-input")
+            yield HandleInput(id="handle-input")
             yield Static(
                 "OR TRY ONE OF THESE", id="discover-label", classes="section-label"
             )
