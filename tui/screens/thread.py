@@ -10,8 +10,14 @@ from textual.widgets import Footer, Static
 
 from core import lexicon
 from core.models import BBS, AtUri, AuthError, Reply, Thread
-from core.records import create_ban_record, create_hidden_record, delete_record
+from core.records import (
+    create_ban_record,
+    create_hidden_record,
+    delete_record,
+    reply_from_record,
+)
 from core.records import hydrate_replies as fetch_replies
+from core.slingshot import get_record, resolve_identity
 from tui.screens.compose import ComposeReplyScreen
 from tui.util import make_session_updater, require_session
 from tui.widgets.breadcrumb import Breadcrumb
@@ -83,7 +89,6 @@ class ThreadScreen(Screen):
         for post in self.query(Post):
             if post.collection == lexicon.REPLY:
                 post.remove()
-        self._replies_map.clear()
 
     @work(exclusive=True)
     async def load_replies(self, page: int = 1) -> None:
@@ -107,6 +112,20 @@ class ThreadScreen(Screen):
 
         for r in result.replies:
             self._replies_map[r.uri] = r
+
+        # Fetch any quoted replies not already known
+        missing = [
+            r.quote for r in result.replies
+            if r.quote and r.quote not in self._replies_map
+        ]
+        for uri in missing:
+            try:
+                parsed = AtUri.parse(uri)
+                rec = await get_record(client, parsed.did, parsed.collection, parsed.rkey)
+                author = await resolve_identity(client, parsed.did)
+                self._replies_map[uri] = reply_from_record(rec, author)
+            except Exception:
+                pass
 
         for r in result.replies:
             quote_text = None
