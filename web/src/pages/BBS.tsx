@@ -8,6 +8,7 @@ import { makeAtUri } from "../lib/util";
 import { useTitle } from "../hooks/useTitle";
 import Localtime from "../components/Localtime";
 import type { BBSLoaderData } from "../router/loaders";
+import PostBody from "../components/PostBody";
 
 export default function BBSPage() {
   const { handle, bbs } = useRouteLoaderData("bbs") as BBSLoaderData;
@@ -140,9 +141,7 @@ export default function BBSPage() {
                   </span>
                 )}
               </div>
-              <p className="text-neutral-400 whitespace-pre-wrap leading-relaxed">
-                {item.body}
-              </p>
+              <PostBody>{item.body}</PostBody>
             </div>
           ))
         ) : (

@@ -27,6 +27,7 @@ import type { BBSLoaderData, ThreadObj } from "../router/loaders";
 import PageNav from "../components/PageNav";
 import ReplyCard, { type Reply } from "../components/ReplyCard";
 import ComposeForm from "../components/ComposeForm";
+import PostBody from "../components/PostBody";
 
 interface LoaderData {
   handle: string;
@@ -290,9 +291,7 @@ function ThreadHeader({
       <h1 className="text-base text-neutral-200 font-bold mb-3">
         {thread.title}
       </h1>
-      <p className="text-neutral-400 whitespace-pre-wrap leading-relaxed">
-        {thread.body}
-      </p>
+      <PostBody>{thread.body}</PostBody>
       {thread.attachments && thread.attachments.length > 0 && (
         <div className="mt-3 space-y-1">
           {thread.attachments.map((a, i) => (

@@ -13,8 +13,10 @@
     "@atcute/client": "^4.2.1",
     "@atcute/lex-cli": "^2.6.1",
     "@atcute/oauth-browser-client": "^3.0.0",
+    "@tailwindcss/typography": "^0.5.19",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.1.1"
   },
   "devDependencies": {
