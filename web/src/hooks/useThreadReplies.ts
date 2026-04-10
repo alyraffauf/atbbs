@@ -35,6 +35,18 @@ function pageForReply(
   return index >= 0 ? Math.floor(index / REPLIES_PER_PAGE) + 1 : null;
 }
 
+
+function rkeyFromHash(): string | null {
+  const h = typeof window !== "undefined" ? window.location.hash : "";
+  return h.startsWith("#reply-") ? h.slice(7) : null;
+}
+
+function pageForRkey(refs: BacklinkRef[], rkey: string | null): number | null {
+  if (!rkey) return null;
+  const index = refs.findIndex((r) => r.rkey === rkey);
+  return index >= 0 ? Math.floor(index / REPLIES_PER_PAGE) + 1 : null;
+}
+
 function clampPage(page: number, totalRefs: number): number {
   const totalPages = Math.max(1, Math.ceil(totalRefs / REPLIES_PER_PAGE));
   return Math.max(1, Math.min(page, totalPages));
@@ -92,11 +104,21 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
 
   // --- Pagination ---
 
+  // Determine initial scroll target from ?reply= or #reply-
+  const initialReplyParam = params.get("reply");
+  const initialHashRkey = rkeyFromHash();
+  const initialScrollRkey = initialReplyParam
+    ? parseAtUri(initialReplyParam).rkey
+    : initialHashRkey;
+
   const [page, setPage] = useState<number>(() => {
     const fromUrl = parseInt(params.get("page") ?? "1", 10);
-    const fromFocus = pageForReply(allRefs, params.get("reply"));
-    return clampPage(fromFocus ?? fromUrl, allRefs.length);
+    const fromReply = pageForReply(allRefs, initialReplyParam);
+    const fromHash = pageForRkey(allRefs, initialHashRkey);
+    return clampPage(fromHash ?? fromReply ?? fromUrl, allRefs.length);
   });
+
+  const [initialScrollDone, setInitialScrollDone] = useState(!initialScrollRkey);
 
   // Keep the URL in sync when the user changes page (e.g. via PageNav).
   useEffect(() => {
@@ -123,6 +145,14 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
 
   const [replies, setReplies] = useState<Reply[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // All replies we've ever seen — accumulates across page changes so quotes
+  // and scroll targets always resolve, even for off-page replies.
+  const [replyCache, setReplyCache] = useState<Record<string, Reply>>({});
+
+  // Pending scroll target — set when navigating to a reply on another page.
+  // Cleared once the scroll completes.
+  const [pendingScrollRkey, setPendingScrollRkey] = useState<string | null>(null);
 
   const fetchVisiblePage = useCallback(
     async (currentRefs: BacklinkRef[], currentPage: number) => {
@@ -183,6 +213,40 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
       items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
       setReplies(items);
       setLoading(false);
+
+      // Add current page replies to the cache
+      const newCache: Record<string, Reply> = {};
+      for (const item of items) newCache[item.uri] = item;
+
+      // Fetch any quoted replies not already known
+      const missingQuotes = items
+        .filter((i) => i.quote && !newCache[i.quote!])
+        .map((i) => i.quote!)
+        .filter((uri) => !replyCache[uri]);
+      if (missingQuotes.length) {
+        const quoteRefs = [...new Set(missingQuotes)].map((uri) => parseAtUri(uri));
+        const quoteRecords = await getRecordsBatch(quoteRefs);
+        const quoteDids = quoteRecords.map((r) => parseAtUri(r.uri).did);
+        const quoteAuthors = await resolveIdentitiesBatch(quoteDids);
+        for (const r of quoteRecords) {
+          const { did, rkey } = parseAtUri(r.uri);
+          if (!(did in quoteAuthors)) continue;
+          const v = r.value as unknown as XyzAtboardsReply.Main;
+          newCache[r.uri] = {
+            uri: r.uri,
+            did,
+            rkey,
+            handle: quoteAuthors[did].handle,
+            pds: quoteAuthors[did].pds ?? "",
+            body: v.body,
+            createdAt: v.createdAt,
+            quote: v.quote ?? null,
+            attachments: (v.attachments ?? []) as Reply["attachments"],
+          };
+        }
+      }
+
+      setReplyCache((prev) => ({ ...prev, ...newCache }));
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- pendingAdds
     // is included so the merge step always sees the latest optimistic set
@@ -196,6 +260,28 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on
     // stable scalars, not the refs array reference or callback identity
   }, [refsLength, page, loaderFingerprint]);
+
+  // Scroll to a reply after a cross-page navigation completes.
+  useEffect(() => {
+    if (!pendingScrollRkey) return;
+    const id = `reply-${pendingScrollRkey}`;
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+      setPendingScrollRkey(null);
+    }
+  }, [pendingScrollRkey, replies]);
+
+  // Scroll to the initial target after the first load.
+  useEffect(() => {
+    if (initialScrollDone || loading || !initialScrollRkey) return;
+    setInitialScrollDone(true);
+    const el = document.getElementById(`reply-${initialScrollRkey}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "instant" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, replies]);
 
   // --- Public actions ---
 
@@ -228,6 +314,26 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
     setReplies((prev) => prev.filter((r) => r.uri !== uri));
   }, []);
 
+  const scrollToReply = useCallback(
+    (uri: string) => {
+      const { rkey } = parseAtUri(uri);
+      // If already on screen, just scroll
+      const el = document.getElementById(`reply-${rkey}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+      // Find the page and navigate — the effect will scroll once loaded
+      const idx = refs.findIndex((r) => refToUri(r) === uri);
+      if (idx >= 0) {
+        const targetPage = Math.floor(idx / REPLIES_PER_PAGE) + 1;
+        setPendingScrollRkey(rkey);
+        setPage(targetPage);
+      }
+    },
+    [refs],
+  );
+
   return {
     page,
     setPage,
@@ -235,6 +341,8 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
     replies,
     loading,
     refs,
+    replyCache,
+    scrollToReply,
     addOptimisticReply,
     removeReply,
   };

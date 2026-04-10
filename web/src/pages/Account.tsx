@@ -175,7 +175,8 @@ function InboxList({
     <div>
       {items.slice(0, shown).map((m) => {
         const { did: tDid, rkey: tRkey } = parseAtUri(m.threadUri);
-        const url = `/bbs/${userHandle}/thread/${tDid}/${tRkey}?reply=${encodeURIComponent(m.replyUri)}`;
+        const { rkey: replyRkey } = parseAtUri(m.replyUri);
+        const url = `/bbs/${userHandle}/thread/${tDid}/${tRkey}#reply-${replyRkey}`;
         return (
           <Link
             key={m.replyUri}

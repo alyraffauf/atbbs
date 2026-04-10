@@ -1,4 +1,4 @@
-import { formatFullDate, relativeDate } from "../lib/util";
+import { formatFullDate, parseAtUri, relativeDate } from "../lib/util";
 import PostBody from "./PostBody.tsx";
 
 export interface Reply {
@@ -19,6 +19,7 @@ interface ReplyCardProps {
   sysopDid: string;
   quoted?: Reply;
   onQuote: () => void;
+  onQuoteClick?: () => void;
   onDelete: () => void;
   onBan: () => void;
   onHide: () => void;
@@ -30,6 +31,7 @@ export default function ReplyCard({
   sysopDid,
   quoted,
   onQuote,
+  onQuoteClick,
   onDelete,
   onBan,
   onHide,
@@ -38,7 +40,7 @@ export default function ReplyCard({
   const isSysop = userDid === sysopDid;
 
   return (
-    <div className="reply-card border border-neutral-800/50 rounded p-4">
+    <div id={`reply-${reply.rkey}`} className="reply-card border border-neutral-800/50 rounded p-4">
       <div className="flex items-baseline justify-between mb-2">
         <div className="flex items-baseline gap-2">
           <span className="text-neutral-300">{reply.handle}</span>
@@ -87,13 +89,17 @@ export default function ReplyCard({
       </div>
 
       {quoted && (
-        <div className="border-l-2 border-neutral-700 pl-3 mb-3 py-1 text-sm text-neutral-500">
+        <button
+          type="button"
+          onClick={onQuoteClick}
+          className="block w-full text-left border-l-2 border-neutral-700 pl-3 mb-3 py-1 text-sm text-neutral-500 hover:border-neutral-500 cursor-pointer"
+        >
           <span className="text-neutral-400">{quoted.handle}:</span>{" "}
           <PostBody>
             {quoted.body.substring(0, 200) +
               (quoted.body.length > 200 ? "..." : "")}
           </PostBody>
-        </div>
+        </button>
       )}
 
       <PostBody>{reply.body}</PostBody>

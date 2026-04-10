@@ -61,6 +61,8 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
     replies,
     loading: loadingPage,
     refs,
+    replyCache,
+    scrollToReply,
     addOptimisticReply,
     removeReply,
   } = useThreadReplies(loaded);
@@ -76,8 +78,6 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
   useBreadcrumb(buildBreadcrumb(bbs, thread, handle), [bbs, thread, handle]);
 
   const isSysop = user && user.did === bbs.identity.did;
-  const repliesByUri: Record<string, Reply> = {};
-  for (const r of replies) repliesByUri[r.uri] = r;
 
   async function onReply(e: SyntheticEvent) {
     e.preventDefault();
@@ -180,8 +180,9 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
               reply={reply}
               userDid={user?.did ?? ""}
               sysopDid={bbs.identity.did}
-              quoted={reply.quote ? repliesByUri[reply.quote] : undefined}
+              quoted={reply.quote ? replyCache[reply.quote] : undefined}
               onQuote={() => setQuote({ uri: reply.uri, handle: reply.handle })}
+              onQuoteClick={reply.quote ? () => scrollToReply(reply.quote!) : undefined}
               onDelete={() => onDeleteReply(reply)}
               onBan={() => onBan(reply.did)}
               onHide={() => onHide(reply.uri)}
