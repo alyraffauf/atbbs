@@ -204,6 +204,28 @@ SysopDeleteScreen Button {
     margin-top: 1;
 }
 
+/* markdown in posts */
+Post Markdown {
+    margin: 0;
+    padding: 0;
+}
+
+Post MarkdownH1,
+Post MarkdownH2,
+Post MarkdownH3,
+Post MarkdownH4 {
+    content-align: left middle;
+    color: #e5e5e5;
+    background: transparent;
+    margin: 1 0 0 0;
+}
+
+Post MarkdownBlockQuote {
+    border-left: solid #525252;
+    padding-left: 2;
+    color: #8a8a8a;
+}
+
 Footer {
     background: #1f1f1f;
     color: #8a8a8a;
