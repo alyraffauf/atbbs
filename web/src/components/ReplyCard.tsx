@@ -1,4 +1,5 @@
 import { formatFullDate, relativeDate } from "../lib/util";
+import PostBody from "./PostBody.tsx";
 
 export interface Reply {
   uri: string;
@@ -93,9 +94,7 @@ export default function ReplyCard({
         </div>
       )}
 
-      <p className="text-neutral-400 whitespace-pre-wrap leading-relaxed">
-        {reply.body}
-      </p>
+      <PostBody>{reply.body}</PostBody>
 
       {reply.attachments.map((attachment, i) => (
         <a
