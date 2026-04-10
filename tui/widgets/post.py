@@ -2,7 +2,7 @@ import webbrowser
 
 from textual.app import ComposeResult
 from textual.widget import Widget
-from textual.widgets import Static
+from textual.widgets import Markdown, Static
 
 from core.models import AtUri
 from core.util import format_datetime_local as format_datetime
@@ -112,7 +112,7 @@ class Post(Widget, can_focus=True):
             yield Static(self._title, classes="post-title", markup=False)
         if self._quote_text:
             yield Static(self._quote_text, classes="post-quote", markup=False)
-        yield Static(self._body, classes="post-body", markup=False)
+        yield Markdown(self._body, classes="post-body")
         for att in self.attachments:
             name = att.get("name", "file")
             cid = att.get("file", {}).get("ref", {}).get("$link", "")
