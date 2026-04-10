@@ -29,6 +29,12 @@ export default function Home() {
     if (h) nav(`/bbs/${encodeURIComponent(h)}`);
   }
 
+  function onRandom() {
+    if (!discovered.length) return;
+    const d = discovered[Math.floor(Math.random() * discovered.length)];
+    nav(`/bbs/${encodeURIComponent(d.handle)}`);
+  }
+
   useEffect(() => {
     (async () => {
       try {
@@ -37,9 +43,7 @@ export default function Home() {
         );
         let records = (await r.json()) as UFORecord[];
         if (!records.length) return;
-        if (records.length > 5) {
-          records = records.sort(() => Math.random() - 0.5).slice(0, 5);
-        }
+        records = records.sort(() => Math.random() - 0.5);
         const authors = await resolveIdentitiesBatch(records.map((r) => r.did));
         const items: Discovered[] = [];
         for (const r of records) {
@@ -95,6 +99,13 @@ export default function Home() {
           >
             go
           </button>
+          <button
+            type="button"
+            onClick={onRandom}
+            className="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 px-4 py-2 rounded"
+          >
+            random
+          </button>
         </form>
         {discovered.length > 0 && (
           <div>
@@ -102,7 +113,7 @@ export default function Home() {
               or try one of these
             </p>
             <div className="space-y-1">
-              {discovered.map((d) => (
+              {discovered.slice(0, 5).map((d) => (
                 <Link
                   key={d.handle}
                   to={`/bbs/${encodeURIComponent(d.handle)}`}
@@ -136,14 +147,16 @@ export default function Home() {
         </div>
         {tab === "pip" && (
           <pre className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-400 text-xs">
-            <span className="text-neutral-500 select-none">$ </span>pip install atbbs
+            <span className="text-neutral-500 select-none">$ </span>pip install
+            atbbs
             {"\n"}
             <span className="text-neutral-500 select-none">$ </span>atbbs
           </pre>
         )}
         {tab === "uv" && (
           <pre className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-400 text-xs">
-            <span className="text-neutral-500 select-none">$ </span>uv tool install atbbs
+            <span className="text-neutral-500 select-none">$ </span>uv tool
+            install atbbs
             {"\n"}
             <span className="text-neutral-500 select-none">$ </span>atbbs
           </pre>
