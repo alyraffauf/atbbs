@@ -35,7 +35,6 @@ function pageForReply(
   return index >= 0 ? Math.floor(index / REPLIES_PER_PAGE) + 1 : null;
 }
 
-
 function rkeyFromHash(): string | null {
   const h = typeof window !== "undefined" ? window.location.hash : "";
   return h.startsWith("#reply-") ? h.slice(7) : null;
@@ -118,7 +117,8 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
     return clampPage(fromHash ?? fromReply ?? fromUrl, allRefs.length);
   });
 
-  const [initialScrollDone, setInitialScrollDone] = useState(!initialScrollRkey);
+  const [initialScrollDone, setInitialScrollDone] =
+    useState(!initialScrollRkey);
 
   // Keep the URL in sync when the user changes page (e.g. via PageNav).
   useEffect(() => {
@@ -152,7 +152,9 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
 
   // Pending scroll target — set when navigating to a reply on another page.
   // Cleared once the scroll completes.
-  const [pendingScrollRkey, setPendingScrollRkey] = useState<string | null>(null);
+  const [pendingScrollRkey, setPendingScrollRkey] = useState<string | null>(
+    null,
+  );
 
   const fetchVisiblePage = useCallback(
     async (currentRefs: BacklinkRef[], currentPage: number) => {
@@ -224,7 +226,9 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
         .map((i) => i.quote!)
         .filter((uri) => !replyCache[uri]);
       if (missingQuotes.length) {
-        const quoteRefs = [...new Set(missingQuotes)].map((uri) => parseAtUri(uri));
+        const quoteRefs = [...new Set(missingQuotes)].map((uri) =>
+          parseAtUri(uri),
+        );
         const quoteRecords = await getRecordsBatch(quoteRefs);
         const quoteDids = quoteRecords.map((r) => parseAtUri(r.uri).did);
         const quoteAuthors = await resolveIdentitiesBatch(quoteDids);

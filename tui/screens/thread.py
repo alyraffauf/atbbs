@@ -120,13 +120,16 @@ class ThreadScreen(Screen):
 
         # Fetch any quoted replies not already known
         missing = [
-            r.quote for r in result.replies
+            r.quote
+            for r in result.replies
             if r.quote and r.quote not in self._replies_map
         ]
         for uri in missing:
             try:
                 parsed = AtUri.parse(uri)
-                rec = await get_record(client, parsed.did, parsed.collection, parsed.rkey)
+                rec = await get_record(
+                    client, parsed.did, parsed.collection, parsed.rkey
+                )
                 author = await resolve_identity(client, parsed.did)
                 self._replies_map[uri] = reply_from_record(rec, author)
             except Exception:

@@ -58,7 +58,7 @@ async def prompt(
 ) -> str:
     """Handle prompt + inactivity timeouts safely."""
     await write(writer, label)
-    try: 
+    try:
         data = await asyncio.wait_for(reader.readline(), timeout=READ_TIMEOUT)
     except asyncio.TimeoutError:
         await write(writer, "\r\n  Connection inactive.\r\n")
@@ -67,6 +67,7 @@ async def prompt(
         return ""
     text = data.decode(errors="ignore").strip()
     return re.sub(r"[^\x20-\x7e]", "", text)
+
 
 async def show_bbs(writer, bbs):
     await write(writer, f"\r\n  {bbs.site.name}\r\n")
@@ -87,6 +88,7 @@ async def show_bbs(writer, bbs):
 
     await write(writer, "[#] open board  [n] news  [q] quit\r\n")
 
+
 async def show_board(writer, board, threads, has_next):
     await write(writer, f"\r\n  {board.name}\r\n")
     await write(writer, f"  {board.description}\r\n\r\n")
@@ -96,7 +98,9 @@ async def show_board(writer, board, threads, has_next):
     else:
         for i, t in enumerate(threads, 1):
             date = format_datetime_utc(t.created_at)
-            await write(writer, f"  {i}. {t.title}  ·  {t.author.handle}  ·  {date}\r\n")
+            await write(
+                writer, f"  {i}. {t.title}  ·  {t.author.handle}  ·  {date}\r\n"
+            )
 
     cmds = ["[#] open thread"]
     if has_next:

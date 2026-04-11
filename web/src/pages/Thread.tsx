@@ -182,7 +182,9 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
               sysopDid={bbs.identity.did}
               quoted={reply.quote ? replyCache[reply.quote] : undefined}
               onQuote={() => setQuote({ uri: reply.uri, handle: reply.handle })}
-              onQuoteClick={reply.quote ? () => scrollToReply(reply.quote!) : undefined}
+              onQuoteClick={
+                reply.quote ? () => scrollToReply(reply.quote!) : undefined
+              }
               onDelete={() => onDeleteReply(reply)}
               onBan={() => onBan(reply.did)}
               onHide={() => onHide(reply.uri)}

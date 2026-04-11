@@ -40,7 +40,10 @@ export default function ReplyCard({
   const isSysop = userDid === sysopDid;
 
   return (
-    <div id={`reply-${reply.rkey}`} className="reply-card border border-neutral-800/50 rounded p-4">
+    <div
+      id={`reply-${reply.rkey}`}
+      className="reply-card border border-neutral-800/50 rounded p-4"
+    >
       <div className="flex items-baseline justify-between mb-2">
         <div className="flex items-baseline gap-2">
           <span className="text-neutral-300">{reply.handle}</span>
