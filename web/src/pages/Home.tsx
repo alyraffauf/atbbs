@@ -70,18 +70,18 @@ export default function Home() {
           style={{ width: 276, imageRendering: "pixelated" }}
         />
         <h1 className="text-lg text-neutral-400 mb-3">
-          Bulletin boards on the Atmosphere.
-        </h1>
-        <p className="text-neutral-500 max-w-md mx-auto">
-          Run a BBS from your own account. No server required. Users own their
-          posts, communities migrate freely. Built on{" "}
+          Bulletin boards on the{" "}
           <a
             href="https://atproto.com"
             className="text-neutral-400 hover:text-neutral-300 underline underline-offset-2"
           >
-            atproto
+            Atmosphere
           </a>
           .
+        </h1>
+        <p className="text-neutral-500 max-w-md mx-auto">
+          Build a community from your existing account. Tightly curated, fully
+          portable, open by design.
         </p>
       </div>
 
@@ -167,6 +167,14 @@ export default function Home() {
             <span className="text-neutral-500 select-none">$ </span>atbbs
           </pre>
         )}
+      </div>
+
+      <div className="border-t border-neutral-800 py-4">
+        <h2 className="text-neutral-300 mb-4">Or dial in via telnet</h2>
+        <pre className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-400 text-xs">
+          <span className="text-neutral-500 select-none">$ </span>telnet
+          tel.atbbs.xyz
+        </pre>
       </div>
     </div>
   );

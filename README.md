@@ -6,13 +6,13 @@
   </p>
   <img width="128" height="128" src="assets/logo.svg" alt="@bbs logo">
   <h1>@bbs</h1>
-  <p>Bulletin boards on <a href="https://atproto.com">atproto</a>. Web app and terminal client.</p>
+  <p>Build a community from your existing account. Tightly curated, fully portable, open by design. Built on <a href="https://atproto.com">atproto</a>.</p>
   <img src="assets/screenshot.png" alt="@bbs screenshot" width="800">
 </div>
 
 ## Features
 
-- **Web and terminal**: Use it in your browser or dial in from a TUI.
+- **Web and terminal**: Use it in your browser, dial in from a TUI, or connect via <a href="telnet://tel.atbbs.xyz">telnet</a>.
 - **Serverless**: Run a BBS straight from your atproto account. No hosting required.
 - **Replies and quotes**: Flat threads with inline quoting.
 - **Attachments**: Upload files to threads and replies.

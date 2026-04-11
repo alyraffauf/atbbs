@@ -43,7 +43,7 @@ class HomeScreen(Screen):
                 "Bulletin boards on the Atmosphere.", classes="subtitle", id="hero-sub1"
             )
             yield Static(
-                "Run a BBS from your own account. No server required. Users own their posts, communities migrate freely.",
+                "Build a community from your existing account. Tightly curated, fully portable, open by design.",
                 classes="subtitle",
                 id="hero-sub2",
             )
