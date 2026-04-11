@@ -111,14 +111,14 @@ export default function Account() {
             <div className="grid grid-cols-2 gap-3 max-w-md">
               <Link
                 to={`/bbs/${user.handle}`}
-                className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-300 hover:text-white hover:border-neutral-700"
+                className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-300 hover:text-neutral-200 hover:border-neutral-700"
               >
                 <div className="text-neutral-200 mb-1">Browse</div>
                 <div className="text-xs text-neutral-500">View your BBS.</div>
               </Link>
               <Link
                 to="/account/edit"
-                className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-300 hover:text-white hover:border-neutral-700"
+                className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-300 hover:text-neutral-200 hover:border-neutral-700"
               >
                 <div className="text-neutral-200 mb-1">Edit</div>
                 <div className="text-xs text-neutral-500">
@@ -127,7 +127,7 @@ export default function Account() {
               </Link>
               <Link
                 to="/account/moderate"
-                className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-300 hover:text-white hover:border-neutral-700"
+                className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-300 hover:text-neutral-200 hover:border-neutral-700"
               >
                 <div className="text-neutral-200 mb-1">Moderate</div>
                 <div className="text-xs text-neutral-500">
@@ -181,7 +181,7 @@ function InboxList({
           <Link
             key={m.replyUri}
             to={url}
-            className="block border border-neutral-800/50 rounded p-4 mb-2 hover:bg-neutral-900"
+            className="block border border-neutral-800/50 rounded p-4 mb-2 hover:bg-neutral-800"
           >
             <div className="flex items-baseline justify-between mb-1">
               <span className="text-neutral-300">{m.handle}</span>

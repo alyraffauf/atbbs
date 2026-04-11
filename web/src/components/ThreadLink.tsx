@@ -16,10 +16,10 @@ export default function ThreadLink({
   return (
     <Link
       to={to}
-      className="block px-3 py-4 -mx-3 rounded hover:bg-neutral-900 group"
+      className="block px-3 py-4 -mx-3 rounded hover:bg-neutral-800 group"
     >
       <div className="flex items-baseline justify-between gap-4">
-        <span className="text-neutral-300 group-hover:text-white truncate">
+        <span className="text-neutral-300 truncate">
           {title}
         </span>
         <span className="shrink-0 text-xs text-neutral-500">{meta}</span>

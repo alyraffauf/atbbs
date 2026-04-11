@@ -86,13 +86,13 @@ export default function SysopModerate() {
               <div
                 key={did}
                 title={did}
-                className="flex items-center justify-between gap-3 px-3 py-2 -mx-3 rounded hover:bg-neutral-900"
+                className="flex items-center justify-between gap-3 px-3 py-2 -mx-3 rounded hover:bg-neutral-800"
               >
                 <a
                   href={`https://pdsls.dev/at/${did}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="truncate text-neutral-300 hover:text-white"
+                  className="truncate text-neutral-300 hover:text-neutral-200"
                 >
                   {bannedHandles[did] ?? did}
                 </a>
@@ -129,13 +129,13 @@ export default function SysopModerate() {
               <div
                 key={p.uri}
                 title={p.uri}
-                className="flex items-center justify-between gap-3 px-3 py-2 -mx-3 rounded hover:bg-neutral-900"
+                className="flex items-center justify-between gap-3 px-3 py-2 -mx-3 rounded hover:bg-neutral-800"
               >
                 <a
                   href={`https://pdsls.dev/${p.uri}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="truncate text-neutral-300 hover:text-white"
+                  className="truncate text-neutral-300 hover:text-neutral-200"
                 >
                   {p.handle} — {p.title || p.body}
                 </a>

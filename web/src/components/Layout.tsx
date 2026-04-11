@@ -75,7 +75,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <footer className="border-t border-neutral-800 mt-auto">
-        <div className="max-w-2xl mx-auto px-4 py-6 flex items-center justify-between text-xs text-neutral-500">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between text-xs text-neutral-500">
           <span>
             made by{" "}
             <a
