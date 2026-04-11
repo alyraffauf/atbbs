@@ -20,7 +20,7 @@ interface Discovered {
 export default function Home() {
   const nav = useNavigate();
   const [handle, setHandle] = useState("");
-  const [tab, setTab] = useState<"pip" | "uv" | "brew">("pip");
+  const [tab, setTab] = useState<"pip" | "uv" | "brew" | "telnet">("pip");
   const [discovered, setDiscovered] = useState<Discovered[]>([]);
   useTitle("atbbs");
 
@@ -133,7 +133,7 @@ export default function Home() {
       <div className="border-t border-neutral-800 py-4">
         <h2 className="text-neutral-300 mb-4">Better yet, use your terminal</h2>
         <div className="flex gap-4 border-b border-neutral-800 mb-4">
-          {(["pip", "uv", "brew"] as const).map((t) => (
+          {(["pip", "uv", "brew", "telnet"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -167,14 +167,12 @@ export default function Home() {
             <span className="text-neutral-500 select-none">$ </span>atbbs
           </pre>
         )}
-      </div>
-
-      <div className="border-t border-neutral-800 py-4">
-        <h2 className="text-neutral-300 mb-4">Or dial in via telnet</h2>
-        <pre className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-400 text-xs">
-          <span className="text-neutral-500 select-none">$ </span>telnet
-          tel.atbbs.xyz
-        </pre>
+        {tab === "telnet" && (
+          <pre className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-400 text-xs">
+            <span className="text-neutral-500 select-none">$ </span>telnet
+            tel.atbbs.xyz
+          </pre>
+        )}
       </div>
     </div>
   );
