@@ -11,23 +11,22 @@
   "dependencies": {
     "@atcute/atproto": "^3.1.11",
     "@atcute/client": "^4.2.1",
-    "@atcute/lex-cli": "^2.6.1",
+    "@atcute/lex-cli": "^2.7.0",
     "@atcute/oauth-browser-client": "^3.0.0",
     "@tailwindcss/typography": "^0.5.19",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "react-markdown": "^10.1.0",
-    "react-router-dom": "^7.1.1"
+    "react-router-dom": "^7.14.0"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^4.3.4",
-    "prettier": "^3.8.1",
-    "tailwindcss": "^4.0.0",
-    "typescript": "^5.7.0",
-    "vite": "^6.0.0",
-    "vite-plugin-pwa": "^1.2.0"
+    "@tailwindcss/vite": "^4.2.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.2.0",
+    "prettier": "^3.8.2",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.8"
   }
 }

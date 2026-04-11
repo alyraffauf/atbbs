@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import { VitePWA } from "vite-plugin-pwa";
 
 const SERVER_HOST = "127.0.0.1";
 const SERVER_PORT = 5173;
@@ -106,14 +105,6 @@ export default defineConfig(({ command }) => {
     plugins: [
       react(),
       tailwindcss(),
-      VitePWA({
-        registerType: "autoUpdate",
-        manifest: false,
-        workbox: {
-          globPatterns: ["**/*.{js,css,html,svg,png}"],
-          navigateFallback: "/index.html",
-        },
-      }),
       {
         name: "atbbs-emit-static-config",
         generateBundle() {
