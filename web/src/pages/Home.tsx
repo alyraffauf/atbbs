@@ -17,6 +17,9 @@ interface Discovered {
   desc: string;
 }
 
+let discoveryCache: { items: Discovered[]; expires: number } | null = null;
+const DISCOVERY_TTL = 5 * 60 * 1000; // 5 minutes
+
 export default function Home() {
   const nav = useNavigate();
   const [handle, setHandle] = useState("");
@@ -37,6 +40,10 @@ export default function Home() {
   }
 
   useEffect(() => {
+    if (discoveryCache && discoveryCache.expires > Date.now()) {
+      setDiscovered(discoveryCache.items);
+      return;
+    }
     (async () => {
       try {
         const r = await fetch(
@@ -55,6 +62,7 @@ export default function Home() {
             desc: r.record.description || "",
           });
         }
+        discoveryCache = { items, expires: Date.now() + DISCOVERY_TTL };
         setDiscovered(items);
       } catch {}
     })();
