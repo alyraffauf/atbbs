@@ -4,10 +4,11 @@ import { useAuth } from "../lib/auth";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { createNews, deleteRecord } from "../lib/writes";
 import { NEWS, SITE } from "../lib/lexicon";
-import { makeAtUri } from "../lib/util";
+import { makeAtUri, nowIso, parseAtUri } from "../lib/util";
 import { useTitle } from "../hooks/useTitle";
 import Localtime from "../components/Localtime";
 import ListLink from "../components/ListLink";
+import type { News } from "../lib/bbs";
 import type { BBSLoaderData } from "../router/loaders";
 import PostBody from "../components/PostBody";
 
@@ -17,6 +18,9 @@ export default function BBSPage() {
   const revalidator = useRevalidator();
   const [newsTitle, setNewsTitle] = useState("");
   const [newsBody, setNewsBody] = useState("");
+  const [pendingNews, setPendingNews] = useState<News[]>([]);
+  const [deletedTids, setDeletedTids] = useState<Set<string>>(new Set());
+  const [showAllNews, setShowAllNews] = useState(false);
 
   useBreadcrumb(
     [{ label: bbs.site.name, to: `/bbs/${handle}` }],
@@ -34,19 +38,36 @@ export default function BBSPage() {
   async function postNews(e: SyntheticEvent) {
     e.preventDefault();
     if (!agent) return;
+    const title = newsTitle.trim();
+    const body = newsBody.trim();
     const siteUri = makeAtUri(bbs.identity.did, SITE, "self");
-    await createNews(agent, siteUri, newsTitle.trim(), newsBody.trim());
+    const resp = await createNews(agent, siteUri, title, body);
+    const tid = parseAtUri(resp.data.uri).rkey;
+    setPendingNews((prev) => [
+      { tid, siteUri, title, body, createdAt: nowIso() },
+      ...prev,
+    ]);
     setNewsTitle("");
     setNewsBody("");
-    revalidator.revalidate();
+    setTimeout(() => revalidator.revalidate(), 1500);
   }
 
   async function removeNews(tid: string) {
     if (!agent) return;
     if (!confirm("Delete this news post?")) return;
     await deleteRecord(agent, NEWS, tid);
-    revalidator.revalidate();
+    setPendingNews((prev) => prev.filter((n) => n.tid !== tid));
+    setDeletedTids((prev) => new Set(prev).add(tid));
+    setTimeout(() => revalidator.revalidate(), 1500);
   }
+
+  // Merge pending news with loader data, deduplicating by tid and filtering deletes.
+  const loaderTids = new Set(bbs.news.map((n) => n.tid));
+  const allNews = [
+    ...pendingNews.filter((n) => !loaderTids.has(n.tid) && !deletedTids.has(n.tid)),
+    ...bbs.news.filter((n) => !deletedTids.has(n.tid)),
+  ];
+  const visibleNews = showAllNews ? allNews : allNews.slice(0, 3);
 
   return (
     <>
@@ -114,40 +135,50 @@ export default function BBSPage() {
           </details>
         )}
 
-        {bbs.news.length ? (
-          bbs.news.map((item, i) => (
-            <Link
-              key={item.tid}
-              to={`/bbs/${handle}/news/${item.tid}`}
-              className={`reply-card block bg-neutral-900 border border-neutral-800 rounded p-4 hover:border-neutral-700 ${i < bbs.news.length - 1 ? "mb-2" : ""}`}
-            >
-              <div className="flex items-baseline justify-between mb-2">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-neutral-200">{item.title}</span>
-                  <span className="text-neutral-600">·</span>
-                  <Localtime iso={item.createdAt} />
+        {allNews.length ? (
+          <>
+            {visibleNews.map((item, i) => (
+              <Link
+                key={item.tid}
+                to={`/bbs/${handle}/news/${item.tid}`}
+                className={`reply-card block bg-neutral-900 border border-neutral-800 rounded p-4 hover:border-neutral-700 ${i < visibleNews.length - 1 ? "mb-2" : ""}`}
+              >
+                <div className="flex items-baseline justify-between mb-2">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-neutral-200">{item.title}</span>
+                    <span className="text-neutral-600">·</span>
+                    <Localtime iso={item.createdAt} />
+                  </div>
+                  {isSysop && (
+                    <span className="reply-actions">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          removeNews(item.tid);
+                        }}
+                        className="text-xs text-neutral-500 hover:text-red-400"
+                      >
+                        delete
+                      </button>
+                    </span>
+                  )}
                 </div>
-                {isSysop && (
-                  <span className="reply-actions">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        removeNews(item.tid);
-                      }}
-                      className="text-xs text-neutral-500 hover:text-red-400"
-                    >
-                      delete
-                    </button>
-                  </span>
-                )}
-              </div>
-              <div className="line-clamp-3 text-neutral-400">
-                {item.body.substring(0, 200) +
-                  (item.body.length > 200 ? "..." : "")}
-              </div>
-            </Link>
-          ))
+                <div className="line-clamp-3 text-neutral-400">
+                  {item.body.substring(0, 200) +
+                    (item.body.length > 200 ? "..." : "")}
+                </div>
+              </Link>
+            ))}
+            {!showAllNews && allNews.length > 3 && (
+              <button
+                onClick={() => setShowAllNews(true)}
+                className="text-neutral-500 hover:text-neutral-300 text-xs mt-2"
+              >
+                show more
+              </button>
+            )}
+          </>
         ) : (
           <p className="text-neutral-500">No news yet.</p>
         )}
