@@ -1,4 +1,5 @@
 import { useEffect, useState, type InputHTMLAttributes } from "react";
+import { inputStyles } from "./Form";
 
 const PLACEHOLDERS = [
   "handle.blacksky.app",
@@ -45,7 +46,7 @@ export default function HandleInput({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={PLACEHOLDERS[index]}
-      className={`bg-neutral-900 border border-neutral-800 rounded px-3 py-2 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-neutral-600 ${className}`}
+      className={`${inputStyles} ${className}`}
       {...rest}
     />
   );
