@@ -63,6 +63,7 @@ export default function ComposeForm({
 
       {onTitleChange !== undefined && (
         <Input
+          name="title"
           value={title ?? ""}
           onChange={(e) => onTitleChange(e.target.value)}
           placeholder={titlePlaceholder}
@@ -72,6 +73,7 @@ export default function ComposeForm({
       )}
 
       <Textarea
+        name="body"
         value={body}
         onChange={(e) => onBodyChange(e.target.value)}
         onKeyDown={(e) => {
@@ -89,6 +91,7 @@ export default function ComposeForm({
       <label className="text-xs text-neutral-500 hover:text-neutral-300 cursor-pointer block">
         attach files
         <input
+          name="attachments"
           type="file"
           multiple
           onChange={(e) => onFilesChange(e.target.files)}

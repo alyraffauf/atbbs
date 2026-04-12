@@ -72,6 +72,7 @@ export default function SysopEdit() {
         <div>
           <label className="block text-neutral-400 mb-1">BBS Name</label>
           <Input
+            name="name"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -81,6 +82,7 @@ export default function SysopEdit() {
         <div>
           <label className="block text-neutral-400 mb-1">Description</label>
           <Input
+            name="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             maxLength={limits.SITE_DESCRIPTION}
@@ -89,6 +91,7 @@ export default function SysopEdit() {
         <div>
           <label className="block text-neutral-400 mb-1">Welcome Message</label>
           <Textarea
+            name="intro"
             rows={6}
             value={intro}
             onChange={(e) => setIntro(e.target.value)}

@@ -109,6 +109,7 @@ export default function SysopModerate() {
           </div>
           <div className="flex gap-2">
             <HandleInput
+              name="ban-handle"
               value={identifier}
               onChange={setIdentifier}
               className="flex-1"
@@ -152,6 +153,7 @@ export default function SysopModerate() {
           </div>
           <div className="flex gap-2">
             <input
+              name="hide-uri"
               type="text"
               value={hideUri}
               onChange={(e) => setHideUri(e.target.value)}

@@ -31,6 +31,7 @@ export default function Login() {
       {error && <p className="text-red-400 mb-4">{error}</p>}
       <form onSubmit={onSubmit} className="flex gap-2 max-w-md">
         <HandleInput
+          name="handle"
           value={handle}
           onChange={setHandle}
           required

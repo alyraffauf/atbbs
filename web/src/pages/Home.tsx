@@ -106,6 +106,7 @@ export default function Home() {
           className="flex flex-col sm:flex-row gap-2 mb-6"
         >
           <HandleInput
+            name="handle"
             value={handle}
             onChange={setHandle}
             required
