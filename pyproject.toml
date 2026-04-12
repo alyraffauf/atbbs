@@ -1,6 +1,6 @@
 [project]
 name = "atbbs"
-version = "0.9.1"
+version = "0.9.2"
 description = "Decentralized bulletin boards on atproto."
 readme = "README.md"
 requires-python = ">=3.14"
