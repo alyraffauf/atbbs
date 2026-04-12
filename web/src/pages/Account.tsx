@@ -34,31 +34,42 @@ export default function Account() {
     )
       return;
     try {
+      const failed: string[] = [];
       const existing = await getRecord(user.did, SITE, "self");
       const slugs: string[] = (existing.value as any).boards ?? [];
       for (const s of slugs) {
         try {
           await deleteRecord(agent, BOARD, s);
-        } catch {}
+        } catch {
+          failed.push(`board/${s}`);
+        }
       }
       const newsRecords = await listRecords(user.pdsUrl, user.did, NEWS);
       for (const n of newsRecords) {
         try {
           await deleteRecord(agent, NEWS, parseAtUri(n.uri).rkey);
-        } catch {}
+        } catch {
+          failed.push(`news/${parseAtUri(n.uri).rkey}`);
+        }
       }
       for (const col of [BAN, HIDE]) {
         const recs = await listRecords(user.pdsUrl, user.did, col);
         for (const r of recs) {
           try {
             await deleteRecord(agent, col, parseAtUri(r.uri).rkey);
-          } catch {}
+          } catch {
+            failed.push(`${col}/${parseAtUri(r.uri).rkey}`);
+          }
         }
+      }
+      if (failed.length) {
+        alert(`Could not delete: ${failed.join(", ")}. Site record was not deleted.`);
+        return;
       }
       await deleteRecord(agent, SITE, "self");
       revalidator.revalidate();
     } catch {
-      alert("Could not fully delete BBS.");
+      alert("Could not delete BBS.");
     }
   }
 
