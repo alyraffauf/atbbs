@@ -116,12 +116,13 @@ export async function deleteRecord(
 async function uploadBlob(rpc: Client, file: File): Promise<BlobRef> {
   const buf = new Uint8Array(await file.arrayBuffer());
   // atcute's typed upload signature is awkward for raw binary; cast at boundary.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const resp = await rpc.post("com.atproto.repo.uploadBlob", {
     input: buf,
     headers: {
       "content-type": file.type || "application/octet-stream",
     },
-  } as unknown as Parameters<typeof rpc.post>[1]);
+  } as any);
   if (!resp.ok) {
     const message = (resp.data as { message?: string })?.message;
     throw new Error(message ?? "uploadBlob failed");
