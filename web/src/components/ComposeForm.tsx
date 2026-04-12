@@ -88,23 +88,34 @@ export default function ComposeForm({
         maxLength={bodyMaxLength}
       />
 
-      <label className="text-xs text-neutral-500 hover:text-neutral-300 cursor-pointer block">
-        attach files
-        <input
-          name="attachments"
-          type="file"
-          multiple
-          onChange={(e) => onFilesChange(e.target.files)}
-          className="hidden"
-        />
-        {fileNames && (
-          <span className="text-neutral-400 ml-2">{fileNames}</span>
-        )}
-      </label>
+      {fileNames && (
+        <div className="flex items-center gap-2 text-xs text-neutral-500">
+          <span className="truncate">{fileNames}</span>
+          <button
+            type="button"
+            onClick={() => onFilesChange(null)}
+            className="text-neutral-500 hover:text-red-400 shrink-0"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
-      <Button type="submit" disabled={posting}>
-        {posting ? "posting..." : submitLabel}
-      </Button>
+      <div className="flex items-center gap-3">
+        <Button type="submit" disabled={posting}>
+          {posting ? "posting..." : submitLabel}
+        </Button>
+        <label className="text-neutral-200 cursor-pointer bg-neutral-800 hover:bg-neutral-700 px-4 py-2 rounded inline-block">
+          attach
+          <input
+            name="attachments"
+            type="file"
+            multiple
+            onChange={(e) => onFilesChange(e.target.files)}
+            className="hidden"
+          />
+        </label>
+      </div>
     </form>
   );
 }
