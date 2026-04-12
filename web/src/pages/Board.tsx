@@ -11,6 +11,7 @@ import { useTitle } from "../hooks/useTitle";
 import { makeAtUri, parseAtUri, relativeDate } from "../lib/util";
 import { BOARD } from "../lib/lexicon";
 import { createThread, uploadAttachments } from "../lib/writes";
+import * as limits from "../lib/limits";
 import ThreadLink from "../components/ThreadLink";
 import ComposeForm from "../components/ComposeForm";
 import {
@@ -119,8 +120,10 @@ export default function BoardPage() {
             title={title}
             onTitleChange={setTitle}
             titlePlaceholder="Thread title"
+            titleMaxLength={limits.THREAD_TITLE}
             body={body}
             onBodyChange={setBody}
+            bodyMaxLength={limits.THREAD_BODY}
             files={files}
             onFilesChange={setFiles}
           />

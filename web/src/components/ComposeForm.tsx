@@ -7,9 +7,11 @@ interface ComposeFormProps {
   onBodyChange: (value: string) => void;
   bodyPlaceholder?: string;
   bodyRows?: number;
+  bodyMaxLength?: number;
   title?: string;
   onTitleChange?: (value: string) => void;
   titlePlaceholder?: string;
+  titleMaxLength?: number;
   files: FileList | null;
   onFilesChange: (files: FileList | null) => void;
   quote?: { uri: string; handle: string } | null;
@@ -35,6 +37,8 @@ export default function ComposeForm({
   submitLabel = "post",
   posting = false,
   className = "",
+  bodyMaxLength,
+  titleMaxLength,
 }: ComposeFormProps) {
   const fileNames = files?.length
     ? Array.from(files)
@@ -63,6 +67,7 @@ export default function ComposeForm({
           onChange={(e) => onTitleChange(e.target.value)}
           placeholder={titlePlaceholder}
           required
+          maxLength={titleMaxLength}
         />
       )}
 
@@ -72,6 +77,7 @@ export default function ComposeForm({
         placeholder={bodyPlaceholder}
         required
         rows={bodyRows}
+        maxLength={bodyMaxLength}
       />
 
       <label className="text-xs text-neutral-500 hover:text-neutral-300 cursor-pointer block">

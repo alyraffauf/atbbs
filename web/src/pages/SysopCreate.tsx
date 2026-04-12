@@ -3,6 +3,7 @@ import { useNavigate, useLoaderData } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { putBoard, putSite } from "../lib/writes";
 import { nowIso } from "../lib/util";
+import * as limits from "../lib/limits";
 import { useTitle } from "../hooks/useTitle";
 import { Input, Textarea, Button } from "../components/Form";
 import BoardRowEditor, { type BoardRow } from "../components/BoardRowEditor";
@@ -74,6 +75,7 @@ export default function SysopCreate() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="My Cool BBS"
+            maxLength={limits.SITE_NAME}
           />
         </div>
         <div>
@@ -82,6 +84,7 @@ export default function SysopCreate() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="A short description of your BBS"
+            maxLength={limits.SITE_DESCRIPTION}
           />
         </div>
         <div>
@@ -91,6 +94,7 @@ export default function SysopCreate() {
             value={intro}
             onChange={(e) => setIntro(e.target.value)}
             placeholder="ASCII art, rules, welcome message..."
+            maxLength={limits.SITE_INTRO}
           />
         </div>
         <BoardRowEditor boards={boards} onChange={setBoards} />

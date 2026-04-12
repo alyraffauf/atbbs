@@ -3,6 +3,7 @@ import { useLoaderData, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { putBoard, putSite } from "../lib/writes";
 import { nowIso } from "../lib/util";
+import * as limits from "../lib/limits";
 import { useTitle } from "../hooks/useTitle";
 import { Input, Textarea, Button } from "../components/Form";
 import BoardRowEditor, { type BoardRow } from "../components/BoardRowEditor";
@@ -74,6 +75,7 @@ export default function SysopEdit() {
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
+            maxLength={limits.SITE_NAME}
           />
         </div>
         <div>
@@ -81,6 +83,7 @@ export default function SysopEdit() {
           <Input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            maxLength={limits.SITE_DESCRIPTION}
           />
         </div>
         <div>
@@ -89,6 +92,7 @@ export default function SysopEdit() {
             rows={6}
             value={intro}
             onChange={(e) => setIntro(e.target.value)}
+            maxLength={limits.SITE_INTRO}
           />
         </div>
         <BoardRowEditor boards={boards} onChange={setBoards} />

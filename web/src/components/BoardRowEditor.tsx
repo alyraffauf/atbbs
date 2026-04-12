@@ -1,4 +1,5 @@
 import { Input } from "./Form";
+import * as limits from "../lib/limits";
 
 export interface BoardRow {
   slug: string;
@@ -41,12 +42,14 @@ export default function BoardRowEditor({
               value={board.name}
               onChange={(e) => updateField(i, "name", e.target.value)}
               placeholder="Name"
+              maxLength={limits.BOARD_NAME}
               className="w-1/3!"
             />
             <Input
               value={board.desc}
               onChange={(e) => updateField(i, "desc", e.target.value)}
               placeholder="Description"
+              maxLength={limits.BOARD_DESCRIPTION}
               className="flex-1!"
             />
           </div>

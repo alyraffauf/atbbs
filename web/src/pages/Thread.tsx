@@ -11,6 +11,7 @@ import { useTitle } from "../hooks/useTitle";
 import { useThreadReplies } from "../hooks/useThreadReplies";
 import { THREAD, REPLY } from "../lib/lexicon";
 import { makeAtUri, parseAtUri } from "../lib/util";
+import * as limits from "../lib/limits";
 import {
   createBan,
   createHide,
@@ -198,6 +199,7 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
           onBodyChange={setBody}
           bodyPlaceholder="Write a reply..."
           bodyRows={3}
+          bodyMaxLength={limits.REPLY_BODY}
           files={files}
           onFilesChange={setFiles}
           quote={quote}

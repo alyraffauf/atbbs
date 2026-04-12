@@ -4,7 +4,7 @@ from textual.containers import Vertical, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Input, ListItem, ListView, Static, TextArea
 
-from core import lexicon
+from core import lexicon, limits
 from core.models import AtUri, AuthError, BBS
 from core.records import (
     create_ban_record,
@@ -82,9 +82,9 @@ class SysopEditScreen(Screen):
         )
         with VerticalScroll(id="edit-scroll"):
             yield Static("NAME", classes="section-label")
-            yield Input(value=self.bbs.site.name, id="edit-name")
+            yield Input(value=self.bbs.site.name, id="edit-name", max_length=limits.SITE_NAME)
             yield Static("DESCRIPTION", classes="section-label")
-            yield Input(value=self.bbs.site.description, id="edit-desc")
+            yield Input(value=self.bbs.site.description, id="edit-desc", max_length=limits.SITE_DESCRIPTION)
             yield Static("INTRO", classes="section-label")
             yield TextArea(self.bbs.site.intro, id="edit-intro", language=None)
             yield Static(
@@ -96,8 +96,8 @@ class SysopEditScreen(Screen):
                 yield Static(
                     f"  {b['slug']}", classes="subtitle", id=f"board-label-{b['slug']}"
                 )
-                yield Input(value=b["name"], id=f"board-name-{b['slug']}")
-                yield Input(value=b["description"], id=f"board-desc-{b['slug']}")
+                yield Input(value=b["name"], id=f"board-name-{b['slug']}", max_length=limits.BOARD_NAME)
+                yield Input(value=b["description"], id=f"board-desc-{b['slug']}", max_length=limits.BOARD_DESCRIPTION)
         yield Footer()
 
     def on_mount(self) -> None:
@@ -115,8 +115,8 @@ class SysopEditScreen(Screen):
 
         scroll = self.query_one("#edit-scroll", VerticalScroll)
         label = Static(f"  {slug}", classes="subtitle", id=f"board-label-{slug}")
-        name_input = Input(value=slug, id=f"board-name-{slug}")
-        desc_input = Input(value="", id=f"board-desc-{slug}")
+        name_input = Input(value=slug, id=f"board-name-{slug}", max_length=limits.BOARD_NAME)
+        desc_input = Input(value="", id=f"board-desc-{slug}", max_length=limits.BOARD_DESCRIPTION)
         scroll.mount(label)
         scroll.mount(name_input)
         scroll.mount(desc_input)
@@ -157,6 +157,9 @@ class SysopEditScreen(Screen):
 
         if not name:
             self.notify("Name cannot be empty.", severity="error")
+            return
+        if len(intro) > limits.SITE_INTRO:
+            self.notify(f"Intro too long ({len(intro)}/{limits.SITE_INTRO}).", severity="error")
             return
 
         now = now_iso()

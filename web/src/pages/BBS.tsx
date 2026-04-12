@@ -5,6 +5,7 @@ import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { createNews, deleteRecord } from "../lib/writes";
 import { NEWS, SITE } from "../lib/lexicon";
 import { makeAtUri, nowIso, parseAtUri } from "../lib/util";
+import * as limits from "../lib/limits";
 import { useTitle } from "../hooks/useTitle";
 import Localtime from "../components/Localtime";
 import ListLink from "../components/ListLink";
@@ -112,6 +113,7 @@ export default function BBSPage() {
                 onChange={(e) => setNewsTitle(e.target.value)}
                 placeholder="Headline"
                 required
+                maxLength={limits.NEWS_TITLE}
                 className="w-full bg-neutral-900 border border-neutral-800 rounded px-3 py-2 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
               />
               <textarea
@@ -120,6 +122,7 @@ export default function BBSPage() {
                 placeholder="Announcement body..."
                 required
                 rows={3}
+                maxLength={limits.NEWS_BODY}
                 className="w-full bg-neutral-900 border border-neutral-800 rounded px-3 py-2 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-neutral-600 resize-y"
               />
               <button
