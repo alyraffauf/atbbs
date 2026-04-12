@@ -95,9 +95,9 @@ export default function BoardPage() {
       setTimeout(() => revalidator.revalidate(), 1500);
       const { did, rkey } = parseAtUri(resp.data.uri);
       navigate(`/bbs/${handle}/thread/${did}/${rkey}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("createThread failed:", err);
-      alert(`Failed to post: ${err?.message ?? err}`);
+      alert(`Failed to post: ${err instanceof Error ? err.message : err}`);
     }
   }
 

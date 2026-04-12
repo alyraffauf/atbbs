@@ -121,7 +121,7 @@ async function uploadBlob(rpc: Client, file: File): Promise<BlobRef> {
     headers: {
       "content-type": file.type || "application/octet-stream",
     },
-  } as any);
+  } as unknown as Parameters<typeof rpc.post>[1]);
   if (!resp.ok) {
     const message = (resp.data as { message?: string })?.message;
     throw new Error(message ?? "uploadBlob failed");

@@ -125,9 +125,9 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
     if (!confirm("Delete this reply?")) return;
     try {
       await deleteRecord(agent, REPLY, reply.rkey);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("deleteRecord failed:", e);
-      alert(`Failed to delete: ${e?.message ?? e}`);
+      alert(`Failed to delete: ${e instanceof Error ? e.message : e}`);
       return;
     }
     removeReply(reply.uri);

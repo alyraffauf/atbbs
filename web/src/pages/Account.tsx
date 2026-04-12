@@ -36,7 +36,8 @@ export default function Account() {
     try {
       const failed: string[] = [];
       const existing = await getRecord(user.did, SITE, "self");
-      const slugs: string[] = (existing.value as any).boards ?? [];
+      const sv = existing.value as Record<string, unknown>;
+      const slugs: string[] = (Array.isArray(sv.boards) ? sv.boards : []) as string[];
       for (const s of slugs) {
         try {
           await deleteRecord(agent, BOARD, s);
