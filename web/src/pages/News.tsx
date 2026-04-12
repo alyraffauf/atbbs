@@ -6,6 +6,7 @@ import { formatFullDate, relativeDate } from "../lib/util";
 import { NEWS } from "../lib/lexicon";
 import { deleteRecord } from "../lib/writes";
 import type { BBSLoaderData } from "../router/loaders";
+import AttachmentLink from "../components/AttachmentLink";
 import PostBody from "../components/PostBody";
 
 export default function NewsPage() {
@@ -64,6 +65,19 @@ export default function NewsPage() {
       </div>
       <h1 className="text-lg text-neutral-200 font-bold mb-3">{item.title}</h1>
       <PostBody>{item.body}</PostBody>
+      {item.attachments && item.attachments.length > 0 && (
+        <div className="mt-3 space-y-1">
+          {item.attachments.map((a, i) => (
+            <AttachmentLink
+              key={i}
+              pds={bbs.identity.pds ?? ""}
+              did={bbs.identity.did}
+              cid={a.file.ref.$link}
+              name={a.name}
+            />
+          ))}
+        </div>
+      )}
     </article>
   );
 }

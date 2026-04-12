@@ -36,6 +36,9 @@ class NewsScreen(Screen):
                 date=self.news.created_at,
                 title=self.news.title,
                 body=self.news.body,
+                author_did=self.bbs.identity.did,
+                author_pds=self.bbs.identity.pds,
+                attachments=self.news.attachments,
             )
         yield Footer()
 

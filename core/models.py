@@ -114,6 +114,7 @@ class News:
     title: str
     body: str
     created_at: str
+    attachments: list[dict] | None = None
 
 
 @dataclass

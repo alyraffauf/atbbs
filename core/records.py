@@ -492,9 +492,19 @@ async def create_news_record(
     site_uri: str,
     title: str,
     body: str,
+    attachments: list[dict] | None = None,
     session_updater=None,
 ) -> httpx.Response:
     """Create a news record in the user's repo."""
+    record = {
+        "$type": lexicon.NEWS,
+        "site": site_uri,
+        "title": title,
+        "body": body,
+        "createdAt": now_iso(),
+    }
+    if attachments:
+        record["attachments"] = attachments
     return await pds_post(
         client,
         session,
@@ -502,13 +512,7 @@ async def create_news_record(
         {
             "repo": session["did"],
             "collection": lexicon.NEWS,
-            "record": {
-                "$type": lexicon.NEWS,
-                "site": site_uri,
-                "title": title,
-                "body": body,
-                "createdAt": now_iso(),
-            },
+            "record": record,
         },
         session_updater,
     )

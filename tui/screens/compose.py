@@ -252,6 +252,7 @@ class ComposeNewsScreen(Screen):
             yield Static("news", classes="title")
             yield Input(placeholder="Title", id="news-title", max_length=limits.NEWS_TITLE)
             yield TextArea(id="news-body", language=None)
+            yield Input(placeholder="attach file (path, optional)", id="news-file")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -277,6 +278,14 @@ class ComposeNewsScreen(Screen):
 
         site_uri = str(AtUri(self.bbs.identity.did, lexicon.SITE, "self"))
 
+        # Handle file attachment
+        attachments = []
+        file_path = self.query_one("#news-file", Input).value.strip()
+        if file_path:
+            attachments = await _upload_file(self, file_path, session)
+            if attachments is None:
+                return
+
         try:
             resp = await create_news_record(
                 self.app.http_client,
@@ -284,6 +293,7 @@ class ComposeNewsScreen(Screen):
                 site_uri,
                 title,
                 body,
+                attachments=attachments or None,
             )
             resp.raise_for_status()
         except AuthError:

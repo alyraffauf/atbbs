@@ -79,6 +79,7 @@ async def resolve_bbs(client: httpx.AsyncClient, handle: str) -> BBS:
             title=r.value["title"],
             body=r.value["body"],
             created_at=r.value["createdAt"],
+            attachments=r.value.get("attachments"),
         )
         for r in news_records
     ]

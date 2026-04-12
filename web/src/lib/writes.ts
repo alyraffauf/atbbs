@@ -210,12 +210,16 @@ export async function createNews(
   siteUri: string,
   title: string,
   body: string,
+  attachments?: Attachment[],
 ) {
   const value: NewsValue = {
     site: siteUri as NewsValue["site"],
     title,
     body,
     createdAt: nowIso(),
+    ...(attachments?.length
+      ? { attachments: attachments as NewsValue["attachments"] }
+      : {}),
   };
   return createRecord(rpc, NEWS, value);
 }

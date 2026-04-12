@@ -2,7 +2,8 @@ import { useState, type SyntheticEvent } from "react";
 import { Link, useRouteLoaderData } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
-import { createNews, deleteRecord } from "../lib/writes";
+import { createNews, deleteRecord, uploadAttachments } from "../lib/writes";
+import ComposeForm from "../components/ComposeForm";
 import { NEWS, SITE } from "../lib/lexicon";
 import { makeAtUri, nowIso, parseAtUri } from "../lib/util";
 import * as limits from "../lib/limits";
@@ -18,6 +19,7 @@ export default function BBSPage() {
   const { user, agent } = useAuth();
   const [newsTitle, setNewsTitle] = useState("");
   const [newsBody, setNewsBody] = useState("");
+  const [newsFiles, setNewsFiles] = useState<FileList | null>(null);
   const [pendingNews, setPendingNews] = useState<News[]>([]);
   const [deletedTids, setDeletedTids] = useState<Set<string>>(new Set());
   const [showAllNews, setShowAllNews] = useState(false);
@@ -41,7 +43,8 @@ export default function BBSPage() {
     const title = newsTitle.trim();
     const body = newsBody.trim();
     const siteUri = makeAtUri(bbs.identity.did, SITE, "self");
-    const resp = await createNews(agent, siteUri, title, body);
+    const attachments = await uploadAttachments(agent, newsFiles);
+    const resp = await createNews(agent, siteUri, title, body, attachments);
     const tid = parseAtUri(resp.data.uri).rkey;
     setPendingNews((prev) => [
       { tid, siteUri, title, body, createdAt: nowIso() },
@@ -49,6 +52,7 @@ export default function BBSPage() {
     ]);
     setNewsTitle("");
     setNewsBody("");
+    setNewsFiles(null);
   }
 
   async function removeNews(tid: string) {
@@ -106,38 +110,22 @@ export default function BBSPage() {
             <summary className="text-neutral-300 cursor-pointer">
               post news
             </summary>
-            <form onSubmit={postNews} className="mt-4 space-y-3">
-              <input
-                type="text"
-                value={newsTitle}
-                onChange={(e) => setNewsTitle(e.target.value)}
-                placeholder="Headline"
-                required
-                maxLength={limits.NEWS_TITLE}
-                className="w-full bg-neutral-900 border border-neutral-800 rounded px-3 py-2 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
-              />
-              <textarea
-                value={newsBody}
-                onChange={(e) => setNewsBody(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                    e.preventDefault();
-                    e.currentTarget.form?.requestSubmit();
-                  }
-                }}
-                placeholder="Announcement body..."
-                required
-                rows={3}
-                maxLength={limits.NEWS_BODY}
-                className="w-full bg-neutral-900 border border-neutral-800 rounded px-3 py-2 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-neutral-600 resize-y"
-              />
-              <button
-                type="submit"
-                className="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 px-4 py-2 rounded"
-              >
-                post
-              </button>
-            </form>
+            <ComposeForm
+              className="mt-4"
+              onSubmit={postNews}
+              title={newsTitle}
+              onTitleChange={setNewsTitle}
+              titlePlaceholder="Headline"
+              titleMaxLength={limits.NEWS_TITLE}
+              body={newsBody}
+              onBodyChange={setNewsBody}
+              bodyPlaceholder="Announcement body..."
+              bodyRows={3}
+              bodyMaxLength={limits.NEWS_BODY}
+              files={newsFiles}
+              onFilesChange={setNewsFiles}
+              submitLabel="post"
+            />
           </details>
         )}
 

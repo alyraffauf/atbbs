@@ -37,12 +37,18 @@ export interface Board {
   updatedAt?: string;
 }
 
+export interface NewsAttachment {
+  file: { ref: { $link: string } };
+  name: string;
+}
+
 export interface News {
   tid: string;
   siteUri: string;
   title: string;
   body: string;
   createdAt: string;
+  attachments?: NewsAttachment[];
 }
 
 export interface Site {
@@ -143,6 +149,7 @@ async function _resolveBBS(handle: string): Promise<BBS> {
         title: v.title,
         body: v.body,
         createdAt: v.createdAt,
+        attachments: v.attachments as NewsAttachment[] | undefined,
       };
     });
     news.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
