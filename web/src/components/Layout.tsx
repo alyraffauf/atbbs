@@ -1,7 +1,6 @@
 import {
   Link,
   Outlet,
-  useLocation,
   useNavigate,
   useNavigation,
 } from "react-router-dom";
@@ -12,7 +11,6 @@ import { useBreadcrumbState, type Crumb } from "../hooks/useBreadcrumb";
 
 export default function Layout() {
   const { user, logout } = useAuth();
-  const location = useLocation();
   const navigation = useNavigation();
   const navigate = useNavigate();
   const isLoading = navigation.state === "loading";
@@ -62,7 +60,6 @@ export default function Layout() {
             ) : (
               <Link
                 to="/login"
-                state={{ from: location.pathname }}
                 className="text-neutral-500 hover:text-neutral-300"
               >
                 log in
@@ -70,7 +67,7 @@ export default function Layout() {
             )}
           </div>
           {/* Mobile: hamburger menu */}
-          <MobileMenu user={user} location={location} onLogout={onLogout} />
+          <MobileMenu user={user} onLogout={onLogout} />
         </div>
       </header>
       <main className="max-w-2xl mx-auto px-4 py-8 flex-1 w-full">
@@ -110,11 +107,9 @@ export default function Layout() {
 
 function MobileMenu({
   user,
-  location,
   onLogout,
 }: {
   user: ReturnType<typeof useAuth>["user"];
-  location: ReturnType<typeof useLocation>;
   onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -154,7 +149,6 @@ function MobileMenu({
           ) : (
             <Link
               to="/login"
-              state={{ from: location.pathname }}
               onClick={() => setOpen(false)}
               className="text-neutral-300 hover:text-neutral-200"
             >
