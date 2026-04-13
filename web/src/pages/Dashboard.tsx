@@ -15,7 +15,6 @@ import type { AuthUser } from "../lib/auth";
 export interface DashboardData {
   user: AuthUser;
   hasBBS: boolean;
-  bbsName: string | null;
   pins: Promise<PinnedBBS[]>;
   threads: Promise<MyThread[]>;
   items: Promise<InboxItem[]>;

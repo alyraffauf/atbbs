@@ -11,12 +11,9 @@ export async function homeLoader() {
   if (!user) return { user: null };
 
   let hasBBS = false;
-  let bbsName: string | null = null;
   try {
-    const siteRecord = await getRecord(user.did, SITE, "self");
+    await getRecord(user.did, SITE, "self");
     hasBBS = true;
-    const siteValue = siteRecord.value as unknown as { name?: string };
-    bbsName = siteValue.name ?? user.handle;
   } catch {
     // no site record
   }
@@ -24,7 +21,6 @@ export async function homeLoader() {
   return {
     user,
     hasBBS,
-    bbsName,
     items: fetchInbox(user.did, user.pdsUrl),
     pins: fetchPins(user.pdsUrl, user.did),
     threads: fetchMyThreads(user.pdsUrl, user.did),
