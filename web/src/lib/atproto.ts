@@ -40,10 +40,19 @@ async function fetchJson<T>(url: string): Promise<T> {
   return resp.json() as Promise<T>;
 }
 
+const identityCache = new Map<string, { doc: MiniDoc; expires: number }>();
+const IDENTITY_TTL = 5 * 60 * 1000; // 5 minutes
+
 export async function resolveIdentity(identifier: string): Promise<MiniDoc> {
-  return fetchJson<MiniDoc>(
+  const cached = identityCache.get(identifier);
+  if (cached && cached.expires > Date.now()) return cached.doc;
+
+  const doc = await fetchJson<MiniDoc>(
     `${SLINGSHOT}/blue.microcosm.identity.resolveMiniDoc?identifier=${encodeURIComponent(identifier)}`,
   );
+  identityCache.set(identifier, { doc, expires: Date.now() + IDENTITY_TTL });
+  identityCache.set(doc.did, { doc, expires: Date.now() + IDENTITY_TTL });
+  return doc;
 }
 
 export async function resolveIdentitiesBatch(
