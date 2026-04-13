@@ -2,6 +2,7 @@
 
 import type { Client } from "@atcute/client";
 import { SITE, BOARD, NEWS, THREAD, REPLY, BAN, HIDE } from "./lexicon";
+import { invalidateBBSCache } from "./bbs";
 import { nowIso } from "./util";
 import { getCurrentUser } from "./auth";
 import type {
@@ -188,7 +189,9 @@ export async function createReply(
 // --- Sysop: site, board, news ---
 
 export async function putSite(rpc: Client, site: SiteValue) {
-  return putRecord(rpc, SITE, "self", site);
+  const resp = await putRecord(rpc, SITE, "self", site);
+  invalidateBBSCache();
+  return resp;
 }
 
 export async function putBoard(
@@ -203,7 +206,9 @@ export async function putBoard(
     description,
     createdAt: createdAt as BoardValue["createdAt"],
   };
-  return putRecord(rpc, BOARD, slug, value);
+  const resp = await putRecord(rpc, BOARD, slug, value);
+  invalidateBBSCache();
+  return resp;
 }
 
 export async function createNews(
@@ -232,7 +237,9 @@ export async function createBan(rpc: Client, did: string) {
     did: did as BanValue["did"],
     createdAt: nowIso(),
   };
-  return createRecord(rpc, BAN, value);
+  const resp = await createRecord(rpc, BAN, value);
+  invalidateBBSCache();
+  return resp;
 }
 
 export async function createHide(rpc: Client, uri: string) {
@@ -240,5 +247,7 @@ export async function createHide(rpc: Client, uri: string) {
     uri: uri as HideValue["uri"],
     createdAt: nowIso(),
   };
-  return createRecord(rpc, HIDE, value);
+  const resp = await createRecord(rpc, HIDE, value);
+  invalidateBBSCache();
+  return resp;
 }

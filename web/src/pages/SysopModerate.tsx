@@ -3,6 +3,7 @@ import { useLoaderData, useRevalidator } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { resolveIdentity } from "../lib/atproto";
 import { BAN, HIDE } from "../lib/lexicon";
+import { invalidateBBSCache } from "../lib/bbs";
 import HandleInput from "../components/HandleInput";
 import { useTitle } from "../hooks/useTitle";
 import { createBan, createHide, deleteRecord } from "../lib/writes";
@@ -49,6 +50,7 @@ export default function SysopModerate() {
     if (!agent) return;
     if (!confirm("Unban this user?")) return;
     await deleteRecord(agent, BAN, rkey);
+    invalidateBBSCache();
     revalidator.revalidate();
   }
 
@@ -68,6 +70,7 @@ export default function SysopModerate() {
     if (!agent) return;
     if (!confirm("Unhide this post?")) return;
     await deleteRecord(agent, HIDE, rkey);
+    invalidateBBSCache();
     revalidator.revalidate();
   }
 

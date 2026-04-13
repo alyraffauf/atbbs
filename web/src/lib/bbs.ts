@@ -68,7 +68,7 @@ export interface BBS {
   news: News[];
 }
 
-const CACHE_TTL = 5000; // 5 seconds — long enough for parent+child loaders
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes — invalidated explicitly on writes
 let cache: { key: string; bbs: BBS; expires: number } | null = null;
 
 export function invalidateBBSCache() {
