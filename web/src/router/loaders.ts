@@ -244,13 +244,23 @@ async function fetchInbox(did: string, pdsUrl: string): Promise<InboxItem[]> {
     ...threads.map((tr) => {
       const v = tr.value as unknown as XyzAtboardsThread.Main;
       return fetchBacklinkItems(
-        tr.uri, `${REPLY}:subject`, did, "reply", v.title ?? "", tr.uri,
+        tr.uri,
+        `${REPLY}:subject`,
+        did,
+        "reply",
+        v.title ?? "",
+        tr.uri,
       );
     }),
     ...replies.map((rr) => {
       const v = rr.value as unknown as XyzAtboardsReply.Main;
       return fetchBacklinkItems(
-        rr.uri, `${REPLY}:quote`, did, "quote", "", v.subject ?? "",
+        rr.uri,
+        `${REPLY}:quote`,
+        did,
+        "quote",
+        "",
+        v.subject ?? "",
       );
     }),
   ]);
@@ -343,10 +353,14 @@ export async function sysopModerateLoader() {
   ]);
 
   const banRkeys = buildRkeyMap<XyzAtboardsBan.Main>(
-    banRecs, banSchema, (v) => v.did,
+    banRecs,
+    banSchema,
+    (v) => v.did,
   );
   const hideRkeys = buildRkeyMap<XyzAtboardsHide.Main>(
-    hideRecs, hideSchema, (v) => v.uri,
+    hideRecs,
+    hideSchema,
+    (v) => v.uri,
   );
 
   let bannedHandles: Record<string, string> = {};
