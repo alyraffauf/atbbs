@@ -4,7 +4,7 @@ import HandleInput from "../components/HandleInput";
 import ListLink from "../components/ListLink";
 import { resolveIdentitiesBatch } from "../lib/atproto";
 import { SITE } from "../lib/lexicon";
-import { useTitle } from "../hooks/useTitle";
+import { usePageTitle } from "../hooks/usePageTitle";
 
 interface UFORecord {
   did: string;
@@ -21,22 +21,22 @@ let discoveryCache: { items: Discovered[]; expires: number } | null = null;
 const DISCOVERY_TTL = 5 * 60 * 1000; // 5 minutes
 
 export default function Home() {
-  const nav = useNavigate();
+  const navigate = useNavigate();
   const [handle, setHandle] = useState("");
   const [tab, setTab] = useState<"pip" | "uv" | "brew" | "telnet">("pip");
   const [discovered, setDiscovered] = useState<Discovered[]>([]);
-  useTitle("atbbs");
+  usePageTitle("atbbs");
 
   function onSubmit(e: SyntheticEvent) {
     e.preventDefault();
-    const h = handle.trim();
-    if (h) nav(`/bbs/${encodeURIComponent(h)}`);
+    const trimmed = handle.trim();
+    if (trimmed) navigate(`/bbs/${encodeURIComponent(trimmed)}`);
   }
 
   function onRandom() {
     if (!discovered.length) return;
-    const d = discovered[Math.floor(Math.random() * discovered.length)];
-    nav(`/bbs/${encodeURIComponent(d.handle)}`);
+    const pick = discovered[Math.floor(Math.random() * discovered.length)];
+    navigate(`/bbs/${encodeURIComponent(pick.handle)}`);
   }
 
   useEffect(() => {
@@ -132,12 +132,12 @@ export default function Home() {
               or try one of these
             </p>
             <div className="space-y-1">
-              {discovered.slice(0, 5).map((d) => (
+              {discovered.slice(0, 5).map((bbs) => (
                 <ListLink
-                  key={d.handle}
-                  to={`/bbs/${encodeURIComponent(d.handle)}`}
-                  name={d.name}
-                  description={d.desc}
+                  key={bbs.handle}
+                  to={`/bbs/${encodeURIComponent(bbs.handle)}`}
+                  name={bbs.name}
+                  description={bbs.desc}
                 />
               ))}
             </div>

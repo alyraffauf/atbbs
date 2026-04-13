@@ -1,13 +1,14 @@
 import { useNavigate, useParams, useRouteLoaderData } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
-import { useTitle } from "../hooks/useTitle";
-import { formatFullDate, relativeDate } from "../lib/util";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { NEWS } from "../lib/lexicon";
 import { deleteRecord } from "../lib/writes";
 import type { BBSLoaderData } from "../router/loaders";
 import AttachmentLink from "../components/AttachmentLink";
+import PostActions from "../components/PostActions";
 import PostBody from "../components/PostBody";
+import PostMeta from "../components/PostMeta";
 
 export default function NewsPage() {
   const { handle, tid } = useParams();
@@ -24,7 +25,7 @@ export default function NewsPage() {
     ],
     [bbs, handle, tid],
   );
-  useTitle(
+  usePageTitle(
     item ? `${item.title} — ${bbs.site.name}` : `News — ${bbs.site.name}`,
   );
 
@@ -32,7 +33,7 @@ export default function NewsPage() {
     return <p className="text-neutral-500">News post not found.</p>;
   }
 
-  const isSysop = user && user.did === bbs.identity.did;
+  const isSysop = !!(user && user.did === bbs.identity.did);
 
   async function onDelete() {
     if (!agent || !tid) return;
@@ -44,36 +45,24 @@ export default function NewsPage() {
   return (
     <article className="bg-neutral-900 border border-neutral-800 rounded p-4">
       <div className="flex items-baseline justify-between mb-3">
-        <div className="flex items-baseline gap-2">
-          <span className="text-neutral-200">{handle}</span>
-          <span className="text-neutral-600">·</span>
-          <time
-            className="text-xs text-neutral-500"
-            title={formatFullDate(item.createdAt)}
-          >
-            {relativeDate(item.createdAt)}
-          </time>
-        </div>
-        {isSysop && (
-          <button
-            onClick={onDelete}
-            className="text-xs text-neutral-500 hover:text-red-400"
-          >
-            delete
-          </button>
-        )}
+        <PostMeta handle={handle ?? ""} createdAt={item.createdAt} />
+        <PostActions
+          isAuthor={isSysop}
+          isSysop={false}
+          onDelete={onDelete}
+        />
       </div>
       <h1 className="text-lg text-neutral-200 font-bold mb-3">{item.title}</h1>
       <PostBody>{item.body}</PostBody>
       {item.attachments && item.attachments.length > 0 && (
         <div className="mt-3 space-y-1">
-          {item.attachments.map((a, i) => (
+          {item.attachments.map((attachment, index) => (
             <AttachmentLink
-              key={i}
+              key={index}
               pds={bbs.identity.pds ?? ""}
               did={bbs.identity.did}
-              cid={a.file.ref.$link}
-              name={a.name}
+              cid={attachment.file.ref.$link}
+              name={attachment.name}
             />
           ))}
         </div>

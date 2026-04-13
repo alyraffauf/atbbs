@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
-import { useTitle } from "../hooks/useTitle";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { useThreadReplies } from "../hooks/useThreadReplies";
 import { THREAD, REPLY } from "../lib/lexicon";
 import { makeAtUri, parseAtUri } from "../lib/util";
@@ -23,7 +23,7 @@ import type { BBSLoaderData, ThreadObj } from "../router/loaders";
 import PageNav from "../components/PageNav";
 import ReplyCard, { type Reply } from "../components/ReplyCard";
 import ComposeForm from "../components/ComposeForm";
-import ThreadHeader from "../components/ThreadHeader";
+import ThreadCard from "../components/ThreadCard";
 
 interface LoaderData {
   handle: string;
@@ -70,7 +70,7 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
   );
   const [posting, setPosting] = useState(false);
 
-  useTitle(`${thread.title} — ${bbs.site.name}`);
+  usePageTitle(`${thread.title} — ${bbs.site.name}`);
   useBreadcrumb(buildBreadcrumb(bbs, thread, handle), [bbs, thread, handle]);
 
   const isSysop = user && user.did === bbs.identity.did;
@@ -147,13 +147,13 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
 
   return (
     <>
-      <ThreadHeader
+      <ThreadCard
         thread={thread}
         userDid={user?.did}
         sysopDid={bbs.identity.did}
-        onDeleteThread={onDeleteThread}
-        onBanAuthor={() => onBan(thread.did)}
-        onHideThread={() => onHide(thread.uri)}
+        onDelete={onDeleteThread}
+        onBan={() => onBan(thread.did)}
+        onHide={() => onHide(thread.uri)}
       />
 
       {totalPages > 1 && (
@@ -217,7 +217,7 @@ function buildBreadcrumb(
   thread: ThreadObj,
   handle: string,
 ) {
-  const board = bbs.site.boards.find((b) => b.slug === thread.boardSlug);
+  const board = bbs.site.boards.find((board) => board.slug === thread.boardSlug);
   return [
     { label: bbs.site.name, to: `/bbs/${handle}` },
     ...(board

@@ -4,7 +4,7 @@ import { useAuth } from "../lib/auth";
 import { putBoard, putSite } from "../lib/writes";
 import { nowIso } from "../lib/util";
 import * as limits from "../lib/limits";
-import { useTitle } from "../hooks/useTitle";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { Input, Textarea, Button } from "../components/Form";
 import BoardRowEditor, { type BoardRow } from "../components/BoardRowEditor";
 import type { BBS } from "../lib/bbs";
@@ -24,36 +24,36 @@ export default function SysopEdit() {
   const [description, setDescription] = useState(bbs.site.description);
   const [intro, setIntro] = useState(bbs.site.intro);
   const [boards, setBoards] = useState<BoardRow[]>(
-    bbs.site.boards.map((b) => ({
-      slug: b.slug,
-      name: b.name,
-      desc: b.description,
+    bbs.site.boards.map((board) => ({
+      slug: board.slug,
+      name: board.name,
+      desc: board.description,
     })),
   );
   const [error, setError] = useState<string | null>(null);
 
-  useTitle("Edit BBS — atbbs");
+  usePageTitle("Edit BBS — atbbs");
 
   async function onSubmit(e: SyntheticEvent) {
     e.preventDefault();
     if (!agent || !name.trim()) return;
     const cleanBoards = boards
-      .map((b) => ({
-        slug: b.slug.trim(),
-        name: b.name.trim(),
-        desc: b.desc.trim(),
+      .map((board) => ({
+        slug: board.slug.trim(),
+        name: board.name.trim(),
+        desc: board.desc.trim(),
       }))
-      .filter((b) => b.slug);
+      .filter((board) => board.slug);
     const now = nowIso();
     try {
-      for (const b of cleanBoards) {
-        await putBoard(agent, b.slug, b.name || b.slug, b.desc, now);
+      for (const board of cleanBoards) {
+        await putBoard(agent, board.slug, board.name || board.slug, board.desc, now);
       }
       await putSite(agent, {
         name: name.trim(),
         description: description.trim(),
         intro,
-        boards: cleanBoards.map((b) => b.slug),
+        boards: cleanBoards.map((board) => board.slug),
         createdAt: bbs.site.createdAt || now,
         updatedAt: now,
       });

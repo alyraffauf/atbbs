@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
-import { useTitle } from "../hooks/useTitle";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { makeAtUri, parseAtUri, relativeDate } from "../lib/util";
 import { BOARD } from "../lib/lexicon";
 import { createThread, uploadAttachments } from "../lib/writes";
@@ -51,7 +51,7 @@ export default function BoardPage() {
   const [body, setBody] = useState("");
   const [files, setFiles] = useState<File[]>([]);
 
-  useTitle(`${board.name} — ${bbs.site.name}`);
+  usePageTitle(`${board.name} — ${bbs.site.name}`);
   useBreadcrumb(
     [
       { label: bbs.site.name, to: `/bbs/${handle}` },

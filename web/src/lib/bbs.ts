@@ -106,9 +106,9 @@ async function _resolveBBS(handle: string): Promise<BBS> {
   if (!is(siteSchema, siteRecord.value)) {
     throw new NoBBSError(`${handle} has an invalid site record.`);
   }
-  const sv = siteRecord.value as unknown as XyzAtboardsSite.Main;
+  const siteValue = siteRecord.value as unknown as XyzAtboardsSite.Main;
   const siteUri = makeAtUri(identity.did, SITE, "self");
-  const boardSlugs: string[] = sv.boards ?? [];
+  const boardSlugs: string[] = siteValue.boards ?? [];
 
   const [boardResults, newsBacklinks, banRecords, hideRecords] =
     await Promise.all([
@@ -121,16 +121,16 @@ async function _resolveBBS(handle: string): Promise<BBS> {
     ]);
 
   const boards: Board[] = [];
-  boardResults.forEach((r, i) => {
-    if (r.status !== "fulfilled") return;
-    if (!is(boardSchema, r.value.value)) return;
-    const v = r.value.value as unknown as XyzAtboardsBoard.Main;
+  boardResults.forEach((result, index) => {
+    if (result.status !== "fulfilled") return;
+    if (!is(boardSchema, result.value.value)) return;
+    const board = result.value.value as unknown as XyzAtboardsBoard.Main;
     boards.push({
-      slug: boardSlugs[i],
-      name: v.name,
-      description: v.description,
-      createdAt: v.createdAt,
-      updatedAt: v.updatedAt,
+      slug: boardSlugs[index],
+      name: board.name,
+      description: board.description,
+      createdAt: board.createdAt,
+      updatedAt: board.updatedAt,
     });
   });
 
@@ -138,20 +138,20 @@ async function _resolveBBS(handle: string): Promise<BBS> {
   let news: News[] = [];
   if (newsBacklinks) {
     const sysopRefs = newsBacklinks.records.filter(
-      (r) => r.did === identity.did,
+      (ref) => ref.did === identity.did,
     );
     const newsRecords = await getRecordsBatch(sysopRefs);
     news = newsRecords
-      .filter((r) => is(newsSchema, r.value))
-      .map((r) => {
-        const v = r.value as unknown as XyzAtboardsNews.Main;
+      .filter((record) => is(newsSchema, record.value))
+      .map((record) => {
+        const value = record.value as unknown as XyzAtboardsNews.Main;
         return {
-          tid: parseAtUri(r.uri).rkey,
-          siteUri: v.site,
-          title: v.title,
-          body: v.body,
-          createdAt: v.createdAt,
-          attachments: v.attachments as NewsAttachment[] | undefined,
+          tid: parseAtUri(record.uri).rkey,
+          siteUri: value.site,
+          title: value.title,
+          body: value.body,
+          createdAt: value.createdAt,
+          attachments: value.attachments as NewsAttachment[] | undefined,
         };
       });
     news.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -159,26 +159,26 @@ async function _resolveBBS(handle: string): Promise<BBS> {
 
   const bannedDids = new Set(
     banRecords
-      .filter((r) => is(banSchema, r.value))
-      .map((r) => (r.value as unknown as XyzAtboardsBan.Main).did),
+      .filter((record) => is(banSchema, record.value))
+      .map((record) => (record.value as unknown as XyzAtboardsBan.Main).did),
   );
   const hiddenPosts = new Set(
     hideRecords
-      .filter((r) => is(hideSchema, r.value))
-      .map((r) => (r.value as unknown as XyzAtboardsHide.Main).uri),
+      .filter((record) => is(hideSchema, record.value))
+      .map((record) => (record.value as unknown as XyzAtboardsHide.Main).uri),
   );
 
   return {
     identity,
     site: {
-      name: sv.name,
-      description: sv.description,
-      intro: sv.intro,
+      name: siteValue.name,
+      description: siteValue.description,
+      intro: siteValue.intro,
       boards,
       bannedDids,
       hiddenPosts,
-      createdAt: sv.createdAt ?? "",
-      updatedAt: sv.updatedAt,
+      createdAt: siteValue.createdAt ?? "",
+      updatedAt: siteValue.updatedAt,
     },
     news,
   };

@@ -52,8 +52,8 @@ export async function resolveIdentitiesBatch(
   const unique = [...new Set(dids)];
   const results = await Promise.allSettled(unique.map(resolveIdentity));
   const map: Record<string, MiniDoc> = {};
-  for (const r of results) {
-    if (r.status === "fulfilled") map[r.value.did] = r.value;
+  for (const result of results) {
+    if (result.status === "fulfilled") map[result.value.did] = result.value;
   }
   return map;
 }
@@ -77,13 +77,14 @@ export async function getRecordsBatch(
   refs: BacklinkRef[],
 ): Promise<ATRecord[]> {
   const results = await Promise.allSettled(
-    refs.map((r) => getRecord(r.did, r.collection, r.rkey)),
+    refs.map((ref) => getRecord(ref.did, ref.collection, ref.rkey)),
   );
   return results
     .filter(
-      (r): r is PromiseFulfilledResult<ATRecord> => r.status === "fulfilled",
+      (result): result is PromiseFulfilledResult<ATRecord> =>
+        result.status === "fulfilled",
     )
-    .map((r) => r.value);
+    .map((result) => result.value);
 }
 
 export async function getBacklinks(
@@ -128,32 +129,32 @@ export async function fetchAndHydrate(
 
   const records = await getRecordsBatch(backlinks.records);
 
-  const filtered = records.filter((r) => {
-    const { did } = parseAtUri(r.uri);
+  const filtered = records.filter((record) => {
+    const { did } = parseAtUri(record.uri);
     if (opts?.excludeDid && did === opts.excludeDid) return false;
     if (opts?.bannedDids?.has(did)) return false;
-    if (opts?.hiddenPosts?.has(r.uri)) return false;
+    if (opts?.hiddenPosts?.has(record.uri)) return false;
     return true;
   });
 
   if (!filtered.length)
     return { records: [], cursor: backlinks.cursor ?? null };
 
-  const dids = filtered.map((r) => parseAtUri(r.uri).did);
+  const dids = filtered.map((record) => parseAtUri(record.uri).did);
   const authors = await resolveIdentitiesBatch(dids);
 
   const hydrated = filtered
-    .filter((r) => parseAtUri(r.uri).did in authors)
-    .map((r) => {
-      const parsed = parseAtUri(r.uri);
-      const author = authors[parsed.did];
+    .filter((record) => parseAtUri(record.uri).did in authors)
+    .map((record) => {
+      const { did, rkey } = parseAtUri(record.uri);
+      const author = authors[did];
       return {
-        uri: r.uri,
-        did: parsed.did,
-        rkey: parsed.rkey,
+        uri: record.uri,
+        did,
+        rkey,
         handle: author.handle,
         pds: author.pds ?? "",
-        value: r.value,
+        value: record.value,
       };
     });
 

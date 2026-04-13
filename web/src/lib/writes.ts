@@ -40,8 +40,8 @@ interface BlobRef {
 type Did = `did:${string}:${string}`;
 type Nsid = `${string}.${string}.${string}`;
 
-const asDid = (s: string) => s as Did;
-const asNsid = (s: string) => s as Nsid;
+const asDid = (value: string) => value as Did;
+const asNsid = (value: string) => value as Nsid;
 
 function currentDid(): Did {
   const user = getCurrentUser();

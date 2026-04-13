@@ -1,6 +1,7 @@
-import { formatFullDate, parseAtUri, relativeDate } from "../lib/util";
 import AttachmentLink from "./AttachmentLink";
-import PostBody from "./PostBody.tsx";
+import PostActions from "./PostActions";
+import PostBody from "./PostBody";
+import PostMeta from "./PostMeta";
 
 export interface Reply {
   uri: string;
@@ -46,50 +47,15 @@ export default function ReplyCard({
       className="reply-card border border-neutral-800/50 rounded p-4"
     >
       <div className="flex items-baseline justify-between mb-2">
-        <div className="flex items-baseline gap-2">
-          <span className="text-neutral-300">{reply.handle}</span>
-          <span className="text-neutral-600">·</span>
-          <time
-            className="text-xs text-neutral-500"
-            title={formatFullDate(reply.createdAt)}
-          >
-            {relativeDate(reply.createdAt)}
-          </time>
-        </div>
-        <span className="reply-actions flex items-center gap-3">
-          {userDid && (
-            <button
-              onClick={onQuote}
-              className="text-xs text-neutral-500 hover:text-neutral-300"
-            >
-              quote
-            </button>
-          )}
-          {isAuthor && (
-            <button
-              onClick={onDelete}
-              className="text-xs text-neutral-500 hover:text-red-400"
-            >
-              delete
-            </button>
-          )}
-          {isSysop && !isAuthor && (
-            <button
-              onClick={onBan}
-              className="text-xs text-neutral-500 hover:text-red-400"
-            >
-              ban
-            </button>
-          )}
-          {isSysop && (
-            <button
-              onClick={onHide}
-              className="text-xs text-neutral-500 hover:text-red-400"
-            >
-              hide
-            </button>
-          )}
-        </span>
+        <PostMeta handle={reply.handle} createdAt={reply.createdAt} />
+        <PostActions
+          isAuthor={isAuthor}
+          isSysop={isSysop}
+          onQuote={userDid ? onQuote : undefined}
+          onDelete={onDelete}
+          onBan={onBan}
+          onHide={onHide}
+        />
       </div>
 
       {quoted && (
@@ -108,9 +74,9 @@ export default function ReplyCard({
 
       <PostBody>{reply.body}</PostBody>
 
-      {reply.attachments.map((attachment, i) => (
+      {reply.attachments.map((attachment, index) => (
         <AttachmentLink
-          key={i}
+          key={index}
           pds={reply.pds}
           did={reply.did}
           cid={attachment.file.ref.$link}

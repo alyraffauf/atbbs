@@ -16,11 +16,11 @@ export default function BoardRowEditor({
   boards,
   onChange,
 }: BoardRowEditorProps) {
-  function updateField(index: number, field: keyof BoardRow, value: string) {
-    const next = boards.map((b, i) =>
-      i === index ? { ...b, [field]: value } : b,
+  function updateBoard(index: number, field: keyof BoardRow, value: string) {
+    const updated = boards.map((board, i) =>
+      i === index ? { ...board, [field]: value } : board,
     );
-    onChange(next);
+    onChange(updated);
   }
 
   return (
@@ -34,20 +34,20 @@ export default function BoardRowEditor({
           <div key={i} className="flex gap-2">
             <Input
               value={board.slug}
-              onChange={(e) => updateField(i, "slug", e.target.value)}
+              onChange={(e) => updateBoard(i, "slug", e.target.value)}
               placeholder="slug"
               className="w-1/4!"
             />
             <Input
               value={board.name}
-              onChange={(e) => updateField(i, "name", e.target.value)}
+              onChange={(e) => updateBoard(i, "name", e.target.value)}
               placeholder="Name"
               maxLength={limits.BOARD_NAME}
               className="w-1/3!"
             />
             <Input
               value={board.desc}
-              onChange={(e) => updateField(i, "desc", e.target.value)}
+              onChange={(e) => updateBoard(i, "desc", e.target.value)}
               placeholder="Description"
               maxLength={limits.BOARD_DESCRIPTION}
               className="flex-1!"

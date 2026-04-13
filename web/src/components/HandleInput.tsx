@@ -12,31 +12,27 @@ const PLACEHOLDERS = [
   "handle.your-domain.com",
 ];
 
-// Props for HandleInput. Extends standard <input> props so callers can
-// pass things like `required`, `disabled`, `id`, etc.
 interface HandleInputProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
   "onChange" | "value"
 > {
   value: string;
-  onChange: (v: string) => void;
+  onChange: (value: string) => void;
 }
 
 export default function HandleInput({
   value,
   onChange,
   className = "",
-  ...rest // any extra <input> attributes (required, disabled, etc.)
+  ...rest
 }: HandleInputProps) {
-  // Cycle through placeholder examples every 3 seconds.
-  const [index, setIndex] = useState(0);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setIndex((i) => (i + 1) % PLACEHOLDERS.length);
+      setPlaceholderIndex((i) => (i + 1) % PLACEHOLDERS.length);
     }, 3000);
 
-    // Stop the timer when this component is removed from the page.
     return () => clearInterval(timer);
   }, []);
 
@@ -45,7 +41,7 @@ export default function HandleInput({
       type="text"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      placeholder={PLACEHOLDERS[index]}
+      placeholder={PLACEHOLDERS[placeholderIndex]}
       className={`${inputStyles} ${className}`}
       {...rest}
     />

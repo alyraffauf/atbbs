@@ -4,7 +4,7 @@ import { useAuth } from "../lib/auth";
 import { putBoard, putSite } from "../lib/writes";
 import { nowIso } from "../lib/util";
 import * as limits from "../lib/limits";
-import { useTitle } from "../hooks/useTitle";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { Input, Textarea, Button } from "../components/Form";
 import BoardRowEditor, { type BoardRow } from "../components/BoardRowEditor";
 import type { AuthUser } from "../lib/auth";
@@ -26,32 +26,32 @@ export default function SysopCreate() {
   ]);
   const [error, setError] = useState<string | null>(null);
 
-  useTitle("Create BBS — atbbs");
+  usePageTitle("Create BBS — atbbs");
 
   async function onSubmit(e: SyntheticEvent) {
     e.preventDefault();
     if (!agent) return;
     const cleanBoards = boards
-      .map((b) => ({
-        slug: b.slug.trim(),
-        name: b.name.trim(),
-        desc: b.desc.trim(),
+      .map((board) => ({
+        slug: board.slug.trim(),
+        name: board.name.trim(),
+        desc: board.desc.trim(),
       }))
-      .filter((b) => b.slug);
+      .filter((board) => board.slug);
     if (!name.trim() || !cleanBoards.length) {
       setError("Name and at least one board are required.");
       return;
     }
     const now = nowIso();
     try {
-      for (const b of cleanBoards) {
-        await putBoard(agent, b.slug, b.name || b.slug, b.desc, now);
+      for (const board of cleanBoards) {
+        await putBoard(agent, board.slug, board.name || board.slug, board.desc, now);
       }
       await putSite(agent, {
         name: name.trim(),
         description: description.trim(),
         intro,
-        boards: cleanBoards.map((b) => b.slug),
+        boards: cleanBoards.map((board) => board.slug),
         createdAt: now,
       });
       navigate(`/bbs/${user.handle}`);

@@ -6,54 +6,22 @@ import { useSearchParams } from "react-router-dom";
 import { getRecordsBatch, resolveIdentitiesBatch } from "../lib/atproto";
 import { parseAtUri } from "../lib/util";
 import type { BBS } from "../lib/bbs";
-import { is } from "@atcute/lexicons/validations";
-import { mainSchema as replySchema } from "../lexicons/types/xyz/atboards/reply";
-import type { XyzAtboardsReply } from "../lexicons";
 import type { Reply } from "../components/ReplyCard";
-
-const REPLIES_PER_PAGE = 10;
-
-interface BacklinkRef {
-  did: string;
-  collection: string;
-  rkey: string;
-}
+import {
+  REPLIES_PER_PAGE,
+  type BacklinkRef,
+  refToUri,
+  pageForReply,
+  rkeyFromHash,
+  pageForRkey,
+  clampPage,
+  recordToReply,
+} from "../lib/replies";
 
 interface ThreadLoaderData {
   bbs: BBS;
   allRefs: BacklinkRef[];
 }
-
-function refToUri(ref: BacklinkRef): string {
-  return `at://${ref.did}/${ref.collection}/${ref.rkey}`;
-}
-
-function pageForReply(
-  refs: BacklinkRef[],
-  replyUri: string | null,
-): number | null {
-  if (!replyUri) return null;
-  const index = refs.findIndex((r) => refToUri(r) === replyUri);
-  return index >= 0 ? Math.floor(index / REPLIES_PER_PAGE) + 1 : null;
-}
-
-function rkeyFromHash(): string | null {
-  const h = typeof window !== "undefined" ? window.location.hash : "";
-  return h.startsWith("#reply-") ? h.slice(7) : null;
-}
-
-function pageForRkey(refs: BacklinkRef[], rkey: string | null): number | null {
-  if (!rkey) return null;
-  const index = refs.findIndex((r) => r.rkey === rkey);
-  return index >= 0 ? Math.floor(index / REPLIES_PER_PAGE) + 1 : null;
-}
-
-function clampPage(page: number, totalRefs: number): number {
-  const totalPages = Math.max(1, Math.ceil(totalRefs / REPLIES_PER_PAGE));
-  return Math.max(1, Math.min(page, totalPages));
-}
-
-// --- Hook ---
 
 export function useThreadReplies(loaded: ThreadLoaderData) {
   const { bbs, allRefs } = loaded;
@@ -174,38 +142,18 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
       // Fetch records from Slingshot.
       const records = await getRecordsBatch(slice);
 
-      // Drop moderated and invalid content.
+      // Drop moderated content.
       const visible = records.filter((r) => {
         const { did } = parseAtUri(r.uri);
-        return (
-          !bbs.site.bannedDids.has(did) &&
-          !bbs.site.hiddenPosts.has(r.uri) &&
-          is(replySchema, r.value)
-        );
+        return !bbs.site.bannedDids.has(did) && !bbs.site.hiddenPosts.has(r.uri);
       });
 
-      // Resolve author handles.
+      // Resolve author handles and build Reply objects.
       const dids = visible.map((r) => parseAtUri(r.uri).did);
       const authors = await resolveIdentitiesBatch(dids);
-
-      // Build Reply objects.
       const items: Reply[] = visible
-        .filter((r) => parseAtUri(r.uri).did in authors)
-        .map((r) => {
-          const { did, rkey } = parseAtUri(r.uri);
-          const v = r.value as unknown as XyzAtboardsReply.Main;
-          return {
-            uri: r.uri,
-            did,
-            rkey,
-            handle: authors[did].handle,
-            pds: authors[did].pds ?? "",
-            body: v.body,
-            createdAt: v.createdAt,
-            quote: v.quote ?? null,
-            attachments: (v.attachments ?? []) as Reply["attachments"],
-          };
-        });
+        .map((r) => recordToReply(r, authors))
+        .filter((r): r is Reply => r !== null);
 
       // Merge in optimistic adds that Slingshot hasn't caught up to yet.
       const fetchedUris = new Set(items.map((i) => i.uri));
@@ -236,22 +184,9 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
         const quoteRecords = await getRecordsBatch(quoteRefs);
         const quoteDids = quoteRecords.map((r) => parseAtUri(r.uri).did);
         const quoteAuthors = await resolveIdentitiesBatch(quoteDids);
-        for (const r of quoteRecords) {
-          const { did, rkey } = parseAtUri(r.uri);
-          if (!(did in quoteAuthors)) continue;
-          if (!is(replySchema, r.value)) continue;
-          const v = r.value as unknown as XyzAtboardsReply.Main;
-          newCache[r.uri] = {
-            uri: r.uri,
-            did,
-            rkey,
-            handle: quoteAuthors[did].handle,
-            pds: quoteAuthors[did].pds ?? "",
-            body: v.body,
-            createdAt: v.createdAt,
-            quote: v.quote ?? null,
-            attachments: (v.attachments ?? []) as Reply["attachments"],
-          };
+        for (const record of quoteRecords) {
+          const reply = recordToReply(record, quoteAuthors);
+          if (reply) newCache[reply.uri] = reply;
         }
       }
 

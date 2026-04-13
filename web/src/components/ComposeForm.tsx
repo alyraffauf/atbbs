@@ -1,5 +1,6 @@
 import type { SyntheticEvent } from "react";
 import { Input, Textarea, Button } from "./Form";
+import FileChips from "./FileChips";
 import { MAX_ATTACHMENTS } from "../lib/limits";
 
 interface ComposeFormProps {
@@ -35,11 +36,11 @@ export default function ComposeForm({
   onFilesChange,
   quote,
   onClearQuote,
+  bodyMaxLength,
+  titleMaxLength,
   submitLabel = "post",
   posting = false,
   className = "",
-  bodyMaxLength,
-  titleMaxLength,
 }: ComposeFormProps) {
   function addFiles(fileList: FileList | null) {
     if (!fileList) return;
@@ -47,7 +48,7 @@ export default function ComposeForm({
     onFilesChange(combined);
   }
 
-  const atLimit = files.length >= MAX_ATTACHMENTS;
+  const attachmentsAtLimit = files.length >= MAX_ATTACHMENTS;
 
   function removeFile(index: number) {
     onFilesChange(files.filter((_, i) => i !== index));
@@ -96,27 +97,14 @@ export default function ComposeForm({
       />
 
       {files.length > 0 && (
-        <div className="flex flex-wrap gap-2 text-xs text-neutral-500">
-          {files.map((f, i) => (
-            <span key={i} className="flex items-center gap-1 bg-neutral-800 px-2 py-1 rounded">
-              {f.name}
-              <button
-                type="button"
-                onClick={() => removeFile(i)}
-                className="text-neutral-500 hover:text-red-400"
-              >
-                ✕
-              </button>
-            </span>
-          ))}
-        </div>
+        <FileChips files={files} onRemove={removeFile} />
       )}
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={posting}>
           {posting ? "posting..." : submitLabel}
         </Button>
-        {!atLimit && (
+        {!attachmentsAtLimit && (
         <label className="text-neutral-200 cursor-pointer bg-neutral-800 hover:bg-neutral-700 px-4 py-2 rounded inline-block">
           attach
           <input

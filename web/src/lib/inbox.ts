@@ -30,14 +30,14 @@ async function fetchBacklinkItems(
       limit: 50,
       excludeDid,
     });
-    return records.map((r) => ({
+    return records.map((record) => ({
       type,
       threadTitle,
       threadUri,
-      replyUri: r.uri,
-      handle: r.handle,
-      body: ((r.value.body as string) ?? "").substring(0, 200),
-      createdAt: (r.value.createdAt as string) ?? "",
+      replyUri: record.uri,
+      handle: record.handle,
+      body: ((record.value.body as string) ?? "").substring(0, 200),
+      createdAt: (record.value.createdAt as string) ?? "",
     }));
   } catch {
     return [];
@@ -53,30 +53,30 @@ export async function fetchInbox(
     listRecords(pdsUrl, did, THREAD, SCAN_LIMIT),
     listRecords(pdsUrl, did, REPLY, SCAN_LIMIT),
   ]);
-  const threads = allThreads.filter((r) => is(threadSchema, r.value));
-  const replies = allReplies.filter((r) => is(replySchema, r.value));
+  const threads = allThreads.filter((record) => is(threadSchema, record.value));
+  const replies = allReplies.filter((record) => is(replySchema, record.value));
 
   const results = await Promise.all([
-    ...threads.map((tr) => {
-      const v = tr.value as unknown as XyzAtboardsThread.Main;
+    ...threads.map((thread) => {
+      const value = thread.value as unknown as XyzAtboardsThread.Main;
       return fetchBacklinkItems(
-        tr.uri,
+        thread.uri,
         `${REPLY}:subject`,
         did,
         "reply",
-        v.title ?? "",
-        tr.uri,
+        value.title ?? "",
+        thread.uri,
       );
     }),
-    ...replies.map((rr) => {
-      const v = rr.value as unknown as XyzAtboardsReply.Main;
+    ...replies.map((reply) => {
+      const value = reply.value as unknown as XyzAtboardsReply.Main;
       return fetchBacklinkItems(
-        rr.uri,
+        reply.uri,
         `${REPLY}:quote`,
         did,
         "quote",
         "",
-        v.subject ?? "",
+        value.subject ?? "",
       );
     }),
   ]);

@@ -7,7 +7,7 @@ import ComposeForm from "../components/ComposeForm";
 import { NEWS, SITE } from "../lib/lexicon";
 import { makeAtUri, nowIso, parseAtUri } from "../lib/util";
 import * as limits from "../lib/limits";
-import { useTitle } from "../hooks/useTitle";
+import { usePageTitle } from "../hooks/usePageTitle";
 import Localtime from "../components/Localtime";
 import ListLink from "../components/ListLink";
 import type { News } from "../lib/bbs";
@@ -28,7 +28,7 @@ export default function BBSPage() {
     [{ label: bbs.site.name, to: `/bbs/${handle}` }],
     [bbs, handle],
   );
-  useTitle(`${bbs.site.name} — atbbs`);
+  usePageTitle(`${bbs.site.name} — atbbs`);
 
   if (user && bbs.site.bannedDids.has(user.did))
     return (
@@ -91,12 +91,12 @@ export default function BBSPage() {
           Boards
         </h2>
         <div className="space-y-1">
-          {bbs.site.boards.map((b) => (
+          {bbs.site.boards.map((board) => (
             <ListLink
-              key={b.slug}
-              to={`/bbs/${handle}/board/${b.slug}`}
-              name={b.name}
-              description={b.description}
+              key={board.slug}
+              to={`/bbs/${handle}/board/${board.slug}`}
+              name={board.name}
+              description={board.description}
             />
           ))}
         </div>

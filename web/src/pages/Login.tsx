@@ -1,6 +1,6 @@
 import { useState, type SyntheticEvent } from "react";
 import { useAuth } from "../lib/auth";
-import { useTitle } from "../hooks/useTitle";
+import { usePageTitle } from "../hooks/usePageTitle";
 import HandleInput from "../components/HandleInput";
 
 export default function Login() {
@@ -8,7 +8,7 @@ export default function Login() {
   const [handle, setHandle] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  useTitle("Login — atbbs");
+  usePageTitle("Login — atbbs");
 
   async function onSubmit(e: SyntheticEvent) {
     e.preventDefault();
