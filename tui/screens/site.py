@@ -18,7 +18,7 @@ from tui.widgets.breadcrumb import Breadcrumb
 class SiteScreen(Screen):
     BINDINGS = [
         ("escape", "app.pop_screen", "back"),
-        ("ctrl+n", "new_news", "news"),
+        ("ctrl+n", "new_news", "post news"),
         ("ctrl+a", "sysop", "sysop"),
     ]
 
