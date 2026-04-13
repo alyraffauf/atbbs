@@ -13,12 +13,28 @@ from core.models import (
     NetworkError,
 )
 from core import lexicon
+from core.cache import TTLCache
 from core.constellation import get_news
 from core.records import list_pds_records
 from core.slingshot import get_record, get_records_batch, resolve_identity
 
+_bbs_cache = TTLCache(ttl_seconds=300)  # 5 minutes
+
+
+def invalidate_bbs_cache():
+    _bbs_cache.clear()
+
 
 async def resolve_bbs(client: httpx.AsyncClient, handle: str) -> BBS:
+    cached = _bbs_cache.get(handle)
+    if cached:
+        return cached
+    bbs = await _resolve_bbs(client, handle)
+    _bbs_cache.set(handle, bbs)
+    return bbs
+
+
+async def _resolve_bbs(client: httpx.AsyncClient, handle: str) -> BBS:
     """Handle -> fully resolved BBS config."""
     try:
         identity = await resolve_identity(client, handle)

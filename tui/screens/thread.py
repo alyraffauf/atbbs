@@ -17,6 +17,7 @@ from core.records import (
     delete_record,
     reply_from_record,
 )
+from core.resolver import invalidate_bbs_cache
 from core.records import hydrate_replies as fetch_replies
 from core.slingshot import get_record, resolve_identity
 from tui.screens.compose import ComposeReplyScreen
@@ -189,6 +190,7 @@ class ThreadScreen(Screen):
         updater = make_session_updater(self.app.session_store)
         try:
             await create_ban_record(self.app.http_client, session, did, updater)
+            invalidate_bbs_cache()
             self.notify(f"Banned {did}.")
         except Exception:
             self.notify("Could not ban user.", severity="error")
@@ -211,6 +213,7 @@ class ThreadScreen(Screen):
             await create_hidden_record(
                 self.app.http_client, session, post.record_uri, updater
             )
+            invalidate_bbs_cache()
             await post.remove()
             self.notify("Post hidden.")
         except Exception:

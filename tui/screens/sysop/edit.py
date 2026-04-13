@@ -7,6 +7,7 @@ from textual.widgets import Footer, Input, Static, TextArea
 from core import lexicon, limits
 from core.models import AuthError, BBS
 from core.records import delete_record, put_board_record, put_site_record
+from core.resolver import invalidate_bbs_cache
 from core.util import now_iso
 from tui.util import make_session_updater, require_session
 from tui.widgets.breadcrumb import Breadcrumb
@@ -188,6 +189,7 @@ class SysopEditScreen(Screen):
                 },
                 updater,
             )
+            invalidate_bbs_cache()
             self.notify("BBS updated.")
             self.app.pop_screen()
         except AuthError:

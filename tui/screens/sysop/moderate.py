@@ -14,6 +14,7 @@ from core.records import (
     delete_record,
     list_pds_records,
 )
+from core.resolver import invalidate_bbs_cache
 from core.slingshot import resolve_identities_batch, resolve_identity
 from tui.util import make_session_updater
 from tui.widgets.breadcrumb import Breadcrumb
@@ -137,6 +138,7 @@ class SysopModerateScreen(Screen):
                 )
                 del self._hide_rkeys[value]
                 self.notify("Post unhidden.")
+            invalidate_bbs_cache()
             await item.remove()
         except AuthError:
             self.notify("Session expired. Please log in again.", severity="error")
@@ -171,6 +173,7 @@ class SysopModerateScreen(Screen):
 
         try:
             await create_ban_record(client, session, did, updater)
+            invalidate_bbs_cache()
             self.notify(f"Banned {did}.")
             self.query_one("#ban-input", Input).value = ""
             self._load_data()
@@ -197,6 +200,7 @@ class SysopModerateScreen(Screen):
 
         try:
             await create_hidden_record(self.app.http_client, session, uri, updater)
+            invalidate_bbs_cache()
             self.notify("Post hidden.")
             self.query_one("#hide-input", Input).value = ""
             self._load_data()

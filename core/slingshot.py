@@ -2,9 +2,12 @@ import asyncio
 
 import httpx
 
+from core.cache import TTLCache
 from core.models import BacklinkRef, MiniDoc, Record
 
 BASE_URL = "https://slingshot.microcosm.blue/xrpc"
+
+_identity_cache = TTLCache(ttl_seconds=300)  # 5 minutes
 
 
 async def get_record(
@@ -33,18 +36,25 @@ async def get_record_by_uri(client: httpx.AsyncClient, at_uri: str) -> Record:
 
 async def resolve_identity(client: httpx.AsyncClient, identifier: str) -> MiniDoc:
     """Resolve a handle or DID to a MiniDoc."""
+    cached = _identity_cache.get(identifier)
+    if cached:
+        return cached
+
     resp = await client.get(
         f"{BASE_URL}/blue.microcosm.identity.resolveMiniDoc",
         params={"identifier": identifier},
     )
     resp.raise_for_status()
     data = resp.json()
-    return MiniDoc(
+    doc = MiniDoc(
         did=data["did"],
         handle=data["handle"],
         pds=data.get("pds"),
         signing_key=data.get("signing_key"),
     )
+    _identity_cache.set(identifier, doc)
+    _identity_cache.set(doc.did, doc)
+    return doc
 
 
 async def resolve_identities_batch(
