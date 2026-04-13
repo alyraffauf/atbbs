@@ -116,57 +116,57 @@ class ThreadScreen(Screen):
 
         scroll = self.query_one("#thread-scroll")
 
-        for r in result.replies:
-            self._replies_map[r.uri] = r
+        for reply in result.replies:
+            self._replies_map[reply.uri] = reply
 
         # Fetch any quoted replies not already known (in parallel)
         missing = [
-            r.quote
-            for r in result.replies
-            if r.quote and r.quote not in self._replies_map
+            reply.quote
+            for reply in result.replies
+            if reply.quote and reply.quote not in self._replies_map
         ]
 
         async def fetch_quote(uri: str):
             parsed = AtUri.parse(uri)
-            rec, author = await asyncio.gather(
+            record, author = await asyncio.gather(
                 get_record(client, parsed.did, parsed.collection, parsed.rkey),
                 resolve_identity(client, parsed.did),
             )
-            return uri, reply_from_record(rec, author)
+            return uri, reply_from_record(record, author)
 
         if missing:
-            results = await asyncio.gather(
+            quote_results = await asyncio.gather(
                 *[fetch_quote(uri) for uri in missing],
                 return_exceptions=True,
             )
-            for r in results:
-                if isinstance(r, tuple):
-                    self._replies_map[r[0]] = r[1]
+            for quote_result in quote_results:
+                if isinstance(quote_result, tuple):
+                    self._replies_map[quote_result[0]] = quote_result[1]
 
-        for r in result.replies:
+        for reply in result.replies:
             quote_text = None
-            if r.quote and r.quote in self._replies_map:
-                q = self._replies_map[r.quote]
-                body_preview = q.body[:200] + ("..." if len(q.body) > 200 else "")
-                quote_text = f"{q.author.handle}: {body_preview}"
+            if reply.quote and reply.quote in self._replies_map:
+                quoted = self._replies_map[reply.quote]
+                body_preview = quoted.body[:200] + ("..." if len(quoted.body) > 200 else "")
+                quote_text = f"{quoted.author.handle}: {body_preview}"
 
             await scroll.mount(
                 Post(
-                    author=r.author.handle,
-                    date=r.created_at,
-                    body=r.body,
-                    author_did=r.author.did,
-                    author_pds=r.author.pds,
-                    record_uri=r.uri,
+                    author=reply.author.handle,
+                    date=reply.created_at,
+                    body=reply.body,
+                    author_did=reply.author.did,
+                    author_pds=reply.author.pds,
+                    record_uri=reply.uri,
                     collection=lexicon.REPLY,
-                    attachments=r.attachments,
+                    attachments=reply.attachments,
                     quote_text=quote_text,
                 ),
                 before=self.query_one("#page-status-bottom"),
             )
 
         # Focus first reply
-        replies = [p for p in self.query(Post) if p.collection == lexicon.REPLY]
+        replies = [post for post in self.query(Post) if post.collection == lexicon.REPLY]
         if replies:
             replies[0].focus()
 

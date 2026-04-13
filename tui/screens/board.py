@@ -67,16 +67,14 @@ class BoardScreen(Screen):
             self.notify("Could not fetch threads.", severity="error")
             return
 
-        lv = self.query_one("#thread-list", ListView)
-        lv.clear()
-        for t in self.threads:
-            label = (
-                f"  {t.title}  —  {t.author.handle} · {format_datetime(t.created_at)}"
-            )
-            await lv.append(ListItem(Static(label), name=t.uri))
+        thread_list = self.query_one("#thread-list", ListView)
+        thread_list.clear()
+        for thread in self.threads:
+            label = f"  {thread.title}  —  {thread.author.handle} · {format_datetime(thread.created_at)}"
+            await thread_list.append(ListItem(Static(label), name=thread.uri))
 
         if self.threads:
-            lv.index = 0
+            thread_list.index = 0
 
         # Remove old next page button if present
         for btn in self.query("#next-page"):

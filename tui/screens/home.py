@@ -116,27 +116,29 @@ class HomeScreen(Screen):
             if len(raw) > 5:
                 raw = random.sample(raw, 5)
 
-            dids = [r["did"] for r in raw]
+            dids = [record["did"] for record in raw]
             authors = await resolve_identities_batch(client, dids)
 
             items = []
-            for r in raw:
-                did = r["did"]
+            for record in raw:
+                did = record["did"]
                 if did in authors:
-                    name = r["record"].get("name", "")
-                    desc = r["record"].get("description", "")
+                    name = record["record"].get("name", "")
+                    desc = record["record"].get("description", "")
                     handle = authors[did].handle
                     items.append((handle, name, desc))
 
             if not items:
                 return
 
-            lv = self.query_one("#discover-list", ListView)
+            discover_list = self.query_one("#discover-list", ListView)
             for handle, name, desc in items:
-                await lv.append(ListItem(Static(f"  {name or handle}"), name=handle))
+                await discover_list.append(
+                    ListItem(Static(f"  {name or handle}"), name=handle)
+                )
 
             self.query_one("#discover-label").display = True
-            lv.display = True
+            discover_list.display = True
             lv.index = 0  # select first bbs
 
         except Exception:

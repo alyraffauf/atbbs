@@ -119,16 +119,16 @@ class ActivityScreen(Screen):
             await scroll.mount(Static("No messages yet.", classes="subtitle"))
             return
 
-        for a in self._items[:50]:
-            title = a["thread_title"] if a["type"] == "reply" else "quoted your reply"
-            if a["type"] == "reply":
+        for item in self._items[:50]:
+            title = item["thread_title"] if item["type"] == "reply" else "quoted your reply"
+            if item["type"] == "reply":
                 title = f"on: {title}"
             await scroll.mount(
                 Post(
-                    author=a["handle"],
-                    date=a["created_at"],
+                    author=item["handle"],
+                    date=item["created_at"],
                     title=title,
-                    body=a["body"],
+                    body=item["body"],
                 )
             )
 

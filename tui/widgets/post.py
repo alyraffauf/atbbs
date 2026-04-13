@@ -113,9 +113,9 @@ class Post(Widget, can_focus=True):
         if self._quote_text:
             yield Markdown(self._quote_text, classes="post-quote")
         yield Markdown(self._body, classes="post-body")
-        for att in self.attachments:
-            name = att.get("name", "file")
-            cid = att.get("file", {}).get("ref", {}).get("$link", "")
+        for attachment in self.attachments:
+            name = attachment.get("name", "file")
+            cid = attachment.get("file", {}).get("ref", {}).get("$link", "")
             if cid and self.author_pds and self.author_did:
                 url = f"{self.author_pds}/xrpc/com.atproto.sync.getBlob?did={self.author_did}&cid={cid}"
                 yield AttachmentLink(name, url)
