@@ -83,6 +83,9 @@ export default function BBSPage() {
         <p className="text-neutral-500 mb-3">{bbs.site.description}</p>
         <ActionBar>
           <PinButton bbsDid={bbs.identity.did} initialRkey={pinRkey} />
+          <ActionLink to={`/profile/${encodeURIComponent(handle)}`}>
+            operator
+          </ActionLink>
           {isSysop && <ActionLink to="/account/edit">edit</ActionLink>}
           {isSysop && <ActionLink to="/account/moderate">moderate</ActionLink>}
         </ActionBar>
