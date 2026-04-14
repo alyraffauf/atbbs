@@ -14,7 +14,7 @@ const _mainSchema = /*#__PURE__*/ v.record(
         /*#__PURE__*/ v.stringLength(0, 1000),
       ]),
     ),
-    createdAt: /*#__PURE__*/ v.datetimeString(),
+    createdAt: /*#__PURE__*/ v.optional(/*#__PURE__*/ v.datetimeString()),
     /**
      * @maxLength 100
      */
@@ -31,7 +31,6 @@ const _mainSchema = /*#__PURE__*/ v.record(
         /*#__PURE__*/ v.stringLength(0, 50),
       ]),
     ),
-    updatedAt: /*#__PURE__*/ v.optional(/*#__PURE__*/ v.datetimeString()),
   }),
 );
 

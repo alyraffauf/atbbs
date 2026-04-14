@@ -11,6 +11,7 @@ import ErrorPage from "../components/ErrorPage";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
 import OAuthCallback from "../pages/OAuthCallback";
+import ProfilePage from "../pages/ProfilePage";
 import BBS from "../pages/BBS";
 import Board from "../pages/Board";
 import Thread from "../pages/Thread";
@@ -24,6 +25,7 @@ import {
   homeLoader,
   bbsLoader,
   boardLoader,
+  profileLoader,
   threadLoader,
   requireAuthLoader,
   sysopEditLoader,
@@ -81,6 +83,12 @@ const routes: RouteObject[] = [
             element: <News />,
           },
         ],
+      },
+      {
+        path: "/profile/:handle",
+        loader: profileLoader,
+        element: <ProfilePage />,
+        errorElement: <ErrorPage />,
       },
       { path: "*", element: <NotFound /> },
     ],

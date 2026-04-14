@@ -1,7 +1,7 @@
 /** Authenticated PDS write helpers using an atcute Client from useAuth().agent. */
 
 import type { Client } from "@atcute/client";
-import { SITE, BOARD, NEWS, THREAD, REPLY, BAN, HIDE, PIN } from "./lexicon";
+import { SITE, BOARD, NEWS, THREAD, REPLY, BAN, HIDE, PIN, PROFILE } from "./lexicon";
 import { invalidateBBSCache } from "./bbs";
 import { nowIso } from "./util";
 import { getCurrentUser } from "./auth";
@@ -14,6 +14,7 @@ import type {
   XyzAtboardsBan,
   XyzAtboardsHide,
   XyzAtboardsPin,
+  XyzAtboardsProfile,
 } from "../lexicons";
 
 // --- Lexicon value types ---
@@ -29,6 +30,7 @@ type NewsValue = Omit<XyzAtboardsNews.Main, "$type">;
 type BanValue = Omit<XyzAtboardsBan.Main, "$type">;
 type HideValue = Omit<XyzAtboardsHide.Main, "$type">;
 type PinValue = Omit<XyzAtboardsPin.Main, "$type">;
+type ProfileValue = Omit<XyzAtboardsProfile.Main, "$type">;
 
 interface BlobRef {
   $type: "blob";
@@ -262,4 +264,21 @@ export async function createPin(rpc: Client, did: string) {
     createdAt: nowIso(),
   };
   return createRecord(rpc, PIN, value);
+}
+
+// --- Profiles ---
+
+export async function putProfile(
+  rpc: Client,
+  name?: string,
+  pronouns?: string,
+  bio?: string,
+) {
+  const value: ProfileValue = {
+    ...(name ? { name } : {}),
+    ...(pronouns ? { pronouns } : {}),
+    ...(bio ? { bio } : {}),
+    createdAt: nowIso() as ProfileValue["createdAt"],
+  };
+  return putRecord(rpc, PROFILE, "self", value);
 }

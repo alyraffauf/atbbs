@@ -7,7 +7,7 @@
       "key": "literal:self",
       "record": {
         "type": "object",
-        "required": ["createdAt"],
+        "required": [],
         "properties": {
           "name": {
             "type": "string",
@@ -22,10 +22,6 @@
             "maxLength": 1000
           },
           "createdAt": {
-            "type": "string",
-            "format": "datetime"
-          },
-          "updatedAt": {
             "type": "string",
             "format": "datetime"
           }

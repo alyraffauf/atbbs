@@ -12,3 +12,6 @@ export const NEWS_BODY = 10000;
 export const REPLY_BODY = 10000;
 export const ATTACHMENT_NAME = 256;
 export const MAX_ATTACHMENTS = 10;
+export const PROFILE_NAME = 100;
+export const PROFILE_PRONOUNS = 50;
+export const PROFILE_BIO = 1000;

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { formatFullDate, relativeDate } from "../../lib/util";
 
 interface PostMetaProps {
@@ -8,7 +9,13 @@ interface PostMetaProps {
 export default function PostMeta({ handle, createdAt }: PostMetaProps) {
   return (
     <div className="flex items-baseline gap-2">
-      <span className="text-neutral-200">{handle}</span>
+      <Link
+        to={`/profile/${encodeURIComponent(handle)}`}
+        className="text-neutral-200 hover:underline"
+        onClick={(event) => event.stopPropagation()}
+      >
+        {handle}
+      </Link>
       <span className="text-neutral-600">·</span>
       <time
         className="text-xs text-neutral-500"
