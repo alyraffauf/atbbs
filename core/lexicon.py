@@ -8,5 +8,6 @@ REPLY = "xyz.atboards.reply"
 BAN = "xyz.atboards.ban"
 HIDE = "xyz.atboards.hide"
 PIN = "xyz.atboards.pin"
+PROFILE = "xyz.atboards.profile"
 
-OAUTH_SCOPE = f"atproto blob:*/* repo:{SITE} repo:{BOARD} repo:{NEWS} repo:{THREAD} repo:{REPLY} repo:{BAN} repo:{HIDE} repo:{PIN}"
+OAUTH_SCOPE = f"atproto blob:*/* repo:{SITE} repo:{BOARD} repo:{NEWS} repo:{THREAD} repo:{REPLY} repo:{BAN} repo:{HIDE} repo:{PIN} repo:{PROFILE}"

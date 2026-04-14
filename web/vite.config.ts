@@ -16,6 +16,7 @@ const SCOPE = [
   "repo:xyz.atboards.ban",
   "repo:xyz.atboards.hide",
   "repo:xyz.atboards.pin",
+  "repo:xyz.atboards.profile",
 ].join(" ");
 
 interface ClientMetadata {
