@@ -37,7 +37,7 @@ export default function Login() {
   const dropdownOpen = dropdown.focused && matches.length > 0;
 
   return (
-    <div className="h-full flex flex-col justify-center overflow-hidden max-w-md mx-auto">
+    <div className="h-full flex flex-col justify-center overflow-hidden">
       <div className="text-center mb-8">
         <picture>
           <source
@@ -48,14 +48,14 @@ export default function Login() {
             src="/hero.svg"
             alt="@bbs"
             className="mx-auto mb-4"
-            style={{ width: 180, imageRendering: "pixelated" }}
+            style={{ width: 276, imageRendering: "pixelated" }}
           />
         </picture>
-        <h1 className="text-lg text-neutral-200 mb-2">
+        <h1 className="text-lg text-neutral-400 mb-2">
           Log in with any{" "}
           <a
             href="https://atproto.com"
-            className="text-neutral-200 underline underline-offset-2 hover:text-neutral-300"
+            className="text-neutral-400 hover:text-neutral-300 underline underline-offset-2"
           >
             AT Protocol
           </a>
