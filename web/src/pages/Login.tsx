@@ -1,7 +1,8 @@
-import { useRef, useState, type SyntheticEvent } from "react";
+import { useState, type SyntheticEvent } from "react";
 import { useAuth } from "../lib/auth";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { useHandleSearch } from "../hooks/useHandleSearch";
+import { useDropdown } from "../hooks/useDropdown";
 import HandleInput from "../components/form/HandleInput";
 import { Button } from "../components/form/Form";
 
@@ -10,9 +11,8 @@ export default function Login() {
   const [handle, setHandle] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const blurTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const matches = useHandleSearch(handle);
+  const dropdown = useDropdown(matches.length);
   usePageTitle("Login — atbbs");
 
   async function onSubmit(event: SyntheticEvent) {
@@ -29,17 +29,10 @@ export default function Login() {
 
   function selectHandle(selected: string) {
     setHandle(selected);
-    setFocused(false);
+    dropdown.close();
   }
 
-  function onFocus() {
-    clearTimeout(blurTimeout.current);
-    setFocused(true);
-  }
-
-  function onBlur() {
-    blurTimeout.current = setTimeout(() => setFocused(false), 150);
-  }
+  const dropdownOpen = dropdown.focused && matches.length > 0;
 
   return (
     <div className="h-full flex flex-col justify-center overflow-hidden max-w-md mx-auto">
@@ -70,7 +63,16 @@ export default function Login() {
 
       {error && <p className="text-red-400 mb-4 text-center">{error}</p>}
 
-      <div onFocus={onFocus} onBlur={onBlur} className="mb-6">
+      <div
+        onFocus={dropdown.onFocus}
+        onBlur={dropdown.onBlur}
+        onKeyDown={(event) =>
+          dropdown.onKeyDown(event, (index) =>
+            selectHandle(matches[index].handle),
+          )
+        }
+        className="mb-6"
+      >
         <form onSubmit={onSubmit} className="flex gap-2">
           <HandleInput
             name="handle"
@@ -79,23 +81,34 @@ export default function Login() {
             required
             className="flex-1"
             aria-autocomplete="list"
-            aria-expanded={focused && matches.length > 0}
+            aria-expanded={dropdownOpen}
+            aria-activedescendant={
+              dropdown.activeIndex >= 0
+                ? `login-option-${dropdown.activeIndex}`
+                : undefined
+            }
             aria-label="Enter your handle"
           />
           <Button type="submit" disabled={busy}>
             {busy ? "..." : "log in"}
           </Button>
         </form>
-        {focused && matches.length > 0 && (
+        {dropdownOpen && (
           <div className="relative">
             <div role="listbox" className="absolute left-0 right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded shadow-lg z-10">
-              {matches.map((match) => (
+              {matches.map((match, index) => (
                 <button
                   key={match.handle}
+                  id={`login-option-${index}`}
                   type="button"
                   role="option"
+                  aria-selected={index === dropdown.activeIndex}
                   onClick={() => selectHandle(match.handle)}
-                  className="flex items-center gap-3 w-full px-3 py-2 text-left hover:bg-neutral-800 first:rounded-t last:rounded-b"
+                  className={`flex items-center gap-3 w-full px-3 py-2 text-left first:rounded-t last:rounded-b ${
+                    index === dropdown.activeIndex
+                      ? "bg-neutral-800"
+                      : "hover:bg-neutral-800"
+                  }`}
                 >
                   {match.avatar && (
                     <img
