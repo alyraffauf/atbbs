@@ -3,20 +3,20 @@ import { Link } from "react-router-dom";
 import { parseAtUri } from "../lib/util";
 import PostBody from "./post/PostBody";
 import PostMeta from "./post/PostMeta";
-import type { InboxItem } from "../router/loaders";
+import type { ActivityItem } from "../lib/activity";
 
 const PAGE_SIZE = 10;
 
-interface InboxListProps {
-  items: InboxItem[];
+interface ActivityListProps {
+  items: ActivityItem[];
   userHandle: string;
 }
 
-export default function InboxList({ items, userHandle }: InboxListProps) {
+export default function ActivityList({ items, userHandle }: ActivityListProps) {
   const [shown, setShown] = useState(PAGE_SIZE);
 
   if (items.length === 0)
-    return <p className="text-neutral-500">No messages yet.</p>;
+    return <p className="text-neutral-500">No activity yet.</p>;
 
   return (
     <div>

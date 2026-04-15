@@ -1,6 +1,6 @@
 import { getRecord } from "../../lib/atproto";
 import { ensureAuthReady, getCurrentUser } from "../../lib/auth";
-import { fetchInbox } from "../../lib/inbox";
+import { fetchActivity } from "../../lib/activity";
 import { fetchPins } from "../../lib/pins";
 import { fetchMyThreads } from "../../lib/mythreads";
 import { SITE } from "../../lib/lexicon";
@@ -21,7 +21,7 @@ export async function homeLoader() {
   return {
     user,
     hasBBS,
-    items: fetchInbox(user.did, user.pdsUrl),
+    activity: fetchActivity(user.did, user.pdsUrl),
     pins: fetchPins(user.pdsUrl, user.did),
     threads: fetchMyThreads(user.pdsUrl, user.did),
   };

@@ -7,9 +7,9 @@ import { usePageTitle } from "../hooks/usePageTitle";
 import DialBBS, { type Suggestion } from "../components/DialBBS";
 import PinnedList from "../components/PinnedList";
 import MyThreadList from "../components/MyThreadList";
-import InboxList from "../components/InboxList";
+import ActivityList from "../components/ActivityList";
 import BBSPanel from "../components/BBSPanel";
-import type { InboxItem, PinnedBBS, MyThread } from "../router/loaders";
+import type { ActivityItem, PinnedBBS, MyThread } from "../router/loaders";
 import type { AuthUser } from "../lib/auth";
 
 export interface DashboardData {
@@ -17,7 +17,7 @@ export interface DashboardData {
   hasBBS: boolean;
   pins: Promise<PinnedBBS[]>;
   threads: Promise<MyThread[]>;
-  items: Promise<InboxItem[]>;
+  activity: Promise<ActivityItem[]>;
 }
 
 type Tab = "inbox" | "threads" | "pinned" | "bbs";
@@ -28,7 +28,7 @@ const TAB_STYLE_INACTIVE =
   "py-2 border-b-2 text-neutral-500 hover:text-neutral-300 border-transparent whitespace-nowrap";
 
 export default function Dashboard({ data }: { data: DashboardData }) {
-  const { user, hasBBS, pins, threads, items } = data;
+  const { user, hasBBS, pins, threads, activity } = data;
   const { agent } = useAuth();
   const revalidator = useRevalidator();
   const discovered = useDiscovery();
@@ -77,7 +77,7 @@ export default function Dashboard({ data }: { data: DashboardData }) {
   }
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: "inbox", label: "Replies" },
+    { key: "inbox", label: "Activity" },
     { key: "threads", label: "Threads" },
     { key: "pinned", label: "Pins" },
     { key: "bbs", label: "My BBS" },
@@ -105,9 +105,9 @@ export default function Dashboard({ data }: { data: DashboardData }) {
 
       {tab === "inbox" && (
         <Suspense fallback={loading}>
-          <Await resolve={items}>
-            {(resolved: InboxItem[]) => (
-              <InboxList items={resolved} userHandle={user.handle} />
+          <Await resolve={activity}>
+            {(resolved: ActivityItem[]) => (
+              <ActivityList items={resolved} userHandle={user.handle} />
             )}
           </Await>
         </Suspense>

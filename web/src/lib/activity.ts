@@ -1,4 +1,4 @@
-/** Inbox data fetching — replies to your threads + quotes of your replies. */
+/** Activity data — replies to your threads + quotes of your replies. */
 
 import { fetchAndHydrate, listRecords } from "./atproto";
 import { THREAD, REPLY } from "./lexicon";
@@ -7,7 +7,7 @@ import { mainSchema as threadSchema } from "../lexicons/types/xyz/atboards/threa
 import { mainSchema as replySchema } from "../lexicons/types/xyz/atboards/reply";
 import type { XyzAtboardsThread, XyzAtboardsReply } from "../lexicons";
 
-export interface InboxItem {
+export interface ActivityItem {
   type: "reply" | "quote";
   threadTitle: string;
   threadUri: string;
@@ -21,10 +21,10 @@ async function fetchBacklinkItems(
   sourceUri: string,
   backlinkSource: string,
   excludeDid: string,
-  type: InboxItem["type"],
+  type: ActivityItem["type"],
   threadTitle: string,
   threadUri: string,
-): Promise<InboxItem[]> {
+): Promise<ActivityItem[]> {
   try {
     const { records } = await fetchAndHydrate(sourceUri, backlinkSource, {
       limit: 50,
@@ -44,10 +44,10 @@ async function fetchBacklinkItems(
   }
 }
 
-export async function fetchInbox(
+export async function fetchActivity(
   did: string,
   pdsUrl: string,
-): Promise<InboxItem[]> {
+): Promise<ActivityItem[]> {
   const SCAN_LIMIT = 50;
   const [allThreads, allReplies] = await Promise.all([
     listRecords(pdsUrl, did, THREAD, SCAN_LIMIT),
@@ -82,7 +82,7 @@ export async function fetchInbox(
   ]);
 
   // Deduplicate — prefer "quote" type when the same reply appears as both.
-  const seen = new Map<string, InboxItem>();
+  const seen = new Map<string, ActivityItem>();
   for (const item of results.flat()) {
     const key = item.handle + item.body + item.createdAt;
     if (!seen.has(key) || item.type === "quote") seen.set(key, item);
