@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 
-export function useDropdown(optionCount: number) {
+export function useDropdown(optionCount: number, onSelect: (index: number) => void) {
   const [focused, setFocused] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const blurTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -19,10 +19,7 @@ export function useDropdown(optionCount: number) {
     }, 150);
   }
 
-  function onKeyDown(
-    event: React.KeyboardEvent,
-    onSelect: (index: number) => void,
-  ) {
+  function onKeyDown(event: React.KeyboardEvent) {
     if (optionCount === 0 || !focused) return;
 
     if (event.key === "ArrowDown") {

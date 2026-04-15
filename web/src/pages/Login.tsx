@@ -12,7 +12,9 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const matches = useHandleSearch(handle);
-  const dropdown = useDropdown(matches.length);
+  const dropdown = useDropdown(matches.length, (index) =>
+    selectHandle(matches[index].handle),
+  );
   usePageTitle("Login — atbbs");
 
   async function onSubmit(event: SyntheticEvent) {
@@ -66,11 +68,7 @@ export default function Login() {
       <div
         onFocus={dropdown.onFocus}
         onBlur={dropdown.onBlur}
-        onKeyDown={(event) =>
-          dropdown.onKeyDown(event, (index) =>
-            selectHandle(matches[index].handle),
-          )
-        }
+        onKeyDown={dropdown.onKeyDown}
         className="mb-6"
       >
         <form onSubmit={onSubmit} className="flex gap-2">

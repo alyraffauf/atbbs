@@ -49,7 +49,9 @@ export default function DialBBS({ discovered, suggestions }: DialBBSProps) {
     resolved,
   );
 
-  const dropdown = useDropdown(visibleSuggestions.length);
+  const dropdown = useDropdown(visibleSuggestions.length, (index) =>
+    navigate(visibleSuggestions[index].to),
+  );
   const dropdownOpen = dropdown.focused && visibleSuggestions.length > 0;
 
   function onSubmit(event: SyntheticEvent) {
@@ -72,11 +74,7 @@ export default function DialBBS({ discovered, suggestions }: DialBBSProps) {
     <div
       onFocus={dropdown.onFocus}
       onBlur={dropdown.onBlur}
-      onKeyDown={(event) =>
-        dropdown.onKeyDown(event, (index) =>
-          navigate(visibleSuggestions[index].to),
-        )
-      }
+      onKeyDown={dropdown.onKeyDown}
     >
       <form onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-2">
         <HandleInput
