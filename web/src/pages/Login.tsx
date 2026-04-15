@@ -24,7 +24,7 @@ export default function Login() {
     try {
       await login(handle.trim());
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Login failed.");
+      setError(err instanceof Error ? err.message : "Could not log in.");
       setBusy(false);
     }
   }

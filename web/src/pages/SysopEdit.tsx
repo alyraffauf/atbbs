@@ -70,7 +70,7 @@ export default function SysopEdit() {
       {error && <p className="text-red-500 mb-4">{error}</p>}
       <form onSubmit={onSubmit} className="space-y-6">
         <div>
-          <label className="block text-neutral-400 mb-1">BBS Name</label>
+          <label className="text-xs text-neutral-400 uppercase tracking-wide">BBS Name</label>
           <Input
             name="name"
             required
@@ -80,7 +80,7 @@ export default function SysopEdit() {
           />
         </div>
         <div>
-          <label className="block text-neutral-400 mb-1">Description</label>
+          <label className="text-xs text-neutral-400 uppercase tracking-wide">Description</label>
           <Input
             name="description"
             value={description}
@@ -89,7 +89,7 @@ export default function SysopEdit() {
           />
         </div>
         <div>
-          <label className="block text-neutral-400 mb-1">Welcome Message</label>
+          <label className="text-xs text-neutral-400 uppercase tracking-wide">Welcome Message</label>
           <Textarea
             name="intro"
             rows={6}
@@ -99,7 +99,7 @@ export default function SysopEdit() {
           />
         </div>
         <BoardRowEditor boards={boards} onChange={setBoards} />
-        <Button type="submit">save changes</Button>
+        <Button type="submit">save</Button>
       </form>
     </>
   );

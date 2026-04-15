@@ -49,7 +49,7 @@ export default function Profile() {
           Recent Threads
         </p>
         <Suspense
-          fallback={<p className="text-neutral-400">Loading...</p>}
+          fallback={<p className="text-neutral-400">loading...</p>}
         >
           <Await resolve={threads}>
             {(resolved: MyThread[]) => (

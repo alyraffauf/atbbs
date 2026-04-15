@@ -15,10 +15,10 @@ export default function OAuthCallback() {
       })
       .catch((e) => {
         console.error(e);
-        setError(e?.message ?? "Sign-in failed.");
+        setError(e?.message ?? "Could not sign in.");
       });
   }, [navigate]);
 
   if (error) return <p className="text-red-400">{error}</p>;
-  return <p className="text-neutral-400">Signing in…</p>;
+  return <p className="text-neutral-400">signing in...</p>;
 }

@@ -15,7 +15,7 @@ export default function BBSPanel({ hasBBS, userHandle, onDelete }: BBSPanelProps
     return (
       <>
         <p className="text-neutral-400 mb-4">
-          You haven't set up a BBS yet.
+          No BBS yet.
         </p>
         <ActionLink to="/account/create">create a bbs</ActionLink>
       </>

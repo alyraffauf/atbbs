@@ -104,7 +104,7 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
       setFiles([]);
       setQuote(null);
     } catch {
-      alert("Failed to post reply.");
+      alert("Could not post reply.");
     } finally {
       setPosting(false);
     }
@@ -124,7 +124,7 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
       await deleteRecord(agent, REPLY, reply.rkey);
     } catch (e: unknown) {
       console.error("deleteRecord failed:", e);
-      alert(`Failed to delete: ${e instanceof Error ? e.message : e}`);
+      alert(`Could not delete: ${e instanceof Error ? e.message : e}`);
       return;
     }
     removeReply(reply.uri);
@@ -162,7 +162,7 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
 
       <div className="space-y-2 mt-4">
         {loadingPage ? (
-          <p className="text-neutral-400">Loading replies...</p>
+          <p className="text-neutral-400">loading...</p>
         ) : replies.length === 0 && !user ? (
           <p className="text-neutral-400">No replies yet.</p>
         ) : (

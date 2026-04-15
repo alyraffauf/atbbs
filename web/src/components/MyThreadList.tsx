@@ -13,7 +13,7 @@ export default function MyThreadList({ threads }: MyThreadListProps) {
   const [shown, setShown] = useState(PAGE_SIZE);
 
   if (threads.length === 0)
-    return <p className="text-neutral-400">You haven't posted any threads yet.</p>;
+    return <p className="text-neutral-400">No threads yet.</p>;
 
   return (
     <div>

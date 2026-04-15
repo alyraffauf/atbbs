@@ -14,7 +14,7 @@ export default function PinnedList({ pins }: PinnedListProps) {
   if (pins.length === 0)
     return (
       <p className="text-neutral-400">
-        No pinned BBSes yet. Visit a BBS and pin it to see it here.
+        No pinned BBSes yet.
       </p>
     );
 

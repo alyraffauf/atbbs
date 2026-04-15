@@ -83,7 +83,7 @@ export default function Dashboard({ data }: { data: DashboardData }) {
     { key: "bbs", label: "My BBS" },
   ];
 
-  const loading = <p className="text-neutral-400">Loading...</p>;
+  const loading = <p className="text-neutral-400">loading...</p>;
 
   return (
     <>

@@ -98,7 +98,7 @@ export default function BoardPage() {
       navigate(`/bbs/${handle}/thread/${did}/${rkey}`);
     } catch (err: unknown) {
       console.error("createThread failed:", err);
-      alert(`Failed to post: ${err instanceof Error ? err.message : err}`);
+      alert(`Could not post: ${err instanceof Error ? err.message : err}`);
     }
   }
 
@@ -153,7 +153,7 @@ export default function BoardPage() {
             disabled={loadingMore}
             className="text-neutral-400 hover:text-neutral-300"
           >
-            {loadingMore ? "loading…" : "next page →"}
+            {loadingMore ? "loading..." : "next page →"}
           </button>
         </div>
       )}
