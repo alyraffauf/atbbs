@@ -4,7 +4,6 @@ import {
   getRecordByUri,
   listRecords,
   resolveIdentitiesBatch,
-  resolveIdentity,
 } from "../../lib/atproto";
 import { BAN, HIDE } from "../../lib/lexicon";
 import { parseAtUri } from "../../lib/util";
@@ -35,27 +34,36 @@ function buildRkeyMap<T>(
 }
 
 async function hydrateHiddenPosts(uris: Set<string>): Promise<HiddenInfo[]> {
-  const hidden: HiddenInfo[] = [];
-  for (const uri of uris) {
+  if (uris.size === 0) return [];
+
+  const uriList = [...uris];
+  const dids = [...new Set(uriList.map((uri) => parseAtUri(uri).did))];
+
+  const [identities, records] = await Promise.all([
+    resolveIdentitiesBatch(dids),
+    Promise.allSettled(uriList.map(getRecordByUri)),
+  ]);
+
+  return uriList.map((uri, index) => {
     const did = parseAtUri(uri).did;
-    let handle = did;
-    try {
-      handle = (await resolveIdentity(did)).handle;
-    } catch {}
-    try {
-      const record = await getRecordByUri(uri);
-      const value = record.value as unknown as { title?: string; body?: string };
-      hidden.push({
+    const handle = identities[did]?.handle ?? did;
+    const result = records[index];
+
+    if (result.status === "fulfilled") {
+      const value = result.value.value as unknown as {
+        title?: string;
+        body?: string;
+      };
+      return {
         uri,
         handle,
         title: value.title ?? "",
         body: (value.body ?? "").substring(0, 100),
-      });
-    } catch {
-      hidden.push({ uri, handle, title: "", body: uri });
+      };
     }
-  }
-  return hidden;
+
+    return { uri, handle, title: "", body: uri };
+  });
 }
 
 export async function sysopEditLoader() {
