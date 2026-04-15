@@ -107,19 +107,18 @@ export default function Login() {
         )}
       </div>
 
-      <div className="text-neutral-400 text-xs space-y-2">
+      <div className="bg-neutral-900 border border-neutral-800 rounded p-4 text-xs text-neutral-400 space-y-3">
         <p>Once signed in, you can:</p>
-        <ul className="list-disc list-inside space-y-1 text-neutral-400">
+        <ul className="list-disc list-inside space-y-1">
           <li>Post threads and replies</li>
           <li>Pin boards you like</li>
           <li>Set up a profile</li>
           <li>Start your own community</li>
         </ul>
+        <p className="text-neutral-400 pt-3 border-t border-neutral-800">
+          You'll be redirected to your hosting provider to continue.
+        </p>
       </div>
-
-      <p className="text-neutral-400 text-xs mt-6">
-        You'll be redirected to your hosting provider to continue.
-      </p>
     </div>
   );
 }
