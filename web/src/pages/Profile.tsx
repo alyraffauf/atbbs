@@ -45,11 +45,11 @@ export default function Profile() {
         onEdit={() => setEditing(true)}
       />
       <div className="mt-8">
-        <p className="text-xs text-neutral-500 uppercase tracking-wide mb-3">
+        <p className="text-xs text-neutral-400 uppercase tracking-wide mb-3">
           Recent Threads
         </p>
         <Suspense
-          fallback={<p className="text-neutral-500">Loading...</p>}
+          fallback={<p className="text-neutral-400">Loading...</p>}
         >
           <Await resolve={threads}>
             {(resolved: MyThread[]) => (

@@ -40,7 +40,7 @@ export default function MobileMenu({ user, onLogout }: MobileMenuProps) {
               <Link to={`/profile/${encodeURIComponent(user.handle)}`} onClick={close} className="text-neutral-300 hover:text-neutral-200">
                 {user.handle}
               </Link>
-              <button type="button" onClick={() => { close(); onLogout(); }} className="text-neutral-500 hover:text-neutral-300">
+              <button type="button" onClick={() => { close(); onLogout(); }} className="text-neutral-400 hover:text-neutral-300">
                 log out
               </button>
             </>

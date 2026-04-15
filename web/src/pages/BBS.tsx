@@ -35,7 +35,7 @@ export default function BBSPage() {
 
   if (user && bbs.site.bannedDids.has(user.did))
     return (
-      <p className="text-neutral-500">You have been banned from this BBS.</p>
+      <p className="text-neutral-400">You have been banned from this BBS.</p>
     );
 
   const isSysop = user && user.did === bbs.identity.did;
@@ -80,7 +80,7 @@ export default function BBSPage() {
     <>
       <div className="mb-8">
         <h1 className="text-lg text-neutral-200 mb-1">{bbs.site.name}</h1>
-        <p className="text-neutral-500 mb-3">{bbs.site.description}</p>
+        <p className="text-neutral-400 mb-3">{bbs.site.description}</p>
         <ActionBar>
           <PinButton bbsDid={bbs.identity.did} initialRkey={pinRkey} />
           <ActionLink to={`/profile/${encodeURIComponent(handle)}`}>
@@ -92,13 +92,13 @@ export default function BBSPage() {
       </div>
 
       {bbs.site.intro && (
-        <pre className="bg-neutral-900 border border-neutral-800 rounded p-4 mb-8 overflow-x-auto text-neutral-500 text-xs leading-snug">
+        <pre className="bg-neutral-900 border border-neutral-800 rounded p-4 mb-8 overflow-x-auto text-neutral-400 text-xs leading-snug">
           {bbs.site.intro}
         </pre>
       )}
 
       <section className="mb-8">
-        <h2 className="text-xs text-neutral-500 uppercase tracking-wide mb-3">
+        <h2 className="text-xs text-neutral-400 uppercase tracking-wide mb-3">
           Boards
         </h2>
         <div className="space-y-1">
@@ -114,7 +114,7 @@ export default function BBSPage() {
       </section>
 
       <section>
-        <h2 className="text-xs text-neutral-500 uppercase tracking-wide mb-3">
+        <h2 className="text-xs text-neutral-400 uppercase tracking-wide mb-3">
           News
         </h2>
 
@@ -153,7 +153,7 @@ export default function BBSPage() {
                 <div className="flex items-baseline justify-between mb-2">
                   <div className="flex items-baseline gap-2">
                     <span className="text-neutral-200">{item.title}</span>
-                    <span className="text-neutral-600">·</span>
+                    <span className="text-neutral-400">·</span>
                     <Localtime iso={item.createdAt} />
                   </div>
                   {isSysop && (
@@ -164,7 +164,7 @@ export default function BBSPage() {
                           e.preventDefault();
                           removeNews(item.tid);
                         }}
-                        className="text-xs text-neutral-500 hover:text-red-400"
+                        className="text-xs text-neutral-400 hover:text-red-400"
                       >
                         delete
                       </button>
@@ -180,14 +180,14 @@ export default function BBSPage() {
             {!showAllNews && allNews.length > 3 && (
               <button
                 onClick={() => setShowAllNews(true)}
-                className="text-neutral-500 hover:text-neutral-300 text-xs mt-2"
+                className="text-neutral-400 hover:text-neutral-300 text-xs mt-2"
               >
                 show more
               </button>
             )}
           </>
         ) : (
-          <p className="text-neutral-500">No news yet.</p>
+          <p className="text-neutral-400">No news yet.</p>
         )}
       </section>
     </>

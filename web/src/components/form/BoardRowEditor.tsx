@@ -26,7 +26,7 @@ export default function BoardRowEditor({
   return (
     <div>
       <label className="block text-neutral-400 mb-1">Boards</label>
-      <p className="text-neutral-500 text-xs mb-2">
+      <p className="text-neutral-400 text-xs mb-2">
         One board per row: slug, name, description
       </p>
       <div className="space-y-2">
@@ -58,7 +58,7 @@ export default function BoardRowEditor({
       <button
         type="button"
         onClick={() => onChange([...boards, { slug: "", name: "", desc: "" }])}
-        className="mt-2 text-neutral-500 hover:text-neutral-300 text-xs"
+        className="mt-2 text-neutral-400 hover:text-neutral-300 text-xs"
       >
         + add board
       </button>

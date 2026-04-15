@@ -16,7 +16,7 @@ export default function ActivityList({ items, userHandle }: ActivityListProps) {
   const [shown, setShown] = useState(PAGE_SIZE);
 
   if (items.length === 0)
-    return <p className="text-neutral-500">No activity yet.</p>;
+    return <p className="text-neutral-400">No activity yet.</p>;
 
   return (
     <div>
@@ -31,7 +31,7 @@ export default function ActivityList({ items, userHandle }: ActivityListProps) {
             className="block border border-neutral-800/50 rounded p-4 mb-2 hover:bg-neutral-800"
           >
             <PostMeta handle={item.handle} createdAt={item.createdAt} />
-            <p className="text-xs text-neutral-500 mb-1">
+            <p className="text-xs text-neutral-400 mb-1">
               {item.type === "quote"
                 ? "quoted your reply"
                 : `on: ${item.threadTitle}`}
@@ -46,7 +46,7 @@ export default function ActivityList({ items, userHandle }: ActivityListProps) {
         <div className="mt-4 text-center">
           <button
             onClick={() => setShown((prev) => prev + PAGE_SIZE)}
-            className="text-neutral-500 hover:text-neutral-300"
+            className="text-neutral-400 hover:text-neutral-300"
           >
             show more
           </button>

@@ -13,7 +13,7 @@ export default function PinnedList({ pins }: PinnedListProps) {
 
   if (pins.length === 0)
     return (
-      <p className="text-neutral-500">
+      <p className="text-neutral-400">
         No pinned BBSes yet. Visit a BBS and pin it to see it here.
       </p>
     );
@@ -31,7 +31,7 @@ export default function PinnedList({ pins }: PinnedListProps) {
       {shown < pins.length && (
         <button
           onClick={() => setShown((prev) => prev + PAGE_SIZE)}
-          className="text-xs text-neutral-500 hover:text-neutral-300 mt-2"
+          className="text-xs text-neutral-400 hover:text-neutral-300 mt-2"
         >
           show more
         </button>

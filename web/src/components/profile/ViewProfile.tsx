@@ -26,11 +26,11 @@ export default function ViewProfile({
           <ActionButton onClick={onEdit}>edit profile</ActionButton>
         )}
       </div>
-      <p className="text-neutral-500">
+      <p className="text-neutral-400">
         {handle}
         {profile?.pronouns && (
           <>
-            <span className="text-neutral-600 mx-1">·</span>
+            <span className="text-neutral-400 mx-1">·</span>
             {profile.pronouns}
           </>
         )}
@@ -42,7 +42,7 @@ export default function ViewProfile({
       )}
       {profile?.bbsName && (
         <div className="mt-6">
-          <p className="text-xs text-neutral-500 uppercase tracking-wide mb-2">
+          <p className="text-xs text-neutral-400 uppercase tracking-wide mb-2">
             BBS
           </p>
           <Link
@@ -52,19 +52,19 @@ export default function ViewProfile({
             <div>
               <div className="text-neutral-200">{profile.bbsName}</div>
               {profile.bbsDescription && (
-                <div className="text-xs text-neutral-500 mt-1">
+                <div className="text-xs text-neutral-400 mt-1">
                   {profile.bbsDescription}
                 </div>
               )}
             </div>
-            <span className="text-neutral-600 group-hover:text-neutral-300 text-lg ml-4">
+            <span className="text-neutral-400 group-hover:text-neutral-300 text-lg ml-4">
               →
             </span>
           </Link>
         </div>
       )}
       {!profile?.name && !profile?.bio && !profile?.bbsName && !isOwner && (
-        <p className="text-neutral-500 mt-4">No profile yet.</p>
+        <p className="text-neutral-400 mt-4">No profile yet.</p>
       )}
     </>
   );

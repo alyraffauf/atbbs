@@ -1,4 +1,4 @@
-const linkStyle = "text-neutral-500 hover:text-neutral-300";
+const linkStyle = "text-neutral-400 hover:text-neutral-300";
 
 const links = [
   { href: "https://github.com/alyraffauf/atbbs", label: "github" },
@@ -8,7 +8,7 @@ const links = [
 export default function Footer() {
   return (
     <footer className="border-t border-neutral-800 mt-auto">
-      <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between text-xs text-neutral-500">
+      <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between text-xs text-neutral-400">
         <span>
           made by <a href="https://aly.codes" className={linkStyle}>aly.codes</a>
         </span>

@@ -66,13 +66,13 @@ export default function PageNav({ current, total, onGo }: PageNavProps) {
             <button
               key={slot.key}
               onClick={() => onGo(slot.page!)}
-              className="text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800 rounded px-3 py-1"
+              className="text-neutral-400 hover:text-neutral-300 hover:bg-neutral-800 rounded px-3 py-1"
             >
               {slot.label}
             </button>
           );
         return (
-          <span key={slot.key} className="text-neutral-600 px-2 py-1">
+          <span key={slot.key} className="text-neutral-400 px-2 py-1">
             {slot.label}
           </span>
         );

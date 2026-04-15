@@ -27,7 +27,7 @@ export default function NewsPage() {
   );
 
   if (!item) {
-    return <p className="text-neutral-500">News post not found.</p>;
+    return <p className="text-neutral-400">News post not found.</p>;
   }
 
   const isSysop = !!(user && user.did === bbs.identity.did);

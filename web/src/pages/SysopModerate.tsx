@@ -78,7 +78,7 @@ export default function SysopModerate() {
   return (
     <>
       <h1 className="text-lg text-neutral-200 mb-1">Moderate BBS</h1>
-      <p className="text-neutral-500 mb-6">
+      <p className="text-neutral-400 mb-6">
         Manage banned users and hidden posts.
       </p>
 
@@ -103,7 +103,7 @@ export default function SysopModerate() {
                 {banRkeys[did] && (
                   <button
                     onClick={() => unban(banRkeys[did])}
-                    className="text-xs text-neutral-500 hover:text-red-400 shrink-0"
+                    className="text-xs text-neutral-400 hover:text-red-400 shrink-0"
                   >
                     unban
                   </button>
@@ -142,7 +142,7 @@ export default function SysopModerate() {
                 {hideRkeys[p.uri] && (
                   <button
                     onClick={() => unhide(hideRkeys[p.uri])}
-                    className="text-xs text-neutral-500 hover:text-red-400 shrink-0"
+                    className="text-xs text-neutral-400 hover:text-red-400 shrink-0"
                   >
                     unhide
                   </button>

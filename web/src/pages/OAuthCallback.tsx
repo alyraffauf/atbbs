@@ -20,5 +20,5 @@ export default function OAuthCallback() {
   }, [navigate]);
 
   if (error) return <p className="text-red-400">{error}</p>;
-  return <p className="text-neutral-500">Signing in…</p>;
+  return <p className="text-neutral-400">Signing in…</p>;
 }

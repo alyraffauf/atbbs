@@ -66,7 +66,7 @@ export default function SysopEdit() {
   return (
     <>
       <h1 className="text-lg text-neutral-200 mb-1">Edit BBS</h1>
-      <p className="text-neutral-500 mb-6">Update your BBS.</p>
+      <p className="text-neutral-400 mb-6">Update your BBS.</p>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       <form onSubmit={onSubmit} className="space-y-6">
         <div>

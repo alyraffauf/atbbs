@@ -63,7 +63,7 @@ export default function SysopCreate() {
   return (
     <>
       <h1 className="text-lg text-neutral-200 mb-1">Create a BBS</h1>
-      <p className="text-neutral-500 mb-6">
+      <p className="text-neutral-400 mb-6">
         Set up your BBS. Your handle becomes the address.
       </p>
       {error && <p className="text-red-500 mb-4">{error}</p>}

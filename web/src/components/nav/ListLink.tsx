@@ -14,7 +14,7 @@ export default function ListLink({ to, name, description }: ListLinkProps) {
     >
       <span className="text-neutral-200">{name}</span>
       {description && (
-        <span className="text-neutral-500 text-xs sm:text-sm">
+        <span className="text-neutral-400 text-xs sm:text-sm">
           {description}
         </span>
       )}

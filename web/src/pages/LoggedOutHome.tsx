@@ -11,7 +11,7 @@ export default function LoggedOutHome() {
 
   const activeTab = "py-2 border-b-2 text-neutral-200 border-neutral-200";
   const inactiveTab =
-    "py-2 border-b-2 text-neutral-500 hover:text-neutral-300 border-transparent";
+    "py-2 border-b-2 text-neutral-400 hover:text-neutral-300 border-transparent";
 
   return (
     <div className="h-full flex flex-col justify-center overflow-hidden">
@@ -38,7 +38,7 @@ export default function LoggedOutHome() {
           </a>
           .
         </h1>
-        <p className="text-neutral-500 max-w-md mx-auto">
+        <p className="text-neutral-400 max-w-md mx-auto">
           Build a community from your existing account. Tightly curated, fully
           portable, open by design.
         </p>
@@ -67,31 +67,31 @@ export default function LoggedOutHome() {
         </div>
         {tab === "pip" && (
           <pre className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-400 text-xs">
-            <span className="text-neutral-500 select-none">$ </span>pip install
+            <span className="text-neutral-400 select-none">$ </span>pip install
             atbbs
             {"\n"}
-            <span className="text-neutral-500 select-none">$ </span>atbbs
+            <span className="text-neutral-400 select-none">$ </span>atbbs
           </pre>
         )}
         {tab === "uv" && (
           <pre className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-400 text-xs">
-            <span className="text-neutral-500 select-none">$ </span>uv tool
+            <span className="text-neutral-400 select-none">$ </span>uv tool
             install atbbs
             {"\n"}
-            <span className="text-neutral-500 select-none">$ </span>atbbs
+            <span className="text-neutral-400 select-none">$ </span>atbbs
           </pre>
         )}
         {tab === "brew" && (
           <pre className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-400 text-xs">
-            <span className="text-neutral-500 select-none">$ </span>brew install
+            <span className="text-neutral-400 select-none">$ </span>brew install
             alyraffauf/tap/atbbs
             {"\n"}
-            <span className="text-neutral-500 select-none">$ </span>atbbs
+            <span className="text-neutral-400 select-none">$ </span>atbbs
           </pre>
         )}
         {tab === "telnet" && (
           <pre className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-400 text-xs">
-            <span className="text-neutral-500 select-none">$ </span>telnet
+            <span className="text-neutral-400 select-none">$ </span>telnet
             tel.atbbs.xyz
           </pre>
         )}

@@ -25,9 +25,9 @@ export default function PostMeta({ handle, createdAt }: PostMetaProps) {
       >
         {handle}
       </span>
-      <span className="text-neutral-600">·</span>
+      <span className="text-neutral-400">·</span>
       <time
-        className="text-xs text-neutral-500"
+        className="text-xs text-neutral-400"
         title={formatFullDate(createdAt)}
       >
         {relativeDate(createdAt)}

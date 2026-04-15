@@ -106,7 +106,7 @@ export default function BoardPage() {
     <>
       <div className="mb-6">
         <h1 className="text-lg text-neutral-200 mb-1">{board.name}</h1>
-        <p className="text-neutral-500">{board.description}</p>
+        <p className="text-neutral-400">{board.description}</p>
       </div>
 
       {user && (
@@ -142,7 +142,7 @@ export default function BoardPage() {
             />
           ))
         ) : (
-          <p className="text-neutral-500">No threads yet.</p>
+          <p className="text-neutral-400">No threads yet.</p>
         )}
       </div>
 
@@ -151,7 +151,7 @@ export default function BoardPage() {
           <button
             onClick={loadMore}
             disabled={loadingMore}
-            className="text-neutral-500 hover:text-neutral-300"
+            className="text-neutral-400 hover:text-neutral-300"
           >
             {loadingMore ? "loading…" : "next page →"}
           </button>

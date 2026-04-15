@@ -28,7 +28,7 @@ export default function ErrorPage() {
   return (
     <div className="py-16 text-center">
       <h1 className="text-lg text-neutral-200 mb-2">{title}</h1>
-      {detail && <p className="text-neutral-500 mb-6">{detail}</p>}
+      {detail && <p className="text-neutral-400 mb-6">{detail}</p>}
       <ActionLink to="/">← back to home</ActionLink>
     </div>
   );

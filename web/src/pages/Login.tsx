@@ -57,7 +57,7 @@ export default function Login() {
           />
         </picture>
         <h1 className="text-lg text-neutral-200 mb-2">Log in to atbbs</h1>
-        <p className="text-neutral-500">Use any atproto account.</p>
+        <p className="text-neutral-400">Use any atproto account.</p>
       </div>
 
       {error && <p className="text-red-400 mb-4 text-center">{error}</p>}
@@ -96,7 +96,7 @@ export default function Login() {
                     <div className="text-sm text-neutral-200 truncate">
                       {match.displayName}
                     </div>
-                    <div className="text-xs text-neutral-500 truncate">
+                    <div className="text-xs text-neutral-400 truncate">
                       {match.handle}
                     </div>
                   </div>
@@ -107,9 +107,9 @@ export default function Login() {
         )}
       </div>
 
-      <div className="text-neutral-500 text-xs space-y-2">
+      <div className="text-neutral-400 text-xs space-y-2">
         <p>Once signed in, you can:</p>
-        <ul className="list-disc list-inside space-y-1 text-neutral-600">
+        <ul className="list-disc list-inside space-y-1 text-neutral-400">
           <li>Post threads and replies</li>
           <li>Pin boards you like</li>
           <li>Set up a profile</li>
@@ -117,7 +117,7 @@ export default function Login() {
         </ul>
       </div>
 
-      <p className="text-neutral-600 text-xs mt-6">
+      <p className="text-neutral-400 text-xs mt-6">
         You'll be redirected to your hosting provider to continue.
       </p>
     </div>

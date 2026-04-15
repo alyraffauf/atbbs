@@ -123,7 +123,7 @@ export default function DialBBS({ discovered, suggestions }: DialBBSProps) {
               >
                 {entry.name}
                 {entry.name !== entry.handle && (
-                  <span className="text-neutral-500 ml-2">{entry.handle}</span>
+                  <span className="text-neutral-400 ml-2">{entry.handle}</span>
                 )}
               </Link>
             ))}

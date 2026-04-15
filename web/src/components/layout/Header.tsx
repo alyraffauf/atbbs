@@ -4,7 +4,7 @@ import Logo from "./Logo";
 import HeaderBreadcrumbs from "./HeaderBreadcrumbs";
 import MobileMenu from "./MobileMenu";
 
-const linkStyle = "text-neutral-500 hover:text-neutral-300";
+const linkStyle = "text-neutral-400 hover:text-neutral-300";
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -18,7 +18,7 @@ export default function Header() {
   return (
     <header className="border-b border-neutral-800">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="hidden md:flex items-center gap-2 text-neutral-500 min-w-0 whitespace-nowrap">
+        <div className="hidden md:flex items-center gap-2 text-neutral-400 min-w-0 whitespace-nowrap">
           <Logo />
           <HeaderBreadcrumbs />
         </div>

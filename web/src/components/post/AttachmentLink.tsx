@@ -37,7 +37,7 @@ export default function AttachmentLink({
     <a
       href={`${pds}/xrpc/com.atproto.sync.getBlob?did=${did}&cid=${cid}`}
       onClick={download}
-      className="text-xs text-neutral-500 hover:text-neutral-300 block mt-1 cursor-pointer"
+      className="text-xs text-neutral-400 hover:text-neutral-300 block mt-1 cursor-pointer"
     >
       [{name}]
     </a>

@@ -28,7 +28,7 @@ export default function EditProfile({
   return (
     <div className="space-y-4">
       <div>
-        <label className="text-xs text-neutral-500 uppercase tracking-wide">
+        <label className="text-xs text-neutral-400 uppercase tracking-wide">
           Name
         </label>
         <Input
@@ -39,7 +39,7 @@ export default function EditProfile({
         />
       </div>
       <div>
-        <label className="text-xs text-neutral-500 uppercase tracking-wide">
+        <label className="text-xs text-neutral-400 uppercase tracking-wide">
           Pronouns
         </label>
         <Input
@@ -50,7 +50,7 @@ export default function EditProfile({
         />
       </div>
       <div>
-        <label className="text-xs text-neutral-500 uppercase tracking-wide">
+        <label className="text-xs text-neutral-400 uppercase tracking-wide">
           Bio
         </label>
         <Textarea
@@ -65,7 +65,7 @@ export default function EditProfile({
         <Button onClick={handleSubmit}>save</Button>
         <button
           onClick={onCancel}
-          className="text-neutral-500 hover:text-neutral-300 text-xs"
+          className="text-neutral-400 hover:text-neutral-300 text-xs"
         >
           cancel
         </button>

@@ -14,7 +14,7 @@ export default function DiscoveryList({
 
   return (
     <div>
-      <p className="text-neutral-500 text-xs uppercase tracking-wide mb-3">
+      <p className="text-neutral-400 text-xs uppercase tracking-wide mb-3">
         or try one of these
       </p>
       <div className="space-y-1">

@@ -15,7 +15,7 @@ export default function HeaderBreadcrumbs() {
             <Link
               key={`crumb-${index}`}
               to={crumb.to}
-              className="text-neutral-500 hover:text-neutral-300"
+              className="text-neutral-400 hover:text-neutral-300"
             >
               {crumb.label}
             </Link>

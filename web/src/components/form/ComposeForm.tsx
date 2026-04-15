@@ -57,12 +57,12 @@ export default function ComposeForm({
   return (
     <form onSubmit={onSubmit} className={`space-y-3 ${className}`}>
       {quote && onClearQuote && (
-        <div className="text-xs text-neutral-500">
+        <div className="text-xs text-neutral-400">
           <span>quoting {quote.handle}</span>
           <button
             type="button"
             onClick={onClearQuote}
-            className="text-neutral-500 hover:text-red-400 ml-2"
+            className="text-neutral-400 hover:text-red-400 ml-2"
           >
             x
           </button>

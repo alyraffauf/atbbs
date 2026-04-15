@@ -25,7 +25,7 @@ type Tab = "inbox" | "threads" | "pinned" | "bbs";
 const TAB_STYLE_ACTIVE =
   "py-2 border-b-2 text-neutral-200 border-neutral-200 whitespace-nowrap";
 const TAB_STYLE_INACTIVE =
-  "py-2 border-b-2 text-neutral-500 hover:text-neutral-300 border-transparent whitespace-nowrap";
+  "py-2 border-b-2 text-neutral-400 hover:text-neutral-300 border-transparent whitespace-nowrap";
 
 export default function Dashboard({ data }: { data: DashboardData }) {
   const { user, hasBBS, pins, threads, activity } = data;
@@ -83,7 +83,7 @@ export default function Dashboard({ data }: { data: DashboardData }) {
     { key: "bbs", label: "My BBS" },
   ];
 
-  const loading = <p className="text-neutral-500">Loading...</p>;
+  const loading = <p className="text-neutral-400">Loading...</p>;
 
   return (
     <>
@@ -105,7 +105,7 @@ export default function Dashboard({ data }: { data: DashboardData }) {
 
       {tab === "inbox" && (
         <>
-          <p className="text-neutral-500 text-xs mb-4">
+          <p className="text-neutral-400 text-xs mb-4">
             Recent replies and quotes from other users.
           </p>
           <Suspense fallback={loading}>
@@ -120,7 +120,7 @@ export default function Dashboard({ data }: { data: DashboardData }) {
 
       {tab === "threads" && (
         <>
-          <p className="text-neutral-500 text-xs mb-4">
+          <p className="text-neutral-400 text-xs mb-4">
             Threads you've posted across all BBSes.
           </p>
           <Suspense fallback={loading}>
@@ -133,7 +133,7 @@ export default function Dashboard({ data }: { data: DashboardData }) {
 
       {tab === "pinned" && (
         <>
-          <p className="text-neutral-500 text-xs mb-4">
+          <p className="text-neutral-400 text-xs mb-4">
             BBSes you've pinned for quick access.
           </p>
           <Suspense fallback={loading}>
@@ -146,7 +146,7 @@ export default function Dashboard({ data }: { data: DashboardData }) {
 
       {tab === "bbs" && (
         <>
-          <p className="text-neutral-500 text-xs mb-4">
+          <p className="text-neutral-400 text-xs mb-4">
             Manage your BBS.
           </p>
           <BBSPanel

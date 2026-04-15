@@ -1,4 +1,4 @@
-const actionStyle = "text-xs text-neutral-500 hover:text-red-400";
+const actionStyle = "text-xs text-neutral-400 hover:text-red-400";
 
 interface PostActionsProps {
   isAuthor: boolean;
@@ -20,7 +20,7 @@ export default function PostActions({
   return (
     <span className="reply-actions flex items-center gap-3">
       {onQuote && (
-        <button onClick={onQuote} className="text-xs text-neutral-500 hover:text-neutral-300">
+        <button onClick={onQuote} className="text-xs text-neutral-400 hover:text-neutral-300">
           quote
         </button>
       )}

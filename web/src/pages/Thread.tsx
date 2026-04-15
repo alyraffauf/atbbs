@@ -162,9 +162,9 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
 
       <div className="space-y-2 mt-4">
         {loadingPage ? (
-          <p className="text-neutral-500">Loading replies...</p>
+          <p className="text-neutral-400">Loading replies...</p>
         ) : replies.length === 0 && !user ? (
-          <p className="text-neutral-500">No replies yet.</p>
+          <p className="text-neutral-400">No replies yet.</p>
         ) : (
           replies.map((reply) => (
             <ReplyCard

@@ -13,7 +13,7 @@ export default function MyThreadList({ threads }: MyThreadListProps) {
   const [shown, setShown] = useState(PAGE_SIZE);
 
   if (threads.length === 0)
-    return <p className="text-neutral-500">You haven't posted any threads yet.</p>;
+    return <p className="text-neutral-400">You haven't posted any threads yet.</p>;
 
   return (
     <div>
@@ -28,18 +28,18 @@ export default function MyThreadList({ threads }: MyThreadListProps) {
           >
             <div className="flex items-baseline gap-2">
               <span className="text-neutral-200">{thread.title}</span>
-              <span className="text-neutral-600">·</span>
+              <span className="text-neutral-400">·</span>
               <time
-                className="text-xs text-neutral-500"
+                className="text-xs text-neutral-400"
                 title={formatFullDate(thread.createdAt)}
               >
                 {relativeDate(thread.createdAt)}
               </time>
             </div>
-            <p className="text-xs text-neutral-500 mt-1">
+            <p className="text-xs text-neutral-400 mt-1">
               on {thread.bbsHandle}
             </p>
-            <p className="text-neutral-500 text-sm line-clamp-2 mt-1">
+            <p className="text-neutral-400 text-sm line-clamp-2 mt-1">
               {thread.body.substring(0, 200)}
             </p>
           </Link>
@@ -49,7 +49,7 @@ export default function MyThreadList({ threads }: MyThreadListProps) {
         <div className="mt-4 text-center">
           <button
             onClick={() => setShown((prev) => prev + PAGE_SIZE)}
-            className="text-neutral-500 hover:text-neutral-300"
+            className="text-neutral-400 hover:text-neutral-300"
           >
             show more
           </button>

@@ -62,7 +62,7 @@ export default function ReplyCard({
         <button
           type="button"
           onClick={onQuoteClick}
-          className="block w-full text-left border-l-2 border-neutral-700 pl-3 mb-3 py-1 text-sm text-neutral-500 hover:border-neutral-500 cursor-pointer"
+          className="block w-full text-left border-l-2 border-neutral-700 pl-3 mb-3 py-1 text-sm text-neutral-400 hover:border-neutral-500 cursor-pointer"
         >
           <span className="text-neutral-400">{quoted.handle}:</span>{" "}
           <PostBody>
