@@ -78,6 +78,9 @@ export default function Login() {
             onChange={setHandle}
             required
             className="flex-1"
+            aria-autocomplete="list"
+            aria-expanded={focused && matches.length > 0}
+            aria-label="Enter your handle"
           />
           <Button type="submit" disabled={busy}>
             {busy ? "..." : "log in"}
@@ -85,11 +88,12 @@ export default function Login() {
         </form>
         {focused && matches.length > 0 && (
           <div className="relative">
-            <div className="absolute left-0 right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded shadow-lg z-10">
+            <div role="listbox" className="absolute left-0 right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded shadow-lg z-10">
               {matches.map((match) => (
                 <button
                   key={match.handle}
                   type="button"
+                  role="option"
                   onClick={() => selectHandle(match.handle)}
                   className="flex items-center gap-3 w-full px-3 py-2 text-left hover:bg-neutral-800 first:rounded-t last:rounded-b"
                 >

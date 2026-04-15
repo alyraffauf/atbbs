@@ -96,6 +96,7 @@ export default function SysopModerate() {
                   href={`https://pdsls.dev/at/${did}`}
                   target="_blank"
                   rel="noreferrer"
+                  aria-label={`${bannedHandles[did] ?? did} (opens in new tab)`}
                   className="truncate text-neutral-300 hover:text-neutral-200"
                 >
                   {bannedHandles[did] ?? did}
@@ -135,6 +136,7 @@ export default function SysopModerate() {
                   href={`https://pdsls.dev/${p.uri}`}
                   target="_blank"
                   rel="noreferrer"
+                  aria-label={`${p.handle} — ${p.title || p.body} (opens in new tab)`}
                   className="truncate text-neutral-300 hover:text-neutral-200"
                 >
                   {p.handle} — {p.title || p.body}
@@ -157,6 +159,7 @@ export default function SysopModerate() {
               value={hideUri}
               onChange={(e) => setHideUri(e.target.value)}
               placeholder="at://did/collection/rkey"
+              aria-label="Post URI to hide"
               className="flex-1 bg-neutral-900 border border-neutral-800 rounded px-3 py-2 text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
             />
             <Button onClick={hide}>hide</Button>

@@ -91,10 +91,12 @@ export default function Dashboard({ data }: { data: DashboardData }) {
         <DialBBS discovered={discovered} suggestions={suggestions} />
       </div>
 
-      <div className="flex gap-4 border-b border-neutral-800 mb-6 overflow-x-auto">
+      <div role="tablist" className="flex gap-4 border-b border-neutral-800 mb-6 overflow-x-auto">
         {tabs.map((entry) => (
           <button
             key={entry.key}
+            role="tab"
+            aria-selected={tab === entry.key}
             onClick={() => setTab(entry.key)}
             className={tab === entry.key ? TAB_STYLE_ACTIVE : TAB_STYLE_INACTIVE}
           >

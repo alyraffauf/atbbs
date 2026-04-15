@@ -108,17 +108,21 @@ export default function DialBBS({ discovered, suggestions }: DialBBSProps) {
           onChange={setInputValue}
           required
           className="sm:flex-1"
+          aria-autocomplete="list"
+          aria-expanded={focused && visibleSuggestions.length > 0}
+          aria-label="Dial a BBS by handle"
         />
         <Button type="submit">go</Button>
         <Button type="button" onClick={onRandom}>random</Button>
       </form>
       {focused && visibleSuggestions.length > 0 && (
         <div className="relative">
-          <div className="absolute left-0 right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded shadow-lg z-10">
+          <div role="listbox" className="absolute left-0 right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded shadow-lg z-10">
             {visibleSuggestions.map((entry) => (
               <Link
                 key={entry.to}
                 to={entry.to}
+                role="option"
                 className="block px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800 first:rounded-t last:rounded-b"
               >
                 {entry.name}
