@@ -1,6 +1,7 @@
-import { useState, type SyntheticEvent } from "react";
+import { useRef, useState, type SyntheticEvent } from "react";
 import { useAuth } from "../lib/auth";
 import { usePageTitle } from "../hooks/usePageTitle";
+import { useHandleSearch } from "../hooks/useHandleSearch";
 import HandleInput from "../components/form/HandleInput";
 import { Button } from "../components/form/Form";
 
@@ -9,10 +10,13 @@ export default function Login() {
   const [handle, setHandle] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const blurTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const matches = useHandleSearch(handle);
   usePageTitle("Login — atbbs");
 
-  async function onSubmit(e: SyntheticEvent) {
-    e.preventDefault();
+  async function onSubmit(event: SyntheticEvent) {
+    event.preventDefault();
     setError(null);
     setBusy(true);
     try {
@@ -23,25 +27,99 @@ export default function Login() {
     }
   }
 
+  function selectHandle(selected: string) {
+    setHandle(selected);
+    setFocused(false);
+  }
+
+  function onFocus() {
+    clearTimeout(blurTimeout.current);
+    setFocused(true);
+  }
+
+  function onBlur() {
+    blurTimeout.current = setTimeout(() => setFocused(false), 150);
+  }
+
   return (
-    <>
-      <h1 className="text-lg text-neutral-200 mb-1">log in</h1>
-      <p className="text-neutral-500 mb-6">
-        Sign in with your atproto handle to post threads and replies.
+    <div className="h-full flex flex-col justify-center overflow-hidden max-w-md mx-auto">
+      <div className="text-center mb-8">
+        <picture>
+          <source
+            srcSet="/hero-dark.svg"
+            media="(prefers-color-scheme: dark)"
+          />
+          <img
+            src="/hero.svg"
+            alt="@bbs"
+            className="mx-auto mb-4"
+            style={{ width: 180, imageRendering: "pixelated" }}
+          />
+        </picture>
+        <h1 className="text-lg text-neutral-200 mb-2">Log in to atbbs</h1>
+        <p className="text-neutral-500">Use any atproto account.</p>
+      </div>
+
+      {error && <p className="text-red-400 mb-4 text-center">{error}</p>}
+
+      <div onFocus={onFocus} onBlur={onBlur} className="mb-6">
+        <form onSubmit={onSubmit} className="flex gap-2">
+          <HandleInput
+            name="handle"
+            value={handle}
+            onChange={setHandle}
+            required
+            className="flex-1"
+          />
+          <Button type="submit" disabled={busy}>
+            {busy ? "..." : "log in"}
+          </Button>
+        </form>
+        {focused && matches.length > 0 && (
+          <div className="relative">
+            <div className="absolute left-0 right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded shadow-lg z-10">
+              {matches.map((match) => (
+                <button
+                  key={match.handle}
+                  type="button"
+                  onClick={() => selectHandle(match.handle)}
+                  className="flex items-center gap-3 w-full px-3 py-2 text-left hover:bg-neutral-800 first:rounded-t last:rounded-b"
+                >
+                  {match.avatar && (
+                    <img
+                      src={match.avatar}
+                      alt=""
+                      className="w-6 h-6 rounded-full shrink-0"
+                    />
+                  )}
+                  <div className="min-w-0">
+                    <div className="text-sm text-neutral-200 truncate">
+                      {match.displayName}
+                    </div>
+                    <div className="text-xs text-neutral-500 truncate">
+                      {match.handle}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="text-neutral-500 text-xs space-y-2">
+        <p>Once signed in, you can:</p>
+        <ul className="list-disc list-inside space-y-1 text-neutral-600">
+          <li>Post threads and replies</li>
+          <li>Pin boards you like</li>
+          <li>Set up a profile</li>
+          <li>Start your own community</li>
+        </ul>
+      </div>
+
+      <p className="text-neutral-600 text-xs mt-6">
+        You'll be redirected to your hosting provider to continue.
       </p>
-      {error && <p className="text-red-400 mb-4">{error}</p>}
-      <form onSubmit={onSubmit} className="flex gap-2 max-w-md">
-        <HandleInput
-          name="handle"
-          value={handle}
-          onChange={setHandle}
-          required
-          className="flex-1"
-        />
-        <Button type="submit" disabled={busy}>
-          {busy ? "..." : "log in"}
-        </Button>
-      </form>
-    </>
+    </div>
   );
 }
