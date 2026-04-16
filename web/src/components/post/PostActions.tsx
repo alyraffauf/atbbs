@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { Quote, MoreHorizontal, Trash2, Ban, EyeOff } from "lucide-react";
+import { Reply, MoreHorizontal, Trash2, Ban, EyeOff } from "lucide-react";
 
 interface PostActionsProps {
   isAuthor: boolean;
@@ -7,7 +7,7 @@ interface PostActionsProps {
   onDelete?: () => void;
   onBan?: () => void;
   onHide?: () => void;
-  onQuote?: () => void;
+  onReplyTo?: () => void;
 }
 
 export default function PostActions({
@@ -16,7 +16,7 @@ export default function PostActions({
   onDelete,
   onBan,
   onHide,
-  onQuote,
+  onReplyTo,
 }: PostActionsProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -37,7 +37,7 @@ export default function PostActions({
   const canHide = isSysop && !!onHide;
   const hasModActions = canDelete || canBan || canHide;
 
-  if (!onQuote && !hasModActions) return null;
+  if (!onReplyTo && !hasModActions) return null;
 
   function select(action: () => void) {
     setOpen(false);
@@ -59,13 +59,13 @@ export default function PostActions({
 
       {open && (
         <div className="absolute right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded shadow-lg z-10 py-1 min-w-28">
-          {onQuote && (
-            <button onClick={() => select(onQuote)} className={menuItem}>
-              <Quote size={12} /> quote
+          {onReplyTo && (
+            <button onClick={() => select(onReplyTo)} className={menuItem}>
+              <Reply size={12} /> reply
             </button>
           )}
 
-          {onQuote && hasModActions && (
+          {onReplyTo && hasModActions && (
             <div className="border-t border-neutral-800 my-1" />
           )}
 

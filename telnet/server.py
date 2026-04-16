@@ -123,10 +123,10 @@ async def show_board(writer, board, threads, has_next):
     if not threads:
         await write(writer, "  No threads yet.\r\n")
     else:
-        for i, t in enumerate(threads, 1):
-            date = format_datetime_utc(t.created_at)
+        for index, thread in enumerate(threads, 1):
+            date = format_datetime_utc(thread.created_at)
             await write(
-                writer, f"  {i}. {t.title}  ·  {t.author.handle}  ·  {date}\r\n"
+                writer, f"  {index}. {thread.title}  ·  {thread.author.handle}  ·  {date}\r\n"
             )
 
     cmds = ["[#] open thread"]
@@ -149,11 +149,11 @@ async def show_thread_header(writer, thread):
 
 
 async def show_replies(writer, replies):
-    for r in replies:
+    for reply in replies:
         await write(
-            writer, f"  {r.author.handle}  ·  {format_datetime_utc(r.created_at)}\r\n"
+            writer, f"  {reply.author.handle}  ·  {format_datetime_utc(reply.created_at)}\r\n"
         )
-        for line in r.body.splitlines():
+        for line in reply.body.splitlines():
             await write(writer, f"    {line}\r\n")
         await write(writer, "\r\n")
 

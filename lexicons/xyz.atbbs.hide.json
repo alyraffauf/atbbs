@@ -1,17 +1,17 @@
 {
   "lexicon": 1,
-  "id": "xyz.atboards.ban",
+  "id": "xyz.atbbs.hide",
   "defs": {
     "main": {
       "type": "record",
       "key": "tid",
       "record": {
         "type": "object",
-        "required": ["did", "createdAt"],
+        "required": ["uri", "createdAt"],
         "properties": {
-          "did": {
+          "uri": {
             "type": "string",
-            "format": "did"
+            "format": "at-uri"
           },
           "createdAt": {
             "type": "string",

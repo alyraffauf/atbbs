@@ -3,15 +3,22 @@ import * as v from "@atcute/lexicons/validations";
 import type {} from "@atcute/lexicons/ambient";
 
 const _mainSchema = /*#__PURE__*/ v.record(
-  /*#__PURE__*/ v.string(),
+  /*#__PURE__*/ v.literal("self"),
   /*#__PURE__*/ v.object({
-    $type: /*#__PURE__*/ v.literal("xyz.atboards.board"),
+    $type: /*#__PURE__*/ v.literal("xyz.atbbs.site"),
+    boards: /*#__PURE__*/ v.array(/*#__PURE__*/ v.resourceUriString()),
     createdAt: /*#__PURE__*/ v.datetimeString(),
     /**
-     * @maxLength 500
+     * @maxLength 1000
      */
     description: /*#__PURE__*/ v.constrain(/*#__PURE__*/ v.string(), [
-      /*#__PURE__*/ v.stringLength(0, 500),
+      /*#__PURE__*/ v.stringLength(0, 1000),
+    ]),
+    /**
+     * @maxLength 5000
+     */
+    intro: /*#__PURE__*/ v.constrain(/*#__PURE__*/ v.string(), [
+      /*#__PURE__*/ v.stringLength(0, 5000),
     ]),
     /**
      * @maxLength 100
@@ -33,6 +40,6 @@ export interface Main extends v.InferInput<typeof mainSchema> {}
 
 declare module "@atcute/lexicons/ambient" {
   interface Records {
-    "xyz.atboards.board": mainSchema;
+    "xyz.atbbs.site": mainSchema;
   }
 }

@@ -6,7 +6,7 @@ from textual.widgets import Footer, Input, Static, TextArea
 
 from core import lexicon, limits
 from core.models import AtUri, AuthError, BBS
-from core.records import create_news_record
+from core.records import create_post_record
 from tui.util import require_session
 from tui.widgets.breadcrumb import Breadcrumb
 from tui.screens.compose.upload import upload_file
@@ -32,7 +32,7 @@ class ComposeNewsScreen(Screen):
         with Vertical():
             yield Static("news", classes="title")
             yield Input(
-                placeholder="Title", id="news-title", max_length=limits.NEWS_TITLE
+                placeholder="Title", id="news-title", max_length=limits.POST_TITLE
             )
             yield TextArea(id="news-body", language=None)
             yield Input(placeholder="attach file (path, optional)", id="news-file")
@@ -55,9 +55,9 @@ class ComposeNewsScreen(Screen):
         if not title or not body:
             self.notify("Title and body cannot be empty.", severity="error")
             return
-        if len(body) > limits.NEWS_BODY:
+        if len(body) > limits.POST_BODY:
             self.notify(
-                f"Body too long ({len(body)}/{limits.NEWS_BODY}).", severity="error"
+                f"Body too long ({len(body)}/{limits.POST_BODY}).", severity="error"
             )
             return
 
@@ -71,12 +71,12 @@ class ComposeNewsScreen(Screen):
                 return
 
         try:
-            resp = await create_news_record(
+            resp = await create_post_record(
                 self.app.http_client,
                 session,
-                site_uri,
-                title,
-                body,
+                scope=site_uri,
+                body=body,
+                title=title,
                 attachments=attachments or None,
             )
             resp.raise_for_status()

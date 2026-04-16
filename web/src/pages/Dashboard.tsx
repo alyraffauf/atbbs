@@ -111,7 +111,7 @@ export default function Dashboard({ data }: { data: DashboardData }) {
       {tab === "inbox" && (
         <>
           <p className="text-neutral-400 text-xs mb-4">
-            Recent replies and quotes from other users.
+            Recent replies from other users.
           </p>
           <Suspense fallback={loading}>
             <Await resolve={activity}>

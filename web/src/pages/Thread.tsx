@@ -9,13 +9,13 @@ import { useAuth } from "../lib/auth";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { useThreadReplies } from "../hooks/useThreadReplies";
-import { THREAD, REPLY } from "../lib/lexicon";
+import { POST } from "../lib/lexicon";
 import { makeAtUri, parseAtUri } from "../lib/util";
 import * as limits from "../lib/limits";
 import {
   createBan,
   createHide,
-  createReply,
+  createPost,
   deleteRecord,
   uploadAttachments,
 } from "../lib/writes";
@@ -65,9 +65,10 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
 
   const [body, setBody] = useState("");
   const [files, setFiles] = useState<File[]>([]);
-  const [quote, setQuote] = useState<{ uri: string; handle: string } | null>(
-    null,
-  );
+  const [replyingTo, setReplyingTo] = useState<{
+    uri: string;
+    handle: string;
+  } | null>(null);
   const [posting, setPosting] = useState(false);
 
   usePageTitle(`${thread.title} — ${bbs.site.name}`);
@@ -80,15 +81,15 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
     if (!agent || !user) return;
     setPosting(true);
     try {
-      const threadUri = makeAtUri(thread.did, THREAD, thread.rkey);
+      const threadUri = makeAtUri(thread.did, POST, thread.rkey);
       const attachments = await uploadAttachments(agent, files);
-      const resp = await createReply(
-        agent,
-        threadUri,
-        body.trim(),
-        quote?.uri ?? null,
+      const { BOARD } = await import("../lib/lexicon");
+      const boardUri = makeAtUri(bbs.identity.did, BOARD, thread.boardSlug);
+      const resp = await createPost(agent, boardUri, body.trim(), {
+        root: threadUri,
+        parent: replyingTo?.uri ?? undefined,
         attachments,
-      );
+      });
       addOptimisticReply({
         uri: resp.data.uri,
         did: parseAtUri(resp.data.uri).did,
@@ -97,12 +98,12 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
         pds: user.pdsUrl,
         body: body.trim(),
         createdAt: new Date().toISOString(),
-        quote: quote?.uri ?? null,
+        parent: replyingTo?.uri ?? null,
         attachments: attachments as Reply["attachments"],
       });
       setBody("");
       setFiles([]);
-      setQuote(null);
+      setReplyingTo(null);
     } catch {
       alert("Could not post reply.");
     } finally {
@@ -113,7 +114,7 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
   async function onDeleteThread() {
     if (!agent) return;
     if (!confirm("Delete this thread?")) return;
-    await deleteRecord(agent, THREAD, thread.rkey);
+    await deleteRecord(agent, POST, thread.rkey);
     navigate(`/bbs/${handle}`);
   }
 
@@ -121,7 +122,7 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
     if (!agent) return;
     if (!confirm("Delete this reply?")) return;
     try {
-      await deleteRecord(agent, REPLY, reply.rkey);
+      await deleteRecord(agent, POST, reply.rkey);
     } catch (e: unknown) {
       console.error("deleteRecord failed:", e);
       alert(`Could not delete: ${e instanceof Error ? e.message : e}`);
@@ -172,10 +173,16 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
               reply={reply}
               userDid={user?.did ?? ""}
               sysopDid={bbs.identity.did}
-              quoted={reply.quote ? replyCache[reply.quote] : undefined}
-              onQuote={() => setQuote({ uri: reply.uri, handle: reply.handle })}
-              onQuoteClick={
-                reply.quote ? () => scrollToReply(reply.quote!) : undefined
+              parentPost={
+                reply.parent ? replyCache[reply.parent] : undefined
+              }
+              onReplyTo={() =>
+                setReplyingTo({ uri: reply.uri, handle: reply.handle })
+              }
+              onParentClick={
+                reply.parent
+                  ? () => scrollToReply(reply.parent!)
+                  : undefined
               }
               onDelete={() => onDeleteReply(reply)}
               onBan={() => onBan(reply.did)}
@@ -199,11 +206,11 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
           onBodyChange={setBody}
           bodyPlaceholder="Write a reply..."
           bodyRows={3}
-          bodyMaxLength={limits.REPLY_BODY}
+          bodyMaxLength={limits.POST_BODY}
           files={files}
           onFilesChange={setFiles}
-          quote={quote}
-          onClearQuote={() => setQuote(null)}
+          replyingTo={replyingTo}
+          onClearReplyTo={() => setReplyingTo(null)}
           submitLabel="reply"
           posting={posting}
         />

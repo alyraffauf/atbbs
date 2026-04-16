@@ -96,7 +96,7 @@ class Record:
 
 @dataclass
 class Board:
-    """xyz.atboards.board — a subforum defined by the sysop."""
+    """xyz.atbbs.board — a subforum defined by the sysop."""
 
     slug: str
     name: str
@@ -106,60 +106,35 @@ class Board:
 
 
 @dataclass
-class News:
-    """xyz.atboards.news — a sysop announcement."""
+class Post:
+    """xyz.atbbs.post — a thread, reply, or news item."""
 
-    tid: str
-    site_uri: str
-    title: str
+    uri: str
+    scope: str
     body: str
     created_at: str
+    author: MiniDoc
+    title: str | None = None
+    root: str | None = None
+    parent: str | None = None
+    updated_at: str | None = None
     attachments: list[dict] | None = None
+
+    @property
+    def is_root(self) -> bool:
+        return self.root is None
 
 
 @dataclass
 class Site:
-    """xyz.atboards.site/self — the BBS front door."""
+    """xyz.atbbs.site/self — the BBS front door."""
 
     name: str
     description: str
     intro: str
     boards: list[Board]
-    banned_dids: set[str]
-    hidden_posts: set[str]
     created_at: str
     updated_at: str | None = None
-
-    def is_banned(self, did: str) -> bool:
-        return did in self.banned_dids
-
-
-@dataclass
-class Thread:
-    """xyz.atboards.thread — a user's thread on a board."""
-
-    uri: str
-    board_uri: str
-    title: str
-    body: str
-    created_at: str
-    author: MiniDoc
-    updated_at: str | None = None
-    attachments: list[dict] | None = None
-
-
-@dataclass
-class Reply:
-    """xyz.atboards.reply — a user's reply to a thread."""
-
-    uri: str
-    subject_uri: str
-    body: str
-    created_at: str
-    author: MiniDoc
-    updated_at: str | None = None
-    attachments: list[dict] | None = None
-    quote: str | None = None
 
 
 @dataclass
@@ -168,4 +143,4 @@ class BBS:
 
     identity: MiniDoc
     site: Site
-    news: list[News]
+    news: list[Post]

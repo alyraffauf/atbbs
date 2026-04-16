@@ -8,9 +8,9 @@ import {
 import { BAN, HIDE } from "../../lib/lexicon";
 import { parseAtUri } from "../../lib/util";
 import { is } from "@atcute/lexicons/validations";
-import { mainSchema as banSchema } from "../../lexicons/types/xyz/atboards/ban";
-import { mainSchema as hideSchema } from "../../lexicons/types/xyz/atboards/hide";
-import type { XyzAtboardsBan, XyzAtboardsHide } from "../../lexicons";
+import { mainSchema as banSchema } from "../../lexicons/types/xyz/atbbs/ban";
+import { mainSchema as hideSchema } from "../../lexicons/types/xyz/atbbs/hide";
+import type { XyzAtbbsBan, XyzAtbbsHide } from "../../lexicons";
 import { requireAuth } from "./auth";
 
 export interface HiddenInfo {
@@ -33,18 +33,17 @@ function buildRkeyMap<T>(
   return map;
 }
 
-async function hydrateHiddenPosts(uris: Set<string>): Promise<HiddenInfo[]> {
-  if (uris.size === 0) return [];
+async function hydrateHiddenPosts(uris: string[]): Promise<HiddenInfo[]> {
+  if (uris.length === 0) return [];
 
-  const uriList = [...uris];
-  const dids = [...new Set(uriList.map((uri) => parseAtUri(uri).did))];
+  const dids = [...new Set(uris.map((uri) => parseAtUri(uri).did))];
 
   const [identities, records] = await Promise.all([
     resolveIdentitiesBatch(dids),
-    Promise.allSettled(uriList.map(getRecordByUri)),
+    Promise.allSettled(uris.map(getRecordByUri)),
   ]);
 
-  return uriList.map((uri, index) => {
+  return uris.map((uri, index) => {
     const did = parseAtUri(uri).did;
     const handle = identities[did]?.handle ?? did;
     const result = records[index];
@@ -91,29 +90,31 @@ export async function sysopModerateLoader() {
     listRecords(user.pdsUrl, user.did, HIDE),
   ]);
 
-  const banRkeys = buildRkeyMap<XyzAtboardsBan.Main>(
+  const banRkeys = buildRkeyMap<XyzAtbbsBan.Main>(
     banRecs,
     banSchema,
     (ban) => ban.did,
   );
-  const hideRkeys = buildRkeyMap<XyzAtboardsHide.Main>(
+  const hideRkeys = buildRkeyMap<XyzAtbbsHide.Main>(
     hideRecs,
     hideSchema,
     (hide) => hide.uri,
   );
 
+  const bannedDids = Object.keys(banRkeys);
   let bannedHandles: Record<string, string> = {};
-  if (bbs.site.bannedDids.size) {
+  if (bannedDids.length) {
     try {
-      const authors = await resolveIdentitiesBatch([...bbs.site.bannedDids]);
-      for (const did of bbs.site.bannedDids)
+      const authors = await resolveIdentitiesBatch(bannedDids);
+      for (const did of bannedDids)
         bannedHandles[did] = authors[did]?.handle ?? did;
     } catch {
-      for (const did of bbs.site.bannedDids) bannedHandles[did] = did;
+      for (const did of bannedDids) bannedHandles[did] = did;
     }
   }
 
-  const hidden = await hydrateHiddenPosts(bbs.site.hiddenPosts);
+  const hiddenUris = Object.keys(hideRkeys);
+  const hidden = await hydrateHiddenPosts(hiddenUris);
 
   return { user, bbs, banRkeys, bannedHandles, hideRkeys, hidden };
 }

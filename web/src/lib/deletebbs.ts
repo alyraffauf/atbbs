@@ -1,9 +1,9 @@
-/** Delete a user's entire BBS: boards, news, bans, hides, then the site record. */
+/** Delete a user's entire BBS: boards, news posts, bans, hides, then the site record. */
 
 import type { Client } from "@atcute/client";
-import { getRecord, listRecords } from "./atproto";
-import { BAN, BOARD, HIDE, NEWS, SITE } from "./lexicon";
-import { parseAtUri } from "./util";
+import { getRecord, getBacklinks, listRecords } from "./atproto";
+import { BAN, BOARD, HIDE, POST, SITE } from "./lexicon";
+import { makeAtUri, parseAtUri } from "./util";
 import { deleteRecord } from "./writes";
 
 export async function deleteBBS(agent: Client, did: string, pdsUrl: string) {
@@ -11,25 +11,35 @@ export async function deleteBBS(agent: Client, did: string, pdsUrl: string) {
 
   const existing = await getRecord(did, SITE, "self");
   const siteValue = existing.value as Record<string, unknown>;
-  const boardSlugs: string[] = (
+  const boardUris: string[] = (
     Array.isArray(siteValue.boards) ? siteValue.boards : []
   ) as string[];
 
-  for (const slug of boardSlugs) {
+  // Delete boards
+  for (const uri of boardUris) {
     try {
-      await deleteRecord(agent, BOARD, slug);
+      const { rkey } = parseAtUri(uri);
+      await deleteRecord(agent, BOARD, rkey);
     } catch {
-      failed.push(`board/${slug}`);
+      failed.push(`board/${uri}`);
     }
   }
 
-  const newsRecords = await listRecords(pdsUrl, did, NEWS);
-  for (const record of newsRecords) {
-    try {
-      await deleteRecord(agent, NEWS, parseAtUri(record.uri).rkey);
-    } catch {
-      failed.push(`news/${parseAtUri(record.uri).rkey}`);
+  // Delete sysop's news posts (posts scoped to the site)
+  const siteUri = makeAtUri(did, SITE, "self");
+  try {
+    const backlinks = await getBacklinks(siteUri, `${POST}:scope`, 100);
+    for (const ref of backlinks.records) {
+      if (ref.did === did) {
+        try {
+          await deleteRecord(agent, POST, ref.rkey);
+        } catch {
+          failed.push(`post/${ref.rkey}`);
+        }
+      }
     }
+  } catch {
+    failed.push("news lookup");
   }
 
   for (const collection of [BAN, HIDE]) {

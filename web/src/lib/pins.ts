@@ -3,9 +3,9 @@
 import { listRecords, getRecord, resolveIdentitiesBatch } from "./atproto";
 import { PIN, SITE } from "./lexicon";
 import { is } from "@atcute/lexicons/validations";
-import { mainSchema as pinSchema } from "../lexicons/types/xyz/atboards/pin";
-import { mainSchema as siteSchema } from "../lexicons/types/xyz/atboards/site";
-import type { XyzAtboardsPin, XyzAtboardsSite } from "../lexicons";
+import { mainSchema as pinSchema } from "../lexicons/types/xyz/atbbs/pin";
+import { mainSchema as siteSchema } from "../lexicons/types/xyz/atbbs/site";
+import type { XyzAtbbsPin, XyzAtbbsSite } from "../lexicons";
 import { parseAtUri } from "./util";
 
 export interface PinnedBBS {
@@ -24,7 +24,7 @@ export async function fetchPins(
   const pinRecords = records.filter((record) => is(pinSchema, record.value));
 
   const pinnedDids = pinRecords.map(
-    (record) => (record.value as unknown as XyzAtboardsPin.Main).did,
+    (record) => (record.value as unknown as XyzAtbbsPin.Main).did,
   );
   if (!pinnedDids.length) return [];
 
@@ -37,13 +37,13 @@ export async function fetchPins(
   siteResults.forEach((result, index) => {
     if (result.status !== "fulfilled") return;
     if (!is(siteSchema, result.value.value)) return;
-    const siteValue = result.value.value as unknown as XyzAtboardsSite.Main;
+    const siteValue = result.value.value as unknown as XyzAtbbsSite.Main;
     siteNames[pinnedDids[index]] = siteValue.name;
   });
 
   const results: PinnedBBS[] = [];
   for (const record of pinRecords) {
-    const value = record.value as unknown as XyzAtboardsPin.Main;
+    const value = record.value as unknown as XyzAtbbsPin.Main;
     const identity = identities[value.did];
     if (!identity) continue;
     results.push({

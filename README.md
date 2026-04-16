@@ -81,9 +81,9 @@ just docker  # build docker image
 
 atbbs has no backend database for content. All BBS data lives in atproto repos:
 
-- **Sysop records**: `xyz.atboards.site`, `xyz.atboards.board`, `xyz.atboards.news`
-- **Moderation records**: `xyz.atboards.ban`, `xyz.atboards.hide`
-- **User records**: `xyz.atboards.thread`, `xyz.atboards.reply`
+- **Sysop records**: `xyz.atbbs.site`, `xyz.atbbs.board`
+- **Moderation records**: `xyz.atbbs.ban`, `xyz.atbbs.hide`
+- **User records**: `xyz.atbbs.post`, `xyz.atbbs.pin`, `xyz.atbbs.profile`
 
 The web app and TUI query existing network infrastructure:
 

@@ -116,8 +116,8 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
   const [replies, setReplies] = useState<Reply[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // All replies we've ever seen — accumulates across page changes so quotes
-  // and scroll targets always resolve, even for off-page replies.
+  // All replies we've ever seen — accumulates across page changes so parent
+  // previews and scroll targets always resolve, even for off-page replies.
   const [replyCache, setReplyCache] = useState<Record<string, Reply>>({});
 
   // Pending scroll target — set when navigating to a reply on another page.
@@ -142,13 +142,7 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
       // Fetch records from Slingshot.
       const records = await getRecordsBatch(slice);
 
-      // Drop moderated content.
-      const visible = records.filter((r) => {
-        const { did } = parseAtUri(r.uri);
-        return (
-          !bbs.site.bannedDids.has(did) && !bbs.site.hiddenPosts.has(r.uri)
-        );
-      });
+      const visible = records;
 
       // Resolve author handles and build Reply objects.
       const dids = visible.map((r) => parseAtUri(r.uri).did);
@@ -174,20 +168,20 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
       const newCache: Record<string, Reply> = {};
       for (const item of items) newCache[item.uri] = item;
 
-      // Fetch any quoted replies not already known
-      const missingQuotes = items
-        .filter((i) => i.quote && !newCache[i.quote!])
-        .map((i) => i.quote!)
+      // Fetch any parent replies not already known
+      const missingParents = items
+        .filter((item) => item.parent && !newCache[item.parent!])
+        .map((item) => item.parent!)
         .filter((uri) => !replyCache[uri]);
-      if (missingQuotes.length) {
-        const quoteRefs = [...new Set(missingQuotes)].map((uri) =>
+      if (missingParents.length) {
+        const parentRefs = [...new Set(missingParents)].map((uri) =>
           parseAtUri(uri),
         );
-        const quoteRecords = await getRecordsBatch(quoteRefs);
-        const quoteDids = quoteRecords.map((r) => parseAtUri(r.uri).did);
-        const quoteAuthors = await resolveIdentitiesBatch(quoteDids);
-        for (const record of quoteRecords) {
-          const reply = recordToReply(record, quoteAuthors);
+        const parentRecords = await getRecordsBatch(parentRefs);
+        const parentDids = parentRecords.map((record) => parseAtUri(record.uri).did);
+        const parentAuthors = await resolveIdentitiesBatch(parentDids);
+        for (const record of parentRecords) {
+          const reply = recordToReply(record, parentAuthors);
           if (reply) newCache[reply.uri] = reply;
         }
       }

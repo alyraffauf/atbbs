@@ -5,9 +5,9 @@ import type {} from "@atcute/lexicons/ambient";
 const _mainSchema = /*#__PURE__*/ v.record(
   /*#__PURE__*/ v.tidString(),
   /*#__PURE__*/ v.object({
-    $type: /*#__PURE__*/ v.literal("xyz.atboards.ban"),
+    $type: /*#__PURE__*/ v.literal("xyz.atbbs.hide"),
     createdAt: /*#__PURE__*/ v.datetimeString(),
-    did: /*#__PURE__*/ v.didString(),
+    uri: /*#__PURE__*/ v.resourceUriString(),
   }),
 );
 
@@ -21,6 +21,6 @@ export interface Main extends v.InferInput<typeof mainSchema> {}
 
 declare module "@atcute/lexicons/ambient" {
   interface Records {
-    "xyz.atboards.ban": mainSchema;
+    "xyz.atbbs.hide": mainSchema;
   }
 }

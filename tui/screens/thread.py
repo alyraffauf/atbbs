@@ -10,12 +10,12 @@ from textual.screen import Screen
 from textual.widgets import Footer, Static
 
 from core import lexicon
-from core.models import BBS, AtUri, AuthError, Reply, Thread
+from core.models import BBS, AtUri, AuthError, Post as PostModel
 from core.records import (
     create_ban_record,
     create_hidden_record,
     delete_record,
-    reply_from_record,
+    post_from_record,
 )
 from core.resolver import invalidate_bbs_cache
 from core.records import hydrate_replies as fetch_replies
@@ -39,7 +39,7 @@ class ThreadScreen(Screen):
     ]
 
     def __init__(
-        self, bbs: BBS, handle: str, thread: Thread, focus_reply: str | None = None
+        self, bbs: BBS, handle: str, thread: PostModel, focus_reply: str | None = None
     ) -> None:
         super().__init__()
         self.bbs = bbs
@@ -48,10 +48,11 @@ class ThreadScreen(Screen):
         self._focus_reply = focus_reply
         self._page: int = 1
         self._total_pages: int = 1
-        self._replies_map: dict[str, Reply] = {}
+        self._replies_map: dict[str, PostModel] = {}
 
     def compose(self) -> ComposeResult:
-        board_slug = AtUri.parse(self.thread.board_uri).rkey
+        scope_parsed = AtUri.parse(self.thread.scope)
+        board_slug = scope_parsed.rkey
         board_name = next(
             (b.name for b in self.bbs.site.boards if b.slug == board_slug), board_slug
         )
@@ -59,7 +60,7 @@ class ThreadScreen(Screen):
             ("@bbs", 3),
             (self.bbs.site.name, 2),
             (board_name, 1),
-            (self.thread.title, 0),
+            (self.thread.title or "", 0),
         )
         with VerticalScroll(id="thread-scroll"):
             yield Post(
@@ -70,7 +71,7 @@ class ThreadScreen(Screen):
                 author_did=self.thread.author.did,
                 author_pds=self.thread.author.pds,
                 record_uri=self.thread.uri,
-                collection=lexicon.THREAD,
+                collection=lexicon.POST,
                 attachments=self.thread.attachments,
             )
             yield Static("", id="page-status-top", classes="page-status")
@@ -91,9 +92,12 @@ class ThreadScreen(Screen):
         self.query_one("#page-status-top", Static).update(text)
         self.query_one("#page-status-bottom", Static).update(text)
 
+    def _is_reply_widget(self, post: Post) -> bool:
+        return post.record_uri is not None and post.record_uri != self.thread.uri
+
     def _clear_replies(self) -> None:
         for post in self.query(Post):
-            if post.collection == lexicon.REPLY:
+            if self._is_reply_widget(post):
                 post.remove()
 
     @work(exclusive=True)
@@ -120,38 +124,38 @@ class ThreadScreen(Screen):
         for reply in result.replies:
             self._replies_map[reply.uri] = reply
 
-        # Fetch any quoted replies not already known (in parallel)
-        missing = [
-            reply.quote
+        # Fetch any parent replies not already known (in parallel)
+        missing_parents = [
+            reply.parent
             for reply in result.replies
-            if reply.quote and reply.quote not in self._replies_map
+            if reply.parent and reply.parent not in self._replies_map
         ]
 
-        async def fetch_quote(uri: str):
+        async def fetch_parent(uri: str):
             parsed = AtUri.parse(uri)
             record, author = await asyncio.gather(
                 get_record(client, parsed.did, parsed.collection, parsed.rkey),
                 resolve_identity(client, parsed.did),
             )
-            return uri, reply_from_record(record, author)
+            return uri, post_from_record(record, author)
 
-        if missing:
-            quote_results = await asyncio.gather(
-                *[fetch_quote(uri) for uri in missing],
+        if missing_parents:
+            parent_results = await asyncio.gather(
+                *[fetch_parent(uri) for uri in missing_parents],
                 return_exceptions=True,
             )
-            for quote_result in quote_results:
-                if isinstance(quote_result, tuple):
-                    self._replies_map[quote_result[0]] = quote_result[1]
+            for parent_result in parent_results:
+                if isinstance(parent_result, tuple):
+                    self._replies_map[parent_result[0]] = parent_result[1]
 
         for reply in result.replies:
-            quote_text = None
-            if reply.quote and reply.quote in self._replies_map:
-                quoted = self._replies_map[reply.quote]
-                body_preview = quoted.body[:200] + (
-                    "..." if len(quoted.body) > 200 else ""
+            parent_preview = None
+            if reply.parent and reply.parent in self._replies_map:
+                parent_post = self._replies_map[reply.parent]
+                body_preview = parent_post.body[:200] + (
+                    "..." if len(parent_post.body) > 200 else ""
                 )
-                quote_text = f"{quoted.author.handle}: {body_preview}"
+                parent_preview = f"{parent_post.author.handle}: {body_preview}"
 
             await scroll.mount(
                 Post(
@@ -161,16 +165,16 @@ class ThreadScreen(Screen):
                     author_did=reply.author.did,
                     author_pds=reply.author.pds,
                     record_uri=reply.uri,
-                    collection=lexicon.REPLY,
+                    collection=lexicon.POST,
                     attachments=reply.attachments,
-                    quote_text=quote_text,
+                    parent_preview=parent_preview,
                 ),
                 before=self.query_one("#page-status-bottom"),
             )
 
         # Focus first reply
         replies = [
-            post for post in self.query(Post) if post.collection == lexicon.REPLY
+            post for post in self.query(Post) if self._is_reply_widget(post)
         ]
         if replies:
             replies[0].focus()
@@ -243,18 +247,18 @@ class ThreadScreen(Screen):
         if not session:
             return
 
-        # If focused on a reply, quote it
-        quote = None
+        # If focused on a reply, set it as the parent
+        parent = None
         focused = self.focused
         if (
             isinstance(focused, Post)
-            and focused.collection == lexicon.REPLY
+            and self._is_reply_widget(focused)
             and focused.record_uri
         ):
-            quote = self._replies_map.get(focused.record_uri)
+            parent = self._replies_map.get(focused.record_uri)
 
         self.app.push_screen(
-            ComposeReplyScreen(self.bbs, self.handle, self.thread, quote=quote)
+            ComposeReplyScreen(self.bbs, self.handle, self.thread, parent=parent)
         )
 
     def action_delete(self) -> None:
@@ -278,7 +282,7 @@ class ThreadScreen(Screen):
             await delete_record(
                 self.app.http_client,
                 session,
-                post.collection,
+                lexicon.POST,
                 post.rkey,
             )
         except AuthError:
@@ -288,7 +292,7 @@ class ThreadScreen(Screen):
             self.notify("Failed to delete.", severity="error")
             return
 
-        if post.collection == lexicon.THREAD:
+        if post.record_uri == self.thread.uri:
             self.app.pop_screen()
         else:
             await post.remove()

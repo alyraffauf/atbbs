@@ -2,9 +2,9 @@ import { useState, type SyntheticEvent } from "react";
 import { Link, useRouteLoaderData } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
-import { createNews, deleteRecord, uploadAttachments } from "../lib/writes";
+import { createPost, deleteRecord, uploadAttachments } from "../lib/writes";
 import ComposeForm from "../components/form/ComposeForm";
-import { NEWS, SITE } from "../lib/lexicon";
+import { POST, SITE } from "../lib/lexicon";
 import { makeAtUri, nowIso, parseAtUri } from "../lib/util";
 import * as limits from "../lib/limits";
 import { usePageTitle } from "../hooks/usePageTitle";
@@ -22,7 +22,7 @@ import {
   Megaphone,
   ChevronDown,
 } from "lucide-react";
-import type { News } from "../lib/bbs";
+import type { NewsPost } from "../lib/bbs";
 import type { BBSLoaderData } from "../router/loaders";
 import PostBody from "../components/post/PostBody";
 
@@ -32,7 +32,7 @@ export default function BBSPage() {
   const [newsTitle, setNewsTitle] = useState("");
   const [newsBody, setNewsBody] = useState("");
   const [newsFiles, setNewsFiles] = useState<File[]>([]);
-  const [pendingNews, setPendingNews] = useState<News[]>([]);
+  const [pendingNews, setPendingNews] = useState<NewsPost[]>([]);
   const [deletedTids, setDeletedTids] = useState<Set<string>>(new Set());
   const [showAllNews, setShowAllNews] = useState(false);
 
@@ -41,11 +41,6 @@ export default function BBSPage() {
     [bbs, handle],
   );
   usePageTitle(`${bbs.site.name} — atbbs`);
-
-  if (user && bbs.site.bannedDids.has(user.did))
-    return (
-      <p className="text-neutral-400">You have been banned from this BBS.</p>
-    );
 
   const isSysop = user && user.did === bbs.identity.did;
 
@@ -56,10 +51,13 @@ export default function BBSPage() {
     const body = newsBody.trim();
     const siteUri = makeAtUri(bbs.identity.did, SITE, "self");
     const attachments = await uploadAttachments(agent, newsFiles);
-    const resp = await createNews(agent, siteUri, title, body, attachments);
-    const tid = parseAtUri(resp.data.uri).rkey;
+    const resp = await createPost(agent, siteUri, body, {
+      title,
+      attachments,
+    });
+    const rkey = parseAtUri(resp.data.uri).rkey;
     setPendingNews((prev) => [
-      { tid, siteUri, title, body, createdAt: nowIso() },
+      { uri: resp.data.uri, rkey, title, body, createdAt: nowIso() },
       ...prev,
     ]);
     setNewsTitle("");
@@ -67,21 +65,21 @@ export default function BBSPage() {
     setNewsFiles([]);
   }
 
-  async function removeNews(tid: string) {
+  async function removeNews(rkey: string) {
     if (!agent) return;
     if (!confirm("Delete this news post?")) return;
-    await deleteRecord(agent, NEWS, tid);
-    setPendingNews((prev) => prev.filter((n) => n.tid !== tid));
-    setDeletedTids((prev) => new Set(prev).add(tid));
+    await deleteRecord(agent, POST, rkey);
+    setPendingNews((prev) => prev.filter((n) => n.rkey !== rkey));
+    setDeletedTids((prev) => new Set(prev).add(rkey));
   }
 
-  // Merge pending news with loader data, deduplicating by tid and filtering deletes.
-  const loaderTids = new Set(bbs.news.map((n) => n.tid));
+  // Merge pending news with loader data, deduplicating by rkey and filtering deletes.
+  const loaderTids = new Set(bbs.news.map((n) => n.rkey));
   const allNews = [
     ...pendingNews.filter(
-      (n) => !loaderTids.has(n.tid) && !deletedTids.has(n.tid),
+      (n) => !loaderTids.has(n.rkey) && !deletedTids.has(n.rkey),
     ),
-    ...bbs.news.filter((n) => !deletedTids.has(n.tid)),
+    ...bbs.news.filter((n) => !deletedTids.has(n.rkey)),
   ];
   const visibleNews = showAllNews ? allNews : allNews.slice(0, 3);
 
@@ -146,12 +144,12 @@ export default function BBSPage() {
               title={newsTitle}
               onTitleChange={setNewsTitle}
               titlePlaceholder="Headline"
-              titleMaxLength={limits.NEWS_TITLE}
+              titleMaxLength={limits.POST_TITLE}
               body={newsBody}
               onBodyChange={setNewsBody}
               bodyPlaceholder="Announcement body..."
               bodyRows={3}
-              bodyMaxLength={limits.NEWS_BODY}
+              bodyMaxLength={limits.POST_BODY}
               files={newsFiles}
               onFilesChange={setNewsFiles}
               submitLabel="post"
@@ -163,8 +161,8 @@ export default function BBSPage() {
           <>
             {visibleNews.map((item, i) => (
               <Link
-                key={item.tid}
-                to={`/bbs/${handle}/news/${item.tid}`}
+                key={item.rkey}
+                to={`/bbs/${handle}/news/${item.rkey}`}
                 className={`reply-card block bg-neutral-900 border border-neutral-800 rounded p-4 hover:border-neutral-700 ${i < visibleNews.length - 1 ? "mb-2" : ""}`}
               >
                 <div className="flex items-baseline justify-between mb-2">
@@ -179,7 +177,7 @@ export default function BBSPage() {
                         type="button"
                         onClick={(e) => {
                           e.preventDefault();
-                          removeNews(item.tid);
+                          removeNews(item.rkey);
                         }}
                         className="text-xs text-neutral-400 hover:text-red-400"
                       >

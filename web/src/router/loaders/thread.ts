@@ -6,11 +6,11 @@ import {
   resolveIdentity,
   type BacklinkRef,
 } from "../../lib/atproto";
-import { THREAD, REPLY } from "../../lib/lexicon";
+import { POST } from "../../lib/lexicon";
 import { makeAtUri, parseAtUri } from "../../lib/util";
 import { is } from "@atcute/lexicons/validations";
-import { mainSchema as threadSchema } from "../../lexicons/types/xyz/atboards/thread";
-import type { XyzAtboardsThread } from "../../lexicons";
+import { mainSchema as postSchema } from "../../lexicons/types/xyz/atbbs/post";
+import type { XyzAtbbsPost } from "../../lexicons";
 
 export interface ThreadObj {
   uri: string;
@@ -25,11 +25,11 @@ export interface ThreadObj {
   attachments?: { file: { ref: { $link: string } }; name: string }[];
 }
 
-async function collectAllReplyRefs(threadUri: string): Promise<BacklinkRef[]> {
+async function collectAllReplyRefs(rootUri: string): Promise<BacklinkRef[]> {
   const collected: BacklinkRef[] = [];
   let cursor: string | undefined;
   for (let i = 0; i < 20; i++) {
-    const page = await getBacklinks(threadUri, `${REPLY}:subject`, 100, cursor);
+    const page = await getBacklinks(rootUri, `${POST}:root`, 100, cursor);
     collected.push(...page.records);
     if (!page.cursor) break;
     cursor = page.cursor;
@@ -42,29 +42,29 @@ export async function threadLoader({ params }: LoaderFunctionArgs) {
   const did = params.did!;
   const tid = params.tid!;
 
-  const threadUri = makeAtUri(did, THREAD, tid);
+  const threadUri = makeAtUri(did, POST, tid);
   const [bbs, threadRecord, author, allRefs] = await Promise.all([
     resolveBBS(handle),
-    getRecord(did, THREAD, tid),
+    getRecord(did, POST, tid),
     resolveIdentity(did),
     collectAllReplyRefs(threadUri),
   ]);
-  if (!is(threadSchema, threadRecord.value)) {
-    throw new Response("Invalid thread record", { status: 404 });
+  if (!is(postSchema, threadRecord.value)) {
+    throw new Response("Invalid post record", { status: 404 });
   }
-  const threadValue = threadRecord.value as unknown as XyzAtboardsThread.Main;
-  const boardSlug = parseAtUri(threadValue.board).rkey;
+  const postValue = threadRecord.value as unknown as XyzAtbbsPost.Main;
+  const boardSlug = parseAtUri(postValue.scope).rkey;
   const thread: ThreadObj = {
     uri: threadRecord.uri,
     did,
     rkey: tid,
     authorHandle: author.handle,
     authorPds: author.pds ?? "",
-    title: threadValue.title,
-    body: threadValue.body,
-    createdAt: threadValue.createdAt,
+    title: postValue.title ?? "",
+    body: postValue.body,
+    createdAt: postValue.createdAt,
     boardSlug,
-    attachments: threadValue.attachments as ThreadObj["attachments"],
+    attachments: postValue.attachments as ThreadObj["attachments"],
   };
 
   return { handle, bbs, thread, allRefs };

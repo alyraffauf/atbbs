@@ -6,7 +6,7 @@ from textual.widgets import Footer, Input, Static, TextArea
 
 from core import lexicon, limits
 from core.models import AtUri, AuthError, BBS, Board
-from core.records import create_thread_record
+from core.records import create_post_record
 from tui.util import require_session
 from tui.widgets.breadcrumb import Breadcrumb
 from tui.screens.compose.upload import upload_file
@@ -36,7 +36,7 @@ class ComposeThreadScreen(Screen):
             yield Input(
                 placeholder="Thread title",
                 id="thread-title",
-                max_length=limits.THREAD_TITLE,
+                max_length=limits.POST_TITLE,
             )
             yield TextArea(id="thread-body", language=None)
             yield Input(placeholder="attach file (path, optional)", id="thread-file")
@@ -59,9 +59,9 @@ class ComposeThreadScreen(Screen):
         if not title or not body:
             self.notify("Title and body cannot be empty.", severity="error")
             return
-        if len(body) > limits.THREAD_BODY:
+        if len(body) > limits.POST_BODY:
             self.notify(
-                f"Body too long ({len(body)}/{limits.THREAD_BODY}).", severity="error"
+                f"Body too long ({len(body)}/{limits.POST_BODY}).", severity="error"
             )
             return
 
@@ -75,12 +75,12 @@ class ComposeThreadScreen(Screen):
                 return
 
         try:
-            resp = await create_thread_record(
+            resp = await create_post_record(
                 self.app.http_client,
                 session,
-                board_uri,
-                title,
-                body,
+                scope=board_uri,
+                body=body,
+                title=title,
                 attachments=attachments or None,
             )
             resp.raise_for_status()

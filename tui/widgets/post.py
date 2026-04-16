@@ -66,7 +66,7 @@ class Post(Widget, can_focus=True):
         color: #8a8a8a;
         margin-top: 1;
     }
-    Post .post-quote {
+    Post .post-parent {
         color: #8a8a8a;
         border-left: solid #525252;
         padding-left: 2;
@@ -85,7 +85,7 @@ class Post(Widget, can_focus=True):
         record_uri: str | None = None,
         collection: str | None = None,
         attachments: list[dict] | None = None,
-        quote_text: str | None = None,
+        parent_preview: str | None = None,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -98,7 +98,7 @@ class Post(Widget, can_focus=True):
         self.record_uri = record_uri
         self.collection = collection
         self.attachments = attachments or []
-        self._quote_text = quote_text
+        self._parent_preview = parent_preview
 
     @property
     def rkey(self) -> str | None:
@@ -110,8 +110,8 @@ class Post(Widget, can_focus=True):
         yield Static(f"{self._author}  {self._date}", classes="post-meta", markup=False)
         if self._title:
             yield Static(self._title, classes="post-title", markup=False)
-        if self._quote_text:
-            yield Markdown(self._quote_text, classes="post-quote")
+        if self._parent_preview:
+            yield Markdown(self._parent_preview, classes="post-parent")
         yield Markdown(self._body, classes="post-body")
         for attachment in self.attachments:
             name = attachment.get("name", "file")

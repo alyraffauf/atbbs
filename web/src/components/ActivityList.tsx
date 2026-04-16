@@ -33,8 +33,8 @@ export default function ActivityList({ items, userHandle }: ActivityListProps) {
           >
             <PostMeta handle={item.handle} createdAt={item.createdAt} />
             <p className="text-xs text-neutral-400 mb-1">
-              {item.type === "quote"
-                ? "quoted your reply"
+              {item.type === "parent_reply"
+                ? "replied to your reply"
                 : `on: ${item.threadTitle}`}
             </p>
             <div className="line-clamp-2">

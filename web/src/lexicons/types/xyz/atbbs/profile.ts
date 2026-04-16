@@ -5,7 +5,7 @@ import type {} from "@atcute/lexicons/ambient";
 const _mainSchema = /*#__PURE__*/ v.record(
   /*#__PURE__*/ v.literal("self"),
   /*#__PURE__*/ v.object({
-    $type: /*#__PURE__*/ v.literal("xyz.atboards.profile"),
+    $type: /*#__PURE__*/ v.literal("xyz.atbbs.profile"),
     /**
      * @maxLength 1000
      */
@@ -44,6 +44,6 @@ export interface Main extends v.InferInput<typeof mainSchema> {}
 
 declare module "@atcute/lexicons/ambient" {
   interface Records {
-    "xyz.atboards.profile": mainSchema;
+    "xyz.atbbs.profile": mainSchema;
   }
 }

@@ -1,27 +1,27 @@
 {
   "lexicon": 1,
-  "id": "xyz.atboards.profile",
+  "id": "xyz.atbbs.board",
   "defs": {
     "main": {
       "type": "record",
-      "key": "literal:self",
+      "key": "any",
       "record": {
         "type": "object",
-        "required": [],
+        "required": ["name", "description", "createdAt"],
         "properties": {
           "name": {
             "type": "string",
             "maxLength": 100
           },
-          "pronouns": {
+          "description": {
             "type": "string",
-            "maxLength": 50
-          },
-          "bio": {
-            "type": "string",
-            "maxLength": 1000
+            "maxLength": 500
           },
           "createdAt": {
+            "type": "string",
+            "format": "datetime"
+          },
+          "updatedAt": {
             "type": "string",
             "format": "datetime"
           }

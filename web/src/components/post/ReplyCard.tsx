@@ -11,7 +11,7 @@ export interface Reply {
   pds: string;
   body: string;
   createdAt: string;
-  quote: string | null;
+  parent: string | null;
   attachments: { file: { ref: { $link: string } }; name: string }[];
 }
 
@@ -19,9 +19,9 @@ interface ReplyCardProps {
   reply: Reply;
   userDid: string;
   sysopDid: string;
-  quoted?: Reply;
-  onQuote: () => void;
-  onQuoteClick?: () => void;
+  parentPost?: Reply;
+  onReplyTo: () => void;
+  onParentClick?: () => void;
   onDelete: () => void;
   onBan: () => void;
   onHide: () => void;
@@ -31,9 +31,9 @@ export default function ReplyCard({
   reply,
   userDid,
   sysopDid,
-  quoted,
-  onQuote,
-  onQuoteClick,
+  parentPost,
+  onReplyTo,
+  onParentClick,
   onDelete,
   onBan,
   onHide,
@@ -51,23 +51,23 @@ export default function ReplyCard({
         <PostActions
           isAuthor={isAuthor}
           isSysop={isSysop}
-          onQuote={userDid ? onQuote : undefined}
+          onReplyTo={userDid ? onReplyTo : undefined}
           onDelete={onDelete}
           onBan={onBan}
           onHide={onHide}
         />
       </div>
 
-      {quoted && (
+      {parentPost && (
         <button
           type="button"
-          onClick={onQuoteClick}
+          onClick={onParentClick}
           className="block w-full text-left border-l-2 border-neutral-700 pl-3 mb-3 py-1 text-sm text-neutral-400 hover:border-neutral-500 cursor-pointer"
         >
-          <span className="text-neutral-400">{quoted.handle}:</span>{" "}
+          <span className="text-neutral-400">{parentPost.handle}:</span>{" "}
           <PostBody>
-            {quoted.body.substring(0, 200) +
-              (quoted.body.length > 200 ? "..." : "")}
+            {parentPost.body.substring(0, 200) +
+              (parentPost.body.length > 200 ? "..." : "")}
           </PostBody>
         </button>
       )}

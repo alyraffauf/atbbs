@@ -1,11 +1,11 @@
-/** Fetch the user's own threads across all BBSes. */
+/** Fetch the user's own root posts (threads) across all BBSes. */
 
 import { listRecords, resolveIdentitiesBatch } from "./atproto";
-import { THREAD } from "./lexicon";
+import { POST } from "./lexicon";
 import { parseAtUri } from "./util";
 import { is } from "@atcute/lexicons/validations";
-import { mainSchema as threadSchema } from "../lexicons/types/xyz/atboards/thread";
-import type { XyzAtboardsThread } from "../lexicons";
+import { mainSchema as postSchema } from "../lexicons/types/xyz/atbbs/post";
+import type { XyzAtbbsPost } from "../lexicons";
 
 export interface MyThread {
   uri: string;
@@ -21,30 +21,33 @@ export async function fetchMyThreads(
   pdsUrl: string,
   did: string,
 ): Promise<MyThread[]> {
-  const records = await listRecords(pdsUrl, did, THREAD);
-  const threadRecords = records.filter((record) =>
-    is(threadSchema, record.value),
-  );
-  if (!threadRecords.length) return [];
+  const records = await listRecords(pdsUrl, did, POST);
+  const rootPosts = records
+    .filter((record) => is(postSchema, record.value))
+    .filter((record) => {
+      const value = record.value as Record<string, unknown>;
+      return !value.root && value.title; // root posts with titles = threads
+    });
+  if (!rootPosts.length) return [];
 
   const bbsDids = new Set(
-    threadRecords.map((record) => {
-      const value = record.value as unknown as XyzAtboardsThread.Main;
-      return parseAtUri(value.board).did;
+    rootPosts.map((record) => {
+      const value = record.value as unknown as XyzAtbbsPost.Main;
+      return parseAtUri(value.scope).did;
     }),
   );
   const identities = await resolveIdentitiesBatch([...bbsDids]);
 
   const results: MyThread[] = [];
-  for (const record of threadRecords) {
-    const value = record.value as unknown as XyzAtboardsThread.Main;
-    const bbsDid = parseAtUri(value.board).did;
+  for (const record of rootPosts) {
+    const value = record.value as unknown as XyzAtbbsPost.Main;
+    const bbsDid = parseAtUri(value.scope).did;
     const identity = identities[bbsDid];
     if (!identity) continue;
     results.push({
       uri: record.uri,
       rkey: parseAtUri(record.uri).rkey,
-      title: value.title,
+      title: value.title ?? "",
       body: value.body,
       createdAt: value.createdAt,
       bbsDid,

@@ -1,11 +1,11 @@
-import type { News } from "../../lib/bbs";
+import type { NewsPost } from "../../lib/bbs";
 import AttachmentLink from "./AttachmentLink";
 import PostActions from "./PostActions";
 import PostBody from "./PostBody";
 import PostMeta from "./PostMeta";
 
 interface NewsCardProps {
-  news: News;
+  news: NewsPost;
   handle: string;
   pds: string;
   did: string;

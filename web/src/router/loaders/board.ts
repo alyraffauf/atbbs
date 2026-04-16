@@ -6,11 +6,11 @@ import {
   resolveIdentitiesBatch,
   type ATRecord,
 } from "../../lib/atproto";
-import { THREAD, BOARD } from "../../lib/lexicon";
+import { POST, BOARD } from "../../lib/lexicon";
 import { makeAtUri, parseAtUri } from "../../lib/util";
 import { is } from "@atcute/lexicons/validations";
-import { mainSchema as threadSchema } from "../../lexicons/types/xyz/atboards/thread";
-import type { XyzAtboardsThread } from "../../lexicons";
+import { mainSchema as postSchema } from "../../lexicons/types/xyz/atbbs/post";
+import type { XyzAtbbsPost } from "../../lexicons";
 
 export interface ThreadItem {
   uri: string;
@@ -28,15 +28,12 @@ export async function hydrateThreadPage(
   cursor?: string,
 ): Promise<{ threads: ThreadItem[]; cursor: string | null }> {
   const boardUri = makeAtUri(bbs.identity.did, BOARD, slug);
-  const backlinks = await getBacklinks(boardUri, `${THREAD}:board`, 50, cursor);
+  const backlinks = await getBacklinks(boardUri, `${POST}:scope`, 50, cursor);
   const records = await getRecordsBatch(backlinks.records);
   const filtered = records.filter((record) => {
-    const { did } = parseAtUri(record.uri);
-    return (
-      !bbs.site.bannedDids.has(did) &&
-      !bbs.site.hiddenPosts.has(record.uri) &&
-      is(threadSchema, record.value)
-    );
+    if (!is(postSchema, record.value)) return false;
+    const value = record.value as unknown as XyzAtbbsPost.Main;
+    return value.title && !value.root; // root posts with titles = threads
   });
   const authors = await resolveIdentitiesBatch(
     filtered.map((record) => parseAtUri(record.uri).did),
@@ -45,13 +42,13 @@ export async function hydrateThreadPage(
     .filter((record) => parseAtUri(record.uri).did in authors)
     .map((record: ATRecord) => {
       const { did, rkey } = parseAtUri(record.uri);
-      const value = record.value as unknown as XyzAtboardsThread.Main;
+      const value = record.value as unknown as XyzAtbbsPost.Main;
       return {
         uri: record.uri,
         did,
         rkey,
         handle: authors[did].handle,
-        title: value.title,
+        title: value.title ?? "",
         body: value.body,
         createdAt: value.createdAt,
       };

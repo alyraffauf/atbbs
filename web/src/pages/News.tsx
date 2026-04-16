@@ -2,7 +2,7 @@ import { useNavigate, useParams, useRouteLoaderData } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
-import { NEWS } from "../lib/lexicon";
+import { POST } from "../lib/lexicon";
 import { deleteRecord } from "../lib/writes";
 import type { BBSLoaderData } from "../router/loaders";
 import NewsCard from "../components/post/NewsCard";
@@ -13,7 +13,7 @@ export default function NewsPage() {
   const { user, agent } = useAuth();
   const navigate = useNavigate();
 
-  const item = bbs.news.find((news) => news.tid === tid);
+  const item = bbs.news.find((news) => news.rkey === tid);
 
   useBreadcrumb(
     [
@@ -35,7 +35,7 @@ export default function NewsPage() {
   async function onDelete() {
     if (!agent || !tid) return;
     if (!confirm("Delete this news post?")) return;
-    await deleteRecord(agent, NEWS, tid);
+    await deleteRecord(agent, POST, tid);
     navigate(`/bbs/${handle}`);
   }
 

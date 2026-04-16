@@ -128,8 +128,6 @@ export async function fetchAndHydrate(
     limit?: number;
     cursor?: string;
     excludeDid?: string;
-    bannedDids?: Set<string>;
-    hiddenPosts?: Set<string>;
   },
 ): Promise<FetchAndHydrateResult> {
   const limit = opts?.limit ?? 50;
@@ -141,8 +139,6 @@ export async function fetchAndHydrate(
   const filtered = records.filter((record) => {
     const { did } = parseAtUri(record.uri);
     if (opts?.excludeDid && did === opts.excludeDid) return false;
-    if (opts?.bannedDids?.has(did)) return false;
-    if (opts?.hiddenPosts?.has(record.uri)) return false;
     return true;
   });
 

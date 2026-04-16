@@ -17,8 +17,8 @@ interface ComposeFormProps {
   titleMaxLength?: number;
   files: File[];
   onFilesChange: (files: File[]) => void;
-  quote?: { uri: string; handle: string } | null;
-  onClearQuote?: () => void;
+  replyingTo?: { uri: string; handle: string } | null;
+  onClearReplyTo?: () => void;
   submitLabel?: string;
   posting?: boolean;
   className?: string;
@@ -35,8 +35,8 @@ export default function ComposeForm({
   titlePlaceholder = "Title",
   files,
   onFilesChange,
-  quote,
-  onClearQuote,
+  replyingTo,
+  onClearReplyTo,
   bodyMaxLength,
   titleMaxLength,
   submitLabel = "post",
@@ -60,13 +60,13 @@ export default function ComposeForm({
 
   return (
     <form onSubmit={onSubmit} className={`space-y-3 ${className}`}>
-      {quote && onClearQuote && (
+      {replyingTo && onClearReplyTo && (
         <div className="text-xs text-neutral-400">
-          <span>quoting {quote.handle}</span>
+          <span>replying to {replyingTo.handle}</span>
           <button
             type="button"
-            onClick={onClearQuote}
-            aria-label="Clear quote"
+            onClick={onClearReplyTo}
+            aria-label="Clear reply"
             className="text-neutral-400 hover:text-red-400 ml-2"
           >
             ✕

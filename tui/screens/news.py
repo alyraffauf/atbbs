@@ -5,7 +5,7 @@ from textual.screen import Screen
 from textual.widgets import Footer
 
 from core import lexicon
-from core.models import AuthError, BBS, News
+from core.models import AtUri, AuthError, BBS, Post as PostModel
 from core.records import delete_record
 from tui.util import make_session_updater
 from tui.widgets.breadcrumb import Breadcrumb
@@ -18,7 +18,7 @@ class NewsScreen(Screen):
         ("ctrl+d", "delete", "delete"),
     ]
 
-    def __init__(self, bbs: BBS, handle: str, news: News) -> None:
+    def __init__(self, bbs: BBS, handle: str, news: PostModel) -> None:
         super().__init__()
         self.bbs = bbs
         self.handle = handle
@@ -53,12 +53,13 @@ class NewsScreen(Screen):
     async def _do_delete(self) -> None:
         session = self.app.user_session
         updater = make_session_updater(self.app.session_store)
+        rkey = AtUri.parse(self.news.uri).rkey
         try:
             await delete_record(
                 self.app.http_client,
                 session,
-                lexicon.NEWS,
-                self.news.tid,
+                lexicon.POST,
+                rkey,
                 updater,
             )
             self.app.pop_screen()

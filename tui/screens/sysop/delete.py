@@ -6,7 +6,7 @@ from textual.widgets import Button, Footer, Static
 
 from core import lexicon
 from core.models import AtUri, BBS
-from core.constellation import get_news
+from core.constellation import get_root_posts
 from core.records import delete_record, list_pds_records
 from tui.util import make_session_updater
 
@@ -23,8 +23,8 @@ class SysopDeleteScreen(Screen):
         with Vertical():
             yield Static("Delete your BBS?", classes="title")
             yield Static(
-                "This will delete your site record, all boards, news, "
-                "bans, and hidden post records. Threads and replies from "
+                "This will delete your site record, all boards, "
+                "bans, and hidden post records. Posts from "
                 "users will remain in their repos.",
             )
             yield Button("delete", id="delete-confirm", variant="error")
@@ -54,17 +54,18 @@ class SysopDeleteScreen(Screen):
             except Exception:
                 failed.append(f"board/{board.slug}")
 
+        # Delete sysop's news posts (posts scoped to site)
         site_uri = str(AtUri(session["did"], lexicon.SITE, "self"))
         try:
-            backlinks = await get_news(client, site_uri)
+            backlinks = await get_root_posts(client, site_uri)
             for ref in backlinks.records:
                 if ref.did == session["did"]:
                     try:
                         await delete_record(
-                            client, session, lexicon.NEWS, ref.rkey, updater
+                            client, session, lexicon.POST, ref.rkey, updater
                         )
                     except Exception:
-                        failed.append(f"news/{ref.rkey}")
+                        failed.append(f"post/{ref.rkey}")
         except Exception:
             failed.append("news lookup")
 

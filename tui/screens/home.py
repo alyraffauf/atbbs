@@ -95,12 +95,6 @@ class HomeScreen(Screen):
             self.notify("Could not reach the network.", severity="error")
             return
 
-        # Check if banned
-        session = self.app.user_session
-        if session and bbs.site.is_banned(session.get("did")):
-            self.notify("You have been banned from this BBS.", severity="error")
-            return
-
         self.app.push_screen(SiteScreen(bbs, handle))
         self.query_one("#handle-input", Input).value = ""
 

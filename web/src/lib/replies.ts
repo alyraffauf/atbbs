@@ -3,8 +3,8 @@
 import { type BacklinkRef } from "./atproto";
 import { parseAtUri } from "./util";
 import { is } from "@atcute/lexicons/validations";
-import { mainSchema as replySchema } from "../lexicons/types/xyz/atboards/reply";
-import type { XyzAtboardsReply } from "../lexicons";
+import { mainSchema as postSchema } from "../lexicons/types/xyz/atbbs/post";
+import type { XyzAtbbsPost } from "../lexicons";
 import type { Reply } from "../components/post/ReplyCard";
 
 export type { BacklinkRef };
@@ -49,8 +49,8 @@ export function recordToReply(
 ): Reply | null {
   const { did, rkey } = parseAtUri(record.uri);
   if (!(did in authors)) return null;
-  if (!is(replySchema, record.value)) return null;
-  const value = record.value as unknown as XyzAtboardsReply.Main;
+  if (!is(postSchema, record.value)) return null;
+  const value = record.value as unknown as XyzAtbbsPost.Main;
   return {
     uri: record.uri,
     did,
@@ -59,7 +59,7 @@ export function recordToReply(
     pds: authors[did].pds ?? "",
     body: value.body,
     createdAt: value.createdAt,
-    quote: value.quote ?? null,
+    parent: value.parent ?? null,
     attachments: (value.attachments ?? []) as Reply["attachments"],
   };
 }

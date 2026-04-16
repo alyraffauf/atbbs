@@ -3,9 +3,9 @@
 import { getRecord, resolveIdentity } from "./atproto";
 import { PROFILE, SITE } from "./lexicon";
 import { is } from "@atcute/lexicons/validations";
-import { mainSchema as profileSchema } from "../lexicons/types/xyz/atboards/profile";
-import { mainSchema as siteSchema } from "../lexicons/types/xyz/atboards/site";
-import type { XyzAtboardsProfile, XyzAtboardsSite } from "../lexicons";
+import { mainSchema as profileSchema } from "../lexicons/types/xyz/atbbs/profile";
+import { mainSchema as siteSchema } from "../lexicons/types/xyz/atbbs/site";
+import type { XyzAtbbsProfile, XyzAtbbsSite } from "../lexicons";
 
 export interface Profile {
   did: string;
@@ -43,7 +43,7 @@ export async function fetchProfile(handle: string): Promise<Profile | null> {
     is(profileSchema, profileResult.value.value)
   ) {
     const value = profileResult.value
-      .value as unknown as XyzAtboardsProfile.Main;
+      .value as unknown as XyzAtbbsProfile.Main;
     profile.name = value.name;
     profile.pronouns = value.pronouns;
     profile.bio = value.bio;
@@ -54,7 +54,7 @@ export async function fetchProfile(handle: string): Promise<Profile | null> {
     siteResult.status === "fulfilled" &&
     is(siteSchema, siteResult.value.value)
   ) {
-    const value = siteResult.value.value as unknown as XyzAtboardsSite.Main;
+    const value = siteResult.value.value as unknown as XyzAtbbsSite.Main;
     profile.bbsName = value.name;
     profile.bbsDescription = value.description;
   }

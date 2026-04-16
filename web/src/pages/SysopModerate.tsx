@@ -86,7 +86,7 @@ export default function SysopModerate() {
         <div>
           <label className="block text-neutral-400 mb-3">Banned Users</label>
           <div className="space-y-1 mb-3">
-            {[...bbs.site.bannedDids].map((did) => (
+            {Object.keys(banRkeys).map((did) => (
               <div
                 key={did}
                 title={did}

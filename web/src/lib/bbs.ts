@@ -5,25 +5,20 @@ import {
   getRecord,
   getRecordsBatch,
   getBacklinks,
-  listRecords,
   resolveIdentity,
   type MiniDoc,
   type ATRecord,
 } from "./atproto";
-import { SITE, BOARD, NEWS, BAN, HIDE } from "./lexicon";
+import { SITE, BOARD, POST, BAN, HIDE } from "./lexicon";
 import { makeAtUri, parseAtUri } from "./util";
 import { is } from "@atcute/lexicons/validations";
-import { mainSchema as siteSchema } from "../lexicons/types/xyz/atboards/site";
-import { mainSchema as boardSchema } from "../lexicons/types/xyz/atboards/board";
-import { mainSchema as newsSchema } from "../lexicons/types/xyz/atboards/news";
-import { mainSchema as banSchema } from "../lexicons/types/xyz/atboards/ban";
-import { mainSchema as hideSchema } from "../lexicons/types/xyz/atboards/hide";
+import { mainSchema as siteSchema } from "../lexicons/types/xyz/atbbs/site";
+import { mainSchema as boardSchema } from "../lexicons/types/xyz/atbbs/board";
+import { mainSchema as postSchema } from "../lexicons/types/xyz/atbbs/post";
 import type {
-  XyzAtboardsSite,
-  XyzAtboardsBoard,
-  XyzAtboardsNews,
-  XyzAtboardsBan,
-  XyzAtboardsHide,
+  XyzAtbbsSite,
+  XyzAtbbsBoard,
+  XyzAtbbsPost,
 } from "../lexicons";
 
 export class BBSNotFoundError extends Error {}
@@ -38,18 +33,18 @@ export interface Board {
   updatedAt?: string;
 }
 
-export interface NewsAttachment {
+export interface PostAttachment {
   file: { ref: { $link: string } };
   name: string;
 }
 
-export interface News {
-  tid: string;
-  siteUri: string;
+export interface NewsPost {
+  uri: string;
+  rkey: string;
   title: string;
   body: string;
   createdAt: string;
-  attachments?: NewsAttachment[];
+  attachments?: PostAttachment[];
 }
 
 export interface Site {
@@ -57,8 +52,6 @@ export interface Site {
   description: string;
   intro: string;
   boards: Board[];
-  bannedDids: Set<string>;
-  hiddenPosts: Set<string>;
   createdAt: string;
   updatedAt?: string;
 }
@@ -66,7 +59,7 @@ export interface Site {
 export interface BBS {
   identity: MiniDoc;
   site: Site;
-  news: News[];
+  news: NewsPost[];
 }
 
 const bbsCache = new TTLCache<string, BBS>(5 * 60 * 1000);
@@ -104,27 +97,28 @@ async function _resolveBBS(handle: string): Promise<BBS> {
   if (!is(siteSchema, siteRecord.value)) {
     throw new NoBBSError(`${handle} has an invalid site record.`);
   }
-  const siteValue = siteRecord.value as unknown as XyzAtboardsSite.Main;
+  const siteValue = siteRecord.value as unknown as XyzAtbbsSite.Main;
   const siteUri = makeAtUri(identity.did, SITE, "self");
-  const boardSlugs: string[] = siteValue.boards ?? [];
+  const boardUris: string[] = siteValue.boards ?? [];
 
-  const [boardResults, newsBacklinks, banRecords, hideRecords] =
-    await Promise.all([
-      Promise.allSettled(
-        boardSlugs.map((slug) => getRecord(identity.did, BOARD, slug)),
-      ),
-      getBacklinks(siteUri, `${NEWS}:site`, 50).catch(() => null),
-      listRecords(identity.pds, identity.did, BAN).catch(() => []),
-      listRecords(identity.pds, identity.did, HIDE).catch(() => []),
-    ]);
+  const [boardResults, newsBacklinks] = await Promise.all([
+    Promise.allSettled(
+      boardUris.map((uri) => {
+        const parsed = parseAtUri(uri);
+        return getRecord(parsed.did, parsed.collection, parsed.rkey);
+      }),
+    ),
+    getBacklinks(siteUri, `${POST}:scope`, 50).catch(() => null),
+  ]);
 
   const boards: Board[] = [];
   boardResults.forEach((result, index) => {
     if (result.status !== "fulfilled") return;
     if (!is(boardSchema, result.value.value)) return;
-    const board = result.value.value as unknown as XyzAtboardsBoard.Main;
+    const board = result.value.value as unknown as XyzAtbbsBoard.Main;
+    const parsed = parseAtUri(boardUris[index]);
     boards.push({
-      slug: boardSlugs[index],
+      slug: parsed.rkey,
       name: board.name,
       description: board.description,
       createdAt: board.createdAt,
@@ -132,39 +126,32 @@ async function _resolveBBS(handle: string): Promise<BBS> {
     });
   });
 
-  // News - only sysop's repo
-  let news: News[] = [];
+  // News - posts scoped to the site, only sysop's repo
+  let news: NewsPost[] = [];
   if (newsBacklinks) {
     const sysopRefs = newsBacklinks.records.filter(
       (ref) => ref.did === identity.did,
     );
     const newsRecords = await getRecordsBatch(sysopRefs);
     news = newsRecords
-      .filter((record) => is(newsSchema, record.value))
+      .filter((record) => is(postSchema, record.value))
+      .filter((record) => {
+        const value = record.value as unknown as XyzAtbbsPost.Main;
+        return value.title && !value.root; // root posts with titles are news/threads
+      })
       .map((record) => {
-        const value = record.value as unknown as XyzAtboardsNews.Main;
+        const value = record.value as unknown as XyzAtbbsPost.Main;
         return {
-          tid: parseAtUri(record.uri).rkey,
-          siteUri: value.site,
-          title: value.title,
+          uri: record.uri,
+          rkey: parseAtUri(record.uri).rkey,
+          title: value.title ?? "",
           body: value.body,
           createdAt: value.createdAt,
-          attachments: value.attachments as NewsAttachment[] | undefined,
+          attachments: value.attachments as PostAttachment[] | undefined,
         };
       });
     news.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
-
-  const bannedDids = new Set(
-    banRecords
-      .filter((record) => is(banSchema, record.value))
-      .map((record) => (record.value as unknown as XyzAtboardsBan.Main).did),
-  );
-  const hiddenPosts = new Set(
-    hideRecords
-      .filter((record) => is(hideSchema, record.value))
-      .map((record) => (record.value as unknown as XyzAtboardsHide.Main).uri),
-  );
 
   return {
     identity,
@@ -173,8 +160,6 @@ async function _resolveBBS(handle: string): Promise<BBS> {
       description: siteValue.description,
       intro: siteValue.intro,
       boards,
-      bannedDids,
-      hiddenPosts,
       createdAt: siteValue.createdAt ?? "",
       updatedAt: siteValue.updatedAt,
     },

@@ -1,14 +1,13 @@
-/** Activity data — replies to your threads + quotes of your replies. */
+/** Activity data — replies to your posts from other users. */
 
 import { fetchAndHydrate, listRecords } from "./atproto";
-import { THREAD, REPLY } from "./lexicon";
+import { POST } from "./lexicon";
 import { is } from "@atcute/lexicons/validations";
-import { mainSchema as threadSchema } from "../lexicons/types/xyz/atboards/thread";
-import { mainSchema as replySchema } from "../lexicons/types/xyz/atboards/reply";
-import type { XyzAtboardsThread, XyzAtboardsReply } from "../lexicons";
+import { mainSchema as postSchema } from "../lexicons/types/xyz/atbbs/post";
+import type { XyzAtbbsPost } from "../lexicons";
 
 export interface ActivityItem {
-  type: "reply" | "quote";
+  type: "reply" | "parent_reply";
   threadTitle: string;
   threadUri: string;
   replyUri: string;
@@ -49,43 +48,46 @@ export async function fetchActivity(
   pdsUrl: string,
 ): Promise<ActivityItem[]> {
   const SCAN_LIMIT = 50;
-  const [allThreads, allReplies] = await Promise.all([
-    listRecords(pdsUrl, did, THREAD, SCAN_LIMIT),
-    listRecords(pdsUrl, did, REPLY, SCAN_LIMIT),
-  ]);
-  const threads = allThreads.filter((record) => is(threadSchema, record.value));
-  const replies = allReplies.filter((record) => is(replySchema, record.value));
+  const allPosts = await listRecords(pdsUrl, did, POST, SCAN_LIMIT);
+  const validPosts = allPosts.filter((record) => is(postSchema, record.value));
+
+  const rootPosts = validPosts.filter(
+    (record) => !(record.value as Record<string, unknown>).root,
+  );
+  const replyPosts = validPosts.filter(
+    (record) => !!(record.value as Record<string, unknown>).root,
+  );
 
   const results = await Promise.all([
-    ...threads.map((thread) => {
-      const value = thread.value as unknown as XyzAtboardsThread.Main;
+    ...rootPosts.map((post) => {
+      const value = post.value as unknown as XyzAtbbsPost.Main;
       return fetchBacklinkItems(
-        thread.uri,
-        `${REPLY}:subject`,
+        post.uri,
+        `${POST}:root`,
         did,
         "reply",
         value.title ?? "",
-        thread.uri,
+        post.uri,
       );
     }),
-    ...replies.map((reply) => {
-      const value = reply.value as unknown as XyzAtboardsReply.Main;
+    ...replyPosts.map((reply) => {
+      const value = reply.value as unknown as XyzAtbbsPost.Main;
       return fetchBacklinkItems(
         reply.uri,
-        `${REPLY}:quote`,
+        `${POST}:parent`,
         did,
-        "quote",
+        "parent_reply",
         "",
-        value.subject ?? "",
+        value.root ?? "",
       );
     }),
   ]);
 
-  // Deduplicate — prefer "quote" type when the same reply appears as both.
+  // Deduplicate — prefer "parent-reply" type when the same reply appears as both.
   const seen = new Map<string, ActivityItem>();
   for (const item of results.flat()) {
     const key = item.handle + item.body + item.createdAt;
-    if (!seen.has(key) || item.type === "quote") seen.set(key, item);
+    if (!seen.has(key) || item.type === "parent_reply") seen.set(key, item);
   }
   return [...seen.values()].sort((a, b) =>
     b.createdAt.localeCompare(a.createdAt),

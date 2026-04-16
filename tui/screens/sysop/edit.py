@@ -5,7 +5,7 @@ from textual.screen import Screen
 from textual.widgets import Footer, Input, Static, TextArea
 
 from core import lexicon, limits
-from core.models import AuthError, BBS
+from core.models import AtUri, AuthError, BBS
 from core.records import delete_record, put_board_record, put_site_record
 from core.resolver import invalidate_bbs_cache
 from core.util import now_iso
@@ -183,7 +183,10 @@ class SysopEditScreen(Screen):
                     "name": name,
                     "description": description,
                     "intro": intro,
-                    "boards": [board["slug"] for board in self._boards],
+                    "boards": [
+                        str(AtUri(session["did"], lexicon.BOARD, board["slug"]))
+                        for board in self._boards
+                    ],
                     "createdAt": self.bbs.site.created_at or now,
                     "updatedAt": now,
                 },

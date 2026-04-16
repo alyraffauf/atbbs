@@ -6,8 +6,8 @@ from textual.containers import VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Footer, Static
 
-from core.models import AtUri, Thread
-from core.records import fetch_inbox
+from core.models import AtUri, Post as PostModel
+from core.records import fetch_inbox, post_from_record
 from core.resolver import resolve_bbs
 from core.slingshot import get_record, resolve_identity
 from tui.screens.thread import ThreadScreen
@@ -33,7 +33,7 @@ class ActivityScreen(Screen):
         with VerticalScroll(id="activity-scroll"):
             yield Static("Inbox", classes="title")
             yield Static(
-                "Replies to your threads and quotes of your replies.",
+                "Replies to your threads from other users.",
                 classes="subtitle",
             )
             yield Static("Loading...", id="activity-loading")
@@ -69,26 +69,17 @@ class ActivityScreen(Screen):
     async def _navigate(self, item: dict) -> None:
         parsed = AtUri.parse(item["thread_uri"])
         thread_did = parsed.did
-        thread_tid = parsed.rkey
+        thread_rkey = parsed.rkey
         handle = item.get("bbs_handle") or self.app.user_session.get("handle", "")
 
         client = self.app.http_client
         try:
             bbs, rec, author = await asyncio.gather(
                 resolve_bbs(client, handle),
-                get_record(client, thread_did, "xyz.atboards.thread", thread_tid),
+                get_record(client, thread_did, "xyz.atbbs.post", thread_rkey),
                 resolve_identity(client, thread_did),
             )
-            thread = Thread(
-                uri=rec.uri,
-                board_uri=rec.value["board"],
-                title=rec.value["title"],
-                body=rec.value["body"],
-                created_at=rec.value["createdAt"],
-                author=author,
-                updated_at=rec.value.get("updatedAt"),
-                attachments=rec.value.get("attachments"),
-            )
+            thread = post_from_record(rec, author)
             self.app.push_screen(
                 ThreadScreen(bbs, handle, thread, focus_reply=item.get("reply_uri"))
             )
@@ -120,11 +111,10 @@ class ActivityScreen(Screen):
             return
 
         for item in self._items[:50]:
-            title = (
-                item["thread_title"] if item["type"] == "reply" else "quoted your reply"
-            )
             if item["type"] == "reply":
-                title = f"on: {title}"
+                title = f"on: {item['thread_title']}"
+            else:
+                title = "replied to your reply"
             await scroll.mount(
                 Post(
                     author=item["handle"],

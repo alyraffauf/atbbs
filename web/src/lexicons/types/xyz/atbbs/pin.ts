@@ -3,9 +3,9 @@ import * as v from "@atcute/lexicons/validations";
 import type {} from "@atcute/lexicons/ambient";
 
 const _mainSchema = /*#__PURE__*/ v.record(
-  /*#__PURE__*/ v.tidString(),
+  /*#__PURE__*/ v.string(),
   /*#__PURE__*/ v.object({
-    $type: /*#__PURE__*/ v.literal("xyz.atboards.pin"),
+    $type: /*#__PURE__*/ v.literal("xyz.atbbs.pin"),
     createdAt: /*#__PURE__*/ v.datetimeString(),
     did: /*#__PURE__*/ v.didString(),
   }),
@@ -21,6 +21,6 @@ export interface Main extends v.InferInput<typeof mainSchema> {}
 
 declare module "@atcute/lexicons/ambient" {
   interface Records {
-    "xyz.atboards.pin": mainSchema;
+    "xyz.atbbs.pin": mainSchema;
   }
 }

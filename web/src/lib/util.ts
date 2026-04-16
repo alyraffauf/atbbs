@@ -29,10 +29,12 @@ export function parseAtUri(uri: string): {
   return { did: parts[2], collection: parts[3], rkey: parts[4] };
 }
 
+import type { Did } from "@atcute/lexicons/syntax";
+
 export function makeAtUri(
   did: string,
   collection: string,
   rkey: string,
-): string {
-  return `at://${did}/${collection}/${rkey}`;
+): `at://${Did}/${string}/${string}` {
+  return `at://${did as Did}/${collection}/${rkey}`;
 }

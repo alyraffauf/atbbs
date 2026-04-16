@@ -1,6 +1,6 @@
 {
   "lexicon": 1,
-  "id": "xyz.atboards.site",
+  "id": "xyz.atbbs.site",
   "defs": {
     "main": {
       "type": "record",
@@ -28,18 +28,6 @@
             "maxLength": 5000
           },
           "boards": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "bannedDids": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "hiddenPosts": {
             "type": "array",
             "items": {
               "type": "string",

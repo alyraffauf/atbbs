@@ -1,10 +1,10 @@
 {
   "lexicon": 1,
-  "id": "xyz.atboards.pin",
+  "id": "xyz.atbbs.pin",
   "defs": {
     "main": {
       "type": "record",
-      "key": "tid",
+      "key": "any",
       "record": {
         "type": "object",
         "required": ["did", "createdAt"],

@@ -30,40 +30,24 @@ async def get_backlinks(
     return BacklinksResponse(
         total=data["total"],
         records=[
-            BacklinkRef(did=r["did"], collection=r["collection"], rkey=r["rkey"])
-            for r in data["records"]
+            BacklinkRef(did=entry["did"], collection=entry["collection"], rkey=entry["rkey"])
+            for entry in data["records"]
         ],
         cursor=data.get("cursor"),
     )
 
 
-async def get_threads(
+async def get_root_posts(
     client: httpx.AsyncClient,
-    board_uri: str,
+    scope_uri: str,
     limit: int = 50,
     cursor: str | None = None,
 ) -> BacklinksResponse:
-    """Get threads pointing at a board."""
+    """Get root posts (threads or news) pointing at a scope (board or site)."""
     return await get_backlinks(
         client,
-        subject=board_uri,
-        source=f"{lexicon.THREAD}:board",
-        limit=limit,
-        cursor=cursor,
-    )
-
-
-async def get_news(
-    client: httpx.AsyncClient,
-    site_uri: str,
-    limit: int = 50,
-    cursor: str | None = None,
-) -> BacklinksResponse:
-    """Get news posts pointing at a site."""
-    return await get_backlinks(
-        client,
-        subject=site_uri,
-        source=f"{lexicon.NEWS}:site",
+        subject=scope_uri,
+        source=f"{lexicon.POST}:scope",
         limit=limit,
         cursor=cursor,
     )
@@ -71,15 +55,15 @@ async def get_news(
 
 async def get_replies(
     client: httpx.AsyncClient,
-    thread_uri: str,
+    root_uri: str,
     limit: int = 50,
     cursor: str | None = None,
 ) -> BacklinksResponse:
-    """Get replies pointing at a thread."""
+    """Get replies pointing at a root post."""
     return await get_backlinks(
         client,
-        subject=thread_uri,
-        source=f"{lexicon.REPLY}:subject",
+        subject=root_uri,
+        source=f"{lexicon.POST}:root",
         limit=limit,
         cursor=cursor,
     )

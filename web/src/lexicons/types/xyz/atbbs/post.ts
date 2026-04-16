@@ -4,13 +4,14 @@ import type {} from "@atcute/lexicons/ambient";
 
 const _attachmentSchema = /*#__PURE__*/ v.object({
   $type: /*#__PURE__*/ v.optional(
-    /*#__PURE__*/ v.literal("xyz.atboards.news#attachment"),
+    /*#__PURE__*/ v.literal("xyz.atbbs.post#attachment"),
   ),
   /**
-   * @accept *\/*
    * @maxSize 1000000
    */
-  file: /*#__PURE__*/ v.blob(),
+  file: /*#__PURE__*/ v.constrain(/*#__PURE__*/ v.blob(), [
+    /*#__PURE__*/ v.blobSize(1000000),
+  ]),
   /**
    * @maxLength 256
    */
@@ -21,7 +22,7 @@ const _attachmentSchema = /*#__PURE__*/ v.object({
 const _mainSchema = /*#__PURE__*/ v.record(
   /*#__PURE__*/ v.tidString(),
   /*#__PURE__*/ v.object({
-    $type: /*#__PURE__*/ v.literal("xyz.atboards.news"),
+    $type: /*#__PURE__*/ v.literal("xyz.atbbs.post"),
     /**
      * @maxLength 10
      */
@@ -39,13 +40,18 @@ const _mainSchema = /*#__PURE__*/ v.record(
       /*#__PURE__*/ v.stringLength(0, 10000),
     ]),
     createdAt: /*#__PURE__*/ v.datetimeString(),
-    site: /*#__PURE__*/ v.resourceUriString(),
+    parent: /*#__PURE__*/ v.optional(/*#__PURE__*/ v.resourceUriString()),
+    root: /*#__PURE__*/ v.optional(/*#__PURE__*/ v.resourceUriString()),
+    scope: /*#__PURE__*/ v.resourceUriString(),
     /**
      * @maxLength 300
      */
-    title: /*#__PURE__*/ v.constrain(/*#__PURE__*/ v.string(), [
-      /*#__PURE__*/ v.stringLength(0, 300),
-    ]),
+    title: /*#__PURE__*/ v.optional(
+      /*#__PURE__*/ v.constrain(/*#__PURE__*/ v.string(), [
+        /*#__PURE__*/ v.stringLength(0, 300),
+      ]),
+    ),
+    updatedAt: /*#__PURE__*/ v.optional(/*#__PURE__*/ v.datetimeString()),
   }),
 );
 
@@ -63,6 +69,6 @@ export interface Main extends v.InferInput<typeof mainSchema> {}
 
 declare module "@atcute/lexicons/ambient" {
   interface Records {
-    "xyz.atboards.news": mainSchema;
+    "xyz.atbbs.post": mainSchema;
   }
 }

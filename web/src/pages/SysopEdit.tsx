@@ -2,7 +2,8 @@ import { useState, type SyntheticEvent } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { putBoard, putSite } from "../lib/writes";
-import { nowIso } from "../lib/util";
+import { BOARD } from "../lib/lexicon";
+import { makeAtUri, nowIso } from "../lib/util";
 import * as limits from "../lib/limits";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { Input, Textarea, Button } from "../components/form/Form";
@@ -61,7 +62,7 @@ export default function SysopEdit() {
         name: name.trim(),
         description: description.trim(),
         intro,
-        boards: cleanBoards.map((board) => board.slug),
+        boards: cleanBoards.map((board) => makeAtUri(user.did, BOARD, board.slug)),
         createdAt: bbs.site.createdAt || now,
         updatedAt: now,
       });

@@ -8,38 +8,26 @@ from dataclasses import dataclass
 import httpx
 
 from core import lexicon
-from core.constellation import get_replies, get_threads
+from core.constellation import get_replies, get_root_posts
 from core.filters import filter_moderated
-from core.models import AtUri, AuthError, BBS, Board, MiniDoc, Record, Reply, Thread
+from core.models import AtUri, AuthError, BBS, Board, MiniDoc, Post, Record
 from core.slingshot import get_records_batch, resolve_identities_batch
 from core.util import now_iso
 
 
-def thread_from_record(record: Record, author: MiniDoc) -> Thread:
-    """Construct a Thread from a raw Record and resolved author."""
-    return Thread(
+def post_from_record(record: Record, author: MiniDoc) -> Post:
+    """Construct a Post from a raw Record and resolved author."""
+    return Post(
         uri=record.uri,
-        board_uri=record.value["board"],
-        title=record.value["title"],
-        body=record.value["body"],
-        created_at=record.value["createdAt"],
+        scope=record.value.get("scope", ""),
+        body=record.value.get("body", ""),
+        created_at=record.value.get("createdAt", ""),
         author=author,
+        title=record.value.get("title"),
+        root=record.value.get("root"),
+        parent=record.value.get("parent"),
         updated_at=record.value.get("updatedAt"),
         attachments=record.value.get("attachments"),
-    )
-
-
-def reply_from_record(record: Record, author: MiniDoc) -> Reply:
-    """Construct a Reply from a raw Record and resolved author."""
-    return Reply(
-        uri=record.uri,
-        subject_uri=record.value["subject"],
-        body=record.value["body"],
-        created_at=record.value["createdAt"],
-        author=author,
-        updated_at=record.value.get("updatedAt"),
-        attachments=record.value.get("attachments"),
-        quote=record.value.get("quote"),
     )
 
 
@@ -47,24 +35,29 @@ async def hydrate_threads(
     client: httpx.AsyncClient,
     bbs: BBS,
     board: Board,
+    banned_dids: set[str] | None = None,
+    hidden_posts: set[str] | None = None,
     cursor: str | None = None,
-) -> tuple[list[Thread], str | None]:
-    """Fetch and hydrate threads for a board."""
+) -> tuple[list[Post], str | None]:
+    """Fetch and hydrate root posts (threads) for a board."""
     board_uri = str(AtUri(bbs.identity.did, lexicon.BOARD, board.slug))
-    backlinks = await get_threads(client, board_uri, cursor=cursor)
+    backlinks = await get_root_posts(client, board_uri, cursor=cursor)
     records = await get_records_batch(client, backlinks.records)
-    records = filter_moderated(records, bbs.site.banned_dids, bbs.site.hidden_posts)
+    if banned_dids or hidden_posts:
+        records = filter_moderated(records, banned_dids or set(), hidden_posts or set())
 
-    parsed = {r.uri: AtUri.parse(r.uri) for r in records}
-    dids = [p.did for p in parsed.values()]
+    parsed = {record.uri: AtUri.parse(record.uri) for record in records}
+    dids = [parsed_uri.did for parsed_uri in parsed.values()]
     authors = await resolve_identities_batch(client, dids)
 
     threads = [
-        thread_from_record(r, authors[parsed[r.uri].did])
-        for r in records
-        if parsed[r.uri].did in authors
+        post_from_record(record, authors[parsed[record.uri].did])
+        for record in records
+        if parsed[record.uri].did in authors
     ]
-    threads.sort(key=lambda t: t.created_at, reverse=True)
+    # Filter to root posts only (no root field = thread, not a reply)
+    threads = [thread for thread in threads if thread.is_root]
+    threads.sort(key=lambda thread: thread.created_at, reverse=True)
     return threads, backlinks.cursor
 
 
@@ -72,7 +65,7 @@ async def hydrate_threads(
 class RepliesPage:
     """A page of hydrated replies with pagination info."""
 
-    replies: list[Reply]
+    replies: list[Post]
     page: int
     total_pages: int
     total_replies: int
@@ -81,7 +74,9 @@ class RepliesPage:
 async def hydrate_replies(
     client: httpx.AsyncClient,
     bbs: BBS,
-    thread_uri: str,
+    root_uri: str,
+    banned_dids: set[str] | None = None,
+    hidden_posts: set[str] | None = None,
     page: int = 1,
     page_size: int = 10,
     focus_reply: str | None = None,
@@ -92,7 +87,7 @@ async def hydrate_replies(
     containing that reply.
     """
     # Fetch all refs (cheap — just did/collection/rkey)
-    backlinks = await get_replies(client, thread_uri, limit=1000)
+    backlinks = await get_replies(client, root_uri, limit=1000)
     all_refs = list(reversed(backlinks.records))  # oldest first
 
     total = len(all_refs)
@@ -118,18 +113,19 @@ async def hydrate_replies(
 
     # Hydrate only this page
     records = await get_records_batch(client, page_refs)
-    records = filter_moderated(records, bbs.site.banned_dids, bbs.site.hidden_posts)
+    if banned_dids or hidden_posts:
+        records = filter_moderated(records, banned_dids or set(), hidden_posts or set())
 
-    parsed = {r.uri: AtUri.parse(r.uri) for r in records}
-    dids = [p.did for p in parsed.values()]
+    parsed = {record.uri: AtUri.parse(record.uri) for record in records}
+    dids = [parsed_uri.did for parsed_uri in parsed.values()]
     authors = await resolve_identities_batch(client, dids)
 
     replies = [
-        reply_from_record(r, authors[parsed[r.uri].did])
-        for r in records
-        if parsed[r.uri].did in authors
+        post_from_record(record, authors[parsed[record.uri].did])
+        for record in records
+        if parsed[record.uri].did in authors
     ]
-    replies.sort(key=lambda t: t.created_at)
+    replies.sort(key=lambda reply: reply.created_at)
     return RepliesPage(
         replies=replies, page=page, total_pages=total_pages, total_replies=total
     )
@@ -274,23 +270,30 @@ async def upload_blob(
     return resp.json()["blob"]
 
 
-async def create_thread_record(
+async def create_post_record(
     client: httpx.AsyncClient,
     session: dict,
-    board_uri: str,
-    title: str,
+    scope: str,
     body: str,
+    title: str | None = None,
+    root: str | None = None,
+    parent: str | None = None,
     attachments: list[dict] | None = None,
     session_updater=None,
 ) -> httpx.Response:
-    """Create a thread record in the user's repo."""
-    record = {
-        "$type": lexicon.THREAD,
-        "board": board_uri,
-        "title": title,
+    """Create a post record in the user's repo."""
+    record: dict = {
+        "$type": lexicon.POST,
+        "scope": scope,
         "body": body,
         "createdAt": now_iso(),
     }
+    if title:
+        record["title"] = title
+    if root:
+        record["root"] = root
+    if parent:
+        record["parent"] = parent
     if attachments:
         record["attachments"] = attachments
     return await pds_post(
@@ -299,40 +302,7 @@ async def create_thread_record(
         "com.atproto.repo.createRecord",
         {
             "repo": session["did"],
-            "collection": lexicon.THREAD,
-            "record": record,
-        },
-        session_updater,
-    )
-
-
-async def create_reply_record(
-    client: httpx.AsyncClient,
-    session: dict,
-    thread_uri: str,
-    body: str,
-    attachments: list[dict] | None = None,
-    quote: str | None = None,
-    session_updater=None,
-) -> httpx.Response:
-    """Create a reply record in the user's repo."""
-    record = {
-        "$type": lexicon.REPLY,
-        "subject": thread_uri,
-        "body": body,
-        "createdAt": now_iso(),
-    }
-    if attachments:
-        record["attachments"] = attachments
-    if quote:
-        record["quote"] = quote
-    return await pds_post(
-        client,
-        session,
-        "com.atproto.repo.createRecord",
-        {
-            "repo": session["did"],
-            "collection": lexicon.REPLY,
+            "collection": lexicon.POST,
             "record": record,
         },
         session_updater,
@@ -486,78 +456,43 @@ async def put_site_record(
     )
 
 
-async def create_news_record(
-    client: httpx.AsyncClient,
-    session: dict,
-    site_uri: str,
-    title: str,
-    body: str,
-    attachments: list[dict] | None = None,
-    session_updater=None,
-) -> httpx.Response:
-    """Create a news record in the user's repo."""
-    record = {
-        "$type": lexicon.NEWS,
-        "site": site_uri,
-        "title": title,
-        "body": body,
-        "createdAt": now_iso(),
-    }
-    if attachments:
-        record["attachments"] = attachments
-    return await pds_post(
-        client,
-        session,
-        "com.atproto.repo.createRecord",
-        {
-            "repo": session["did"],
-            "collection": lexicon.NEWS,
-            "record": record,
-        },
-        session_updater,
-    )
-
-
 async def fetch_inbox(
     client: httpx.AsyncClient,
     did: str,
     pds_url: str,
     max_items: int = 50,
 ) -> list[dict]:
-    """Fetch inbox: replies to user's threads + quotes of user's replies."""
+    """Fetch inbox: replies to user's root posts and replies to user's replies."""
     import asyncio
 
     from core.constellation import get_backlinks
 
-    SCAN_LIMIT = 20  # how many threads/replies to scan
+    SCAN_LIMIT = 20  # how many posts to scan
     BACKLINK_LIMIT = 25  # backlinks per record
     MAX_CONCURRENT = 10  # concurrent API calls
 
     sem = asyncio.Semaphore(MAX_CONCURRENT)
 
-    # Fetch thread and reply lists concurrently
-    async def list_records(collection):
-        try:
-            resp = await client.get(
-                f"{pds_url}/xrpc/com.atproto.repo.listRecords",
-                params={"repo": did, "collection": collection, "limit": SCAN_LIMIT},
-            )
-            resp.raise_for_status()
-            return resp.json().get("records", [])
-        except Exception:
-            return []
+    # Fetch user's posts
+    try:
+        resp = await client.get(
+            f"{pds_url}/xrpc/com.atproto.repo.listRecords",
+            params={"repo": did, "collection": lexicon.POST, "limit": SCAN_LIMIT},
+        )
+        resp.raise_for_status()
+        all_posts = resp.json().get("records", [])
+    except Exception:
+        all_posts = []
 
-    thread_records, reply_records = await asyncio.gather(
-        list_records(lexicon.THREAD),
-        list_records(lexicon.REPLY),
-    )
+    root_posts = [post for post in all_posts if "root" not in post["value"]]
+    reply_posts = [post for post in all_posts if "root" in post["value"]]
 
-    # Batch-resolve BBS handles for all threads at once
+    # Batch-resolve BBS handles for all root posts at once
     bbs_dids = set()
-    for tr in thread_records:
-        board_uri = tr["value"].get("board", "")
-        if board_uri:
-            bbs_dids.add(AtUri.parse(board_uri).did)
+    for root_post in root_posts:
+        scope = root_post["value"].get("scope", "")
+        if scope:
+            bbs_dids.add(AtUri.parse(scope).did)
     try:
         bbs_authors = (
             await resolve_identities_batch(client, list(bbs_dids)) if bbs_dids else {}
@@ -565,40 +500,40 @@ async def fetch_inbox(
     except Exception:
         bbs_authors = {}
 
-    # 1. Fetch replies to user's threads (concurrent)
-    async def fetch_thread_replies(tr):
+    # 1. Fetch replies to user's root posts (concurrent)
+    async def fetch_post_replies(root_post):
         async with sem:
-            thread_uri = tr["uri"]
-            thread_title = tr["value"].get("title", "")
-            board_uri = tr["value"].get("board", "")
-            bbs_did = AtUri.parse(board_uri).did if board_uri else did
+            post_uri = root_post["uri"]
+            post_title = root_post["value"].get("title", "")
+            scope = root_post["value"].get("scope", "")
+            bbs_did = AtUri.parse(scope).did if scope else did
             bbs_handle = bbs_authors[bbs_did].handle if bbs_did in bbs_authors else ""
 
             try:
-                backlinks = await get_replies(client, thread_uri, limit=BACKLINK_LIMIT)
+                backlinks = await get_replies(client, post_uri, limit=BACKLINK_LIMIT)
                 records = await get_records_batch(client, backlinks.records)
-                parsed = {r.uri: AtUri.parse(r.uri) for r in records}
-                records = [r for r in records if parsed[r.uri].did != did]
+                parsed = {record.uri: AtUri.parse(record.uri) for record in records}
+                records = [record for record in records if parsed[record.uri].did != did]
                 if not records:
                     return []
 
-                dids = [parsed[r.uri].did for r in records]
+                dids = [parsed[record.uri].did for record in records]
                 authors = await resolve_identities_batch(client, dids)
 
                 items = []
-                for r in records:
-                    author_did = parsed[r.uri].did
+                for record in records:
+                    author_did = parsed[record.uri].did
                     if author_did not in authors:
                         continue
                     items.append(
                         {
                             "type": "reply",
-                            "reply_uri": r.uri,
-                            "thread_title": thread_title,
-                            "thread_uri": thread_uri,
+                            "reply_uri": record.uri,
+                            "thread_title": post_title,
+                            "thread_uri": post_uri,
                             "handle": authors[author_did].handle,
-                            "body": r.value.get("body", "")[:200],
-                            "created_at": r.value.get("createdAt", ""),
+                            "body": record.value.get("body", "")[:200],
+                            "created_at": record.value.get("createdAt", ""),
                             "bbs_handle": bbs_handle,
                         }
                     )
@@ -606,44 +541,44 @@ async def fetch_inbox(
             except Exception:
                 return []
 
-    # 2. Fetch quotes of user's replies (concurrent)
-    async def fetch_reply_quotes(rr):
+    # 2. Fetch replies that reference user's replies as parent (concurrent)
+    async def fetch_child_replies(reply_post):
         async with sem:
-            reply_uri = rr["uri"]
-            thread_uri = rr["value"].get("subject", "")
+            reply_uri = reply_post["uri"]
+            root_uri = reply_post["value"].get("root", "")
             try:
                 backlinks = await get_backlinks(
                     client,
                     subject=reply_uri,
-                    source=f"{lexicon.REPLY}:quote",
+                    source=f"{lexicon.POST}:parent",
                     limit=BACKLINK_LIMIT,
                 )
                 if not backlinks.records:
                     return []
 
                 records = await get_records_batch(client, backlinks.records)
-                parsed = {r.uri: AtUri.parse(r.uri) for r in records}
-                records = [r for r in records if parsed[r.uri].did != did]
+                parsed = {record.uri: AtUri.parse(record.uri) for record in records}
+                records = [record for record in records if parsed[record.uri].did != did]
                 if not records:
                     return []
 
-                dids = [parsed[r.uri].did for r in records]
+                dids = [parsed[record.uri].did for record in records]
                 authors = await resolve_identities_batch(client, dids)
 
                 items = []
-                for r in records:
-                    author_did = parsed[r.uri].did
+                for record in records:
+                    author_did = parsed[record.uri].did
                     if author_did not in authors:
                         continue
                     items.append(
                         {
-                            "type": "quote",
-                            "reply_uri": r.uri,
+                            "type": "parent_reply",
+                            "reply_uri": record.uri,
                             "thread_title": "",
-                            "thread_uri": thread_uri,
+                            "thread_uri": root_uri,
                             "handle": authors[author_did].handle,
-                            "body": r.value.get("body", "")[:200],
-                            "created_at": r.value.get("createdAt", ""),
+                            "body": record.value.get("body", "")[:200],
+                            "created_at": record.value.get("createdAt", ""),
                             "bbs_handle": "",
                         }
                     )
@@ -653,24 +588,24 @@ async def fetch_inbox(
 
     # Run all lookups concurrently
     results = await asyncio.gather(
-        *[fetch_thread_replies(tr) for tr in thread_records],
-        *[fetch_reply_quotes(rr) for rr in reply_records],
+        *[fetch_post_replies(root_post) for root_post in root_posts],
+        *[fetch_child_replies(reply_post) for reply_post in reply_posts],
     )
 
     all_items = []
     for items in results:
         all_items.extend(items)
 
-    # Deduplicate and prefer quotes if same record appears in both
+    # Deduplicate and prefer parent-reply type if same record appears in both
     seen = {}
     for item in all_items:
         key = item["handle"] + item["body"] + item["created_at"]
         if key in seen:
-            if item["type"] == "quote":
+            if item["type"] == "parent_reply":
                 seen[key] = item
         else:
             seen[key] = item
 
     deduped = list(seen.values())
-    deduped.sort(key=lambda a: a["created_at"], reverse=True)
+    deduped.sort(key=lambda item: item["created_at"], reverse=True)
     return deduped

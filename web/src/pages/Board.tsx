@@ -11,7 +11,7 @@ import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { makeAtUri, parseAtUri, relativeDate } from "../lib/util";
 import { BOARD } from "../lib/lexicon";
-import { createThread, uploadAttachments } from "../lib/writes";
+import { createPost, uploadAttachments } from "../lib/writes";
 import * as limits from "../lib/limits";
 import ThreadLink from "../components/nav/ThreadLink";
 import ComposeForm from "../components/form/ComposeForm";
@@ -80,17 +80,12 @@ export default function BoardPage() {
       return;
     }
     try {
-      const { makeAtUri } = await import("../lib/util");
-      const { BOARD: BOARD_COL } = await import("../lib/lexicon");
-      const boardUri = makeAtUri(bbs.identity.did, BOARD_COL, board.slug);
+      const boardUri = makeAtUri(bbs.identity.did, BOARD, board.slug);
       const attachments = await uploadAttachments(agent, files);
-      const resp = await createThread(
-        agent,
-        boardUri,
-        title.trim(),
-        body.trim(),
+      const resp = await createPost(agent, boardUri, body.trim(), {
+        title: title.trim(),
         attachments,
-      );
+      });
       setTitle("");
       setBody("");
       setFiles([]);
@@ -98,7 +93,7 @@ export default function BoardPage() {
       const { did, rkey } = parseAtUri(resp.data.uri);
       navigate(`/bbs/${handle}/thread/${did}/${rkey}`);
     } catch (err: unknown) {
-      console.error("createThread failed:", err);
+      console.error("createPost failed:", err);
       alert(`Could not post: ${err instanceof Error ? err.message : err}`);
     }
   }
@@ -121,10 +116,10 @@ export default function BoardPage() {
             title={title}
             onTitleChange={setTitle}
             titlePlaceholder="Thread title"
-            titleMaxLength={limits.THREAD_TITLE}
+            titleMaxLength={limits.POST_TITLE}
             body={body}
             onBodyChange={setBody}
-            bodyMaxLength={limits.THREAD_BODY}
+            bodyMaxLength={limits.POST_BODY}
             files={files}
             onFilesChange={setFiles}
           />

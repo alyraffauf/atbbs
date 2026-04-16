@@ -3,11 +3,23 @@ import * as v from "@atcute/lexicons/validations";
 import type {} from "@atcute/lexicons/ambient";
 
 const _mainSchema = /*#__PURE__*/ v.record(
-  /*#__PURE__*/ v.tidString(),
+  /*#__PURE__*/ v.string(),
   /*#__PURE__*/ v.object({
-    $type: /*#__PURE__*/ v.literal("xyz.atboards.hide"),
+    $type: /*#__PURE__*/ v.literal("xyz.atbbs.board"),
     createdAt: /*#__PURE__*/ v.datetimeString(),
-    uri: /*#__PURE__*/ v.resourceUriString(),
+    /**
+     * @maxLength 500
+     */
+    description: /*#__PURE__*/ v.constrain(/*#__PURE__*/ v.string(), [
+      /*#__PURE__*/ v.stringLength(0, 500),
+    ]),
+    /**
+     * @maxLength 100
+     */
+    name: /*#__PURE__*/ v.constrain(/*#__PURE__*/ v.string(), [
+      /*#__PURE__*/ v.stringLength(0, 100),
+    ]),
+    updatedAt: /*#__PURE__*/ v.optional(/*#__PURE__*/ v.datetimeString()),
   }),
 );
 
@@ -21,6 +33,6 @@ export interface Main extends v.InferInput<typeof mainSchema> {}
 
 declare module "@atcute/lexicons/ambient" {
   interface Records {
-    "xyz.atboards.hide": mainSchema;
+    "xyz.atbbs.board": mainSchema;
   }
 }

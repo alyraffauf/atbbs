@@ -1,46 +1,32 @@
 /** Authenticated PDS write helpers using an atcute Client from useAuth().agent. */
 
 import type { Client } from "@atcute/client";
-import {
-  SITE,
-  BOARD,
-  NEWS,
-  THREAD,
-  REPLY,
-  BAN,
-  HIDE,
-  PIN,
-  PROFILE,
-} from "./lexicon";
+import { SITE, BOARD, POST, BAN, HIDE, PIN, PROFILE } from "./lexicon";
 import { invalidateBBSCache } from "./bbs";
 import { nowIso } from "./util";
 import { getCurrentUser } from "./auth";
 import type {
-  XyzAtboardsThread,
-  XyzAtboardsReply,
-  XyzAtboardsSite,
-  XyzAtboardsBoard,
-  XyzAtboardsNews,
-  XyzAtboardsBan,
-  XyzAtboardsHide,
-  XyzAtboardsPin,
-  XyzAtboardsProfile,
+  XyzAtbbsPost,
+  XyzAtbbsSite,
+  XyzAtbbsBoard,
+  XyzAtbbsBan,
+  XyzAtbbsHide,
+  XyzAtbbsPin,
+  XyzAtbbsProfile,
 } from "../lexicons";
 
 // --- Lexicon value types ---
 
-// Strip $type so a single Attachment value works for both thread and reply.
-type Attachment = Omit<XyzAtboardsThread.Attachment, "$type">;
+// Strip $type so a single Attachment value works for posts.
+type Attachment = Omit<XyzAtbbsPost.Attachment, "$type">;
 
-type ThreadValue = Omit<XyzAtboardsThread.Main, "$type">;
-type ReplyValue = Omit<XyzAtboardsReply.Main, "$type">;
-type SiteValue = Omit<XyzAtboardsSite.Main, "$type">;
-type BoardValue = Omit<XyzAtboardsBoard.Main, "$type">;
-type NewsValue = Omit<XyzAtboardsNews.Main, "$type">;
-type BanValue = Omit<XyzAtboardsBan.Main, "$type">;
-type HideValue = Omit<XyzAtboardsHide.Main, "$type">;
-type PinValue = Omit<XyzAtboardsPin.Main, "$type">;
-type ProfileValue = Omit<XyzAtboardsProfile.Main, "$type">;
+type PostValue = Omit<XyzAtbbsPost.Main, "$type">;
+type SiteValue = Omit<XyzAtbbsSite.Main, "$type">;
+type BoardValue = Omit<XyzAtbbsBoard.Main, "$type">;
+type BanValue = Omit<XyzAtbbsBan.Main, "$type">;
+type HideValue = Omit<XyzAtbbsHide.Main, "$type">;
+type PinValue = Omit<XyzAtbbsPin.Main, "$type">;
+type ProfileValue = Omit<XyzAtbbsProfile.Main, "$type">;
 
 interface BlobRef {
   $type: "blob";
@@ -164,43 +150,32 @@ export async function uploadAttachments(
   return out;
 }
 
-// --- Threads & replies ---
+// --- Posts (threads, replies, news) ---
 
-export async function createThread(
+export async function createPost(
   rpc: Client,
-  boardUri: string,
-  title: string,
+  scope: string,
   body: string,
-  attachments?: Attachment[],
+  opts?: {
+    title?: string;
+    root?: string;
+    parent?: string;
+    attachments?: Attachment[];
+  },
 ) {
-  const value: ThreadValue = {
-    board: boardUri as ThreadValue["board"],
-    title,
+  const value: PostValue = {
+    scope: scope as PostValue["scope"],
     body,
     createdAt: nowIso(),
-    ...(attachments?.length ? { attachments } : {}),
+    ...(opts?.title ? { title: opts.title } : {}),
+    ...(opts?.root ? { root: opts.root as PostValue["root"] } : {}),
+    ...(opts?.parent ? { parent: opts.parent as PostValue["parent"] } : {}),
+    ...(opts?.attachments?.length ? { attachments: opts.attachments } : {}),
   };
-  return createRecord(rpc, THREAD, value);
+  return createRecord(rpc, POST, value);
 }
 
-export async function createReply(
-  rpc: Client,
-  threadUri: string,
-  body: string,
-  quote?: string | null,
-  attachments?: Attachment[],
-) {
-  const value: ReplyValue = {
-    subject: threadUri as ReplyValue["subject"],
-    body,
-    createdAt: nowIso(),
-    ...(quote ? { quote: quote as ReplyValue["quote"] } : {}),
-    ...(attachments?.length ? { attachments } : {}),
-  };
-  return createRecord(rpc, REPLY, value);
-}
-
-// --- Sysop: site, board, news ---
+// --- Sysop: site, board ---
 
 export async function putSite(rpc: Client, site: SiteValue) {
   const resp = await putRecord(rpc, SITE, "self", site);
@@ -223,25 +198,6 @@ export async function putBoard(
   const resp = await putRecord(rpc, BOARD, slug, value);
   invalidateBBSCache();
   return resp;
-}
-
-export async function createNews(
-  rpc: Client,
-  siteUri: string,
-  title: string,
-  body: string,
-  attachments?: Attachment[],
-) {
-  const value: NewsValue = {
-    site: siteUri as NewsValue["site"],
-    title,
-    body,
-    createdAt: nowIso(),
-    ...(attachments?.length
-      ? { attachments: attachments as NewsValue["attachments"] }
-      : {}),
-  };
-  return createRecord(rpc, NEWS, value);
 }
 
 // --- Sysop: bans & hides ---
@@ -273,7 +229,8 @@ export async function createPin(rpc: Client, did: string) {
     did: did as PinValue["did"],
     createdAt: nowIso(),
   };
-  return createRecord(rpc, PIN, value);
+  // Use DID as rkey for idempotent pins
+  return createRecord(rpc, PIN, value, did);
 }
 
 // --- Profiles ---

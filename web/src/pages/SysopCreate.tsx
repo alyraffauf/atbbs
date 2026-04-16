@@ -2,7 +2,8 @@ import { useState, type SyntheticEvent } from "react";
 import { useNavigate, useLoaderData } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { putBoard, putSite } from "../lib/writes";
-import { nowIso } from "../lib/util";
+import { BOARD } from "../lib/lexicon";
+import { makeAtUri, nowIso } from "../lib/util";
 import * as limits from "../lib/limits";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { Input, Textarea, Button } from "../components/form/Form";
@@ -59,7 +60,7 @@ export default function SysopCreate() {
         name: name.trim(),
         description: description.trim(),
         intro,
-        boards: cleanBoards.map((board) => board.slug),
+        boards: cleanBoards.map((board) => makeAtUri(user.did, BOARD, board.slug)),
         createdAt: now,
       });
       navigate(`/bbs/${user.handle}`);

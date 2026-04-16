@@ -4,7 +4,7 @@ from textual.containers import VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Footer, ListItem, ListView, Static
 
-from core.models import BBS
+from core.models import BBS, Post as PostModel
 from core.resolver import resolve_bbs
 from core.util import format_datetime_local as format_datetime
 from tui.screens.board import BoardScreen
