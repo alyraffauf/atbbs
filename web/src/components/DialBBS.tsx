@@ -77,13 +77,13 @@ export default function DialBBS({ discovered, suggestions }: DialBBSProps) {
       onBlur={dropdown.onBlur}
       onKeyDown={dropdown.onKeyDown}
     >
-      <form onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-2">
+      <form onSubmit={onSubmit} className="flex gap-2">
         <HandleInput
           name="handle"
           value={inputValue}
           onChange={setInputValue}
           required
-          className="sm:flex-1"
+          className="flex-1"
           aria-autocomplete="list"
           aria-expanded={dropdownOpen}
           aria-activedescendant={
