@@ -49,9 +49,7 @@ export default function Profile() {
         <p className="text-xs text-neutral-400 uppercase tracking-wide mb-3 inline-flex items-center gap-1.5">
           <MessageSquare size={12} /> Recent Threads
         </p>
-        <Suspense
-          fallback={<p className="text-neutral-400">loading...</p>}
-        >
+        <Suspense fallback={<p className="text-neutral-400">loading...</p>}>
           <Await resolve={threads}>
             {(resolved: MyThread[]) => (
               <MyThreadList threads={resolved.slice(0, 5)} />

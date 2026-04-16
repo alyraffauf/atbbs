@@ -63,7 +63,9 @@ export default function EditProfile({
         />
       </div>
       <div className="flex gap-2">
-        <Button onClick={handleSubmit}><Check size={14} className="inline -mt-0.5" /> save</Button>
+        <Button onClick={handleSubmit}>
+          <Check size={14} className="inline -mt-0.5" /> save
+        </Button>
         <button
           onClick={onCancel}
           className="inline-flex items-center gap-1.5 text-neutral-400 hover:text-neutral-300 text-xs"

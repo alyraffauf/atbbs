@@ -2,7 +2,10 @@
 
 import { useRef, useState } from "react";
 
-export function useDropdown(optionCount: number, onSelect: (index: number) => void) {
+export function useDropdown(
+  optionCount: number,
+  onSelect: (index: number) => void,
+) {
   const [focused, setFocused] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const blurTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -26,14 +29,10 @@ export function useDropdown(optionCount: number, onSelect: (index: number) => vo
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setActiveIndex((prev) =>
-        prev < optionCount - 1 ? prev + 1 : 0,
-      );
+      setActiveIndex((prev) => (prev < optionCount - 1 ? prev + 1 : 0));
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
-      setActiveIndex((prev) =>
-        prev > 0 ? prev - 1 : optionCount - 1,
-      );
+      setActiveIndex((prev) => (prev > 0 ? prev - 1 : optionCount - 1));
     } else if (event.key === "Enter" && activeIndex >= 0) {
       event.preventDefault();
       onSelectRef.current(activeIndex);

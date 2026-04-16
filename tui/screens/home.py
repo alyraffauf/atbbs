@@ -40,7 +40,9 @@ class HomeScreen(Screen):
             hero.append("▀▀ ▀▀ ▀▀")
             yield Static(hero, id="hero-title")
             yield Static(
-                "Bulletin boards on the AT Protocol.", classes="subtitle", id="hero-sub1"
+                "Bulletin boards on the AT Protocol.",
+                classes="subtitle",
+                id="hero-sub1",
             )
             yield Static(
                 "Build a community from your existing account. Tightly curated, fully portable, open by design.",

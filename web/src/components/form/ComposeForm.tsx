@@ -45,7 +45,10 @@ export default function ComposeForm({
 }: ComposeFormProps) {
   function addFiles(fileList: FileList | null) {
     if (!fileList) return;
-    const combined = [...files, ...Array.from(fileList)].slice(0, MAX_ATTACHMENTS);
+    const combined = [...files, ...Array.from(fileList)].slice(
+      0,
+      MAX_ATTACHMENTS,
+    );
     onFilesChange(combined);
   }
 
@@ -98,25 +101,31 @@ export default function ComposeForm({
         maxLength={bodyMaxLength}
       />
 
-      {files.length > 0 && (
-        <FileChips files={files} onRemove={removeFile} />
-      )}
+      {files.length > 0 && <FileChips files={files} onRemove={removeFile} />}
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={posting}>
-          {posting ? "posting..." : <><Send size={14} className="inline -mt-0.5" /> {submitLabel}</>}
+          {posting ? (
+            "posting..."
+          ) : (
+            <>
+              <Send size={14} className="inline -mt-0.5" /> {submitLabel}
+            </>
+          )}
         </Button>
         {!attachmentsAtLimit && (
-        <label className="text-neutral-200 cursor-pointer bg-neutral-800 hover:bg-neutral-700 px-4 py-2 rounded inline-block">
-          <span className="inline-flex items-center gap-1.5"><Paperclip size={14} /> attach</span>
-          <input
-            name="attachments"
-            type="file"
-            multiple
-            onChange={(e) => addFiles(e.target.files)}
-            className="hidden"
-          />
-        </label>
+          <label className="text-neutral-200 cursor-pointer bg-neutral-800 hover:bg-neutral-700 px-4 py-2 rounded inline-block">
+            <span className="inline-flex items-center gap-1.5">
+              <Paperclip size={14} /> attach
+            </span>
+            <input
+              name="attachments"
+              type="file"
+              multiple
+              onChange={(e) => addFiles(e.target.files)}
+              className="hidden"
+            />
+          </label>
         )}
       </div>
     </form>

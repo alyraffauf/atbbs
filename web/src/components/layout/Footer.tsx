@@ -10,11 +10,16 @@ export default function Footer() {
     <footer className="border-t border-neutral-800 mt-auto">
       <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between text-xs text-neutral-400">
         <span>
-          made by <a href="https://aly.codes" className={linkStyle}>aly.codes</a>
+          made by{" "}
+          <a href="https://aly.codes" className={linkStyle}>
+            aly.codes
+          </a>
         </span>
         <div className="flex items-center gap-4">
           {links.map(({ href, label }) => (
-            <a key={label} href={href} className={linkStyle}>{label}</a>
+            <a key={label} href={href} className={linkStyle}>
+              {label}
+            </a>
           ))}
         </div>
       </div>

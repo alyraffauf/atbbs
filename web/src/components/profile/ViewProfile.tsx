@@ -24,7 +24,9 @@ export default function ViewProfile({
           {profile?.name ?? handle}
         </h1>
         {isOwner && (
-          <ActionButton onClick={onEdit} icon={Pencil}>edit</ActionButton>
+          <ActionButton onClick={onEdit} icon={Pencil}>
+            edit
+          </ActionButton>
         )}
       </div>
       <p className="text-neutral-400">
@@ -58,7 +60,10 @@ export default function ViewProfile({
                 </div>
               )}
             </div>
-            <ChevronRight size={18} className="text-neutral-400 group-hover:text-neutral-300 ml-4" />
+            <ChevronRight
+              size={18}
+              className="text-neutral-400 group-hover:text-neutral-300 ml-4"
+            />
           </Link>
         </div>
       )}

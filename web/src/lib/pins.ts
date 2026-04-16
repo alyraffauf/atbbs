@@ -1,10 +1,6 @@
 /** Fetch and resolve the user's pinned BBSes. */
 
-import {
-  listRecords,
-  getRecord,
-  resolveIdentitiesBatch,
-} from "./atproto";
+import { listRecords, getRecord, resolveIdentitiesBatch } from "./atproto";
 import { PIN, SITE } from "./lexicon";
 import { is } from "@atcute/lexicons/validations";
 import { mainSchema as pinSchema } from "../lexicons/types/xyz/atboards/pin";

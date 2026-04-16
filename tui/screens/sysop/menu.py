@@ -29,10 +29,13 @@ class SysopScreen(Screen):
         name = event.item.name
         if name == "edit":
             from tui.screens.sysop.edit import SysopEditScreen
+
             self.app.push_screen(SysopEditScreen(self.bbs, self.handle))
         elif name == "moderate":
             from tui.screens.sysop.moderate import SysopModerateScreen
+
             self.app.push_screen(SysopModerateScreen(self.bbs, self.handle))
         elif name == "delete":
             from tui.screens.sysop.delete import SysopDeleteScreen
+
             self.app.push_screen(SysopDeleteScreen(self.bbs, self.handle))

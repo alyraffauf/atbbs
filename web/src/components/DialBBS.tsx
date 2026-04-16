@@ -93,12 +93,19 @@ export default function DialBBS({ discovered, suggestions }: DialBBSProps) {
           }
           aria-label="Dial a BBS by handle"
         />
-        <Button type="submit"><ArrowRight size={16} /></Button>
-        <Button type="button" onClick={onRandom}><Dices size={16} /></Button>
+        <Button type="submit">
+          <ArrowRight size={16} />
+        </Button>
+        <Button type="button" onClick={onRandom}>
+          <Dices size={16} />
+        </Button>
       </form>
       {dropdownOpen && (
         <div className="relative">
-          <div role="listbox" className="absolute left-0 right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded shadow-lg z-10">
+          <div
+            role="listbox"
+            className="absolute left-0 right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded shadow-lg z-10"
+          >
             {visibleSuggestions.map((entry, index) => (
               <Link
                 key={entry.to}

@@ -70,9 +70,7 @@ export default function Dashboard({ data }: { data: DashboardData }) {
       await deleteBBS(agent, user.did, user.pdsUrl);
       revalidator.revalidate();
     } catch (error) {
-      alert(
-        error instanceof Error ? error.message : "Could not delete BBS.",
-      );
+      alert(error instanceof Error ? error.message : "Could not delete BBS.");
     }
   }
 
@@ -91,14 +89,19 @@ export default function Dashboard({ data }: { data: DashboardData }) {
         <DialBBS discovered={discovered} suggestions={suggestions} />
       </div>
 
-      <div role="tablist" className="flex gap-4 border-b border-neutral-800 mb-6 overflow-x-auto">
+      <div
+        role="tablist"
+        className="flex gap-4 border-b border-neutral-800 mb-6 overflow-x-auto"
+      >
         {tabs.map((entry) => (
           <button
             key={entry.key}
             role="tab"
             aria-selected={tab === entry.key}
             onClick={() => setTab(entry.key)}
-            className={tab === entry.key ? TAB_STYLE_ACTIVE : TAB_STYLE_INACTIVE}
+            className={
+              tab === entry.key ? TAB_STYLE_ACTIVE : TAB_STYLE_INACTIVE
+            }
           >
             {entry.label}
           </button>
@@ -148,9 +151,7 @@ export default function Dashboard({ data }: { data: DashboardData }) {
 
       {tab === "bbs" && (
         <>
-          <p className="text-neutral-400 text-xs mb-4">
-            Manage your BBS.
-          </p>
+          <p className="text-neutral-400 text-xs mb-4">Manage your BBS.</p>
           <BBSPanel
             hasBBS={hasBBS}
             userHandle={user.handle}

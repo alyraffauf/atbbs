@@ -42,7 +42,8 @@ export async function fetchProfile(handle: string): Promise<Profile | null> {
     profileResult.status === "fulfilled" &&
     is(profileSchema, profileResult.value.value)
   ) {
-    const value = profileResult.value.value as unknown as XyzAtboardsProfile.Main;
+    const value = profileResult.value
+      .value as unknown as XyzAtboardsProfile.Main;
     profile.name = value.name;
     profile.pronouns = value.pronouns;
     profile.bio = value.bio;

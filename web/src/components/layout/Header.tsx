@@ -28,11 +28,20 @@ export default function Header() {
         <div className="hidden md:flex items-center gap-3 shrink-0 ml-4">
           {user ? (
             <>
-              <Link to={`/profile/${encodeURIComponent(user.handle)}`} className={linkStyle}>{user.handle}</Link>
-              <button type="button" onClick={onLogout} className={linkStyle}>log out</button>
+              <Link
+                to={`/profile/${encodeURIComponent(user.handle)}`}
+                className={linkStyle}
+              >
+                {user.handle}
+              </Link>
+              <button type="button" onClick={onLogout} className={linkStyle}>
+                log out
+              </button>
             </>
           ) : (
-            <Link to="/login" className={linkStyle}>log in</Link>
+            <Link to="/login" className={linkStyle}>
+              log in
+            </Link>
           )}
         </div>
         <MobileMenu user={user} onLogout={onLogout} />

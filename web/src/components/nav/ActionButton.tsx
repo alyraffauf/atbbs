@@ -32,7 +32,12 @@ export function ActionButton({
   );
 }
 
-export function ActionLink({ to, children, icon: Icon, className }: ActionLinkProps) {
+export function ActionLink({
+  to,
+  children,
+  icon: Icon,
+  className,
+}: ActionLinkProps) {
   return (
     <Link to={to} className={`${actionStyle} ${className ?? ""}`}>
       {Icon && <Icon size={14} />}

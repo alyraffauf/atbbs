@@ -17,4 +17,8 @@ export async function bbsLoader({ params }: LoaderFunctionArgs) {
   return { handle, bbs, pinRkey };
 }
 
-export type BBSLoaderData = { handle: string; bbs: BBS; pinRkey: string | null };
+export type BBSLoaderData = {
+  handle: string;
+  bbs: BBS;
+  pinRkey: string | null;
+};

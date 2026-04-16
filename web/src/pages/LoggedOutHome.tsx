@@ -69,7 +69,9 @@ export default function LoggedOutHome() {
       </div>
 
       <div className="border-t border-neutral-800 py-4">
-        <h2 className="text-neutral-300 mb-4 flex items-center gap-2"><Phone size={16} /> Dial a BBS</h2>
+        <h2 className="text-neutral-300 mb-4 flex items-center gap-2">
+          <Phone size={16} /> Dial a BBS
+        </h2>
         <div className="mb-6">
           <DialBBS discovered={discovered} suggestions={suggestions} />
         </div>
@@ -94,7 +96,8 @@ export default function LoggedOutHome() {
             {installCommands[tab].split("\n").map((line, i) => (
               <span key={`${tab}-${i}`}>
                 {i > 0 && "\n"}
-                <span className="select-none">$ </span>{line}
+                <span className="select-none">$ </span>
+                {line}
               </span>
             ))}
           </pre>

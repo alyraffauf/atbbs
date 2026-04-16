@@ -217,7 +217,9 @@ function buildBreadcrumb(
   thread: ThreadObj,
   handle: string,
 ) {
-  const board = bbs.site.boards.find((board) => board.slug === thread.boardSlug);
+  const board = bbs.site.boards.find(
+    (board) => board.slug === thread.boardSlug,
+  );
   return [
     { label: bbs.site.name, to: `/bbs/${handle}` },
     ...(board

@@ -148,7 +148,9 @@ class ThreadScreen(Screen):
             quote_text = None
             if reply.quote and reply.quote in self._replies_map:
                 quoted = self._replies_map[reply.quote]
-                body_preview = quoted.body[:200] + ("..." if len(quoted.body) > 200 else "")
+                body_preview = quoted.body[:200] + (
+                    "..." if len(quoted.body) > 200 else ""
+                )
                 quote_text = f"{quoted.author.handle}: {body_preview}"
 
             await scroll.mount(
@@ -167,7 +169,9 @@ class ThreadScreen(Screen):
             )
 
         # Focus first reply
-        replies = [post for post in self.query(Post) if post.collection == lexicon.REPLY]
+        replies = [
+            post for post in self.query(Post) if post.collection == lexicon.REPLY
+        ]
         if replies:
             replies[0].focus()
 

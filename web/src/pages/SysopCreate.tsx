@@ -6,7 +6,9 @@ import { nowIso } from "../lib/util";
 import * as limits from "../lib/limits";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { Input, Textarea, Button } from "../components/form/Form";
-import BoardRowEditor, { type BoardRow } from "../components/form/BoardRowEditor";
+import BoardRowEditor, {
+  type BoardRow,
+} from "../components/form/BoardRowEditor";
 import type { AuthUser } from "../lib/auth";
 
 export default function SysopCreate() {
@@ -45,7 +47,13 @@ export default function SysopCreate() {
     const now = nowIso();
     try {
       for (const board of cleanBoards) {
-        await putBoard(agent, board.slug, board.name || board.slug, board.desc, now);
+        await putBoard(
+          agent,
+          board.slug,
+          board.name || board.slug,
+          board.desc,
+          now,
+        );
       }
       await putSite(agent, {
         name: name.trim(),
@@ -69,7 +77,9 @@ export default function SysopCreate() {
       {error && <p className="text-red-500 mb-4">{error}</p>}
       <form onSubmit={onSubmit} className="space-y-6">
         <div>
-          <label className="text-xs text-neutral-400 uppercase tracking-wide">BBS Name</label>
+          <label className="text-xs text-neutral-400 uppercase tracking-wide">
+            BBS Name
+          </label>
           <Input
             name="name"
             required
@@ -80,7 +90,9 @@ export default function SysopCreate() {
           />
         </div>
         <div>
-          <label className="text-xs text-neutral-400 uppercase tracking-wide">Description</label>
+          <label className="text-xs text-neutral-400 uppercase tracking-wide">
+            Description
+          </label>
           <Input
             name="description"
             value={description}
@@ -90,7 +102,9 @@ export default function SysopCreate() {
           />
         </div>
         <div>
-          <label className="text-xs text-neutral-400 uppercase tracking-wide">Welcome Message</label>
+          <label className="text-xs text-neutral-400 uppercase tracking-wide">
+            Welcome Message
+          </label>
           <Textarea
             name="intro"
             rows={6}

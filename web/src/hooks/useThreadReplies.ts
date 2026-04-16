@@ -145,7 +145,9 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
       // Drop moderated content.
       const visible = records.filter((r) => {
         const { did } = parseAtUri(r.uri);
-        return !bbs.site.bannedDids.has(did) && !bbs.site.hiddenPosts.has(r.uri);
+        return (
+          !bbs.site.bannedDids.has(did) && !bbs.site.hiddenPosts.has(r.uri)
+        );
       });
 
       // Resolve author handles and build Reply objects.

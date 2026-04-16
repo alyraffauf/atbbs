@@ -120,7 +120,9 @@ class ActivityScreen(Screen):
             return
 
         for item in self._items[:50]:
-            title = item["thread_title"] if item["type"] == "reply" else "quoted your reply"
+            title = (
+                item["thread_title"] if item["type"] == "reply" else "quoted your reply"
+            )
             if item["type"] == "reply":
                 title = f"on: {title}"
             await scroll.mount(

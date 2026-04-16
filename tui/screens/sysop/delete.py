@@ -76,9 +76,7 @@ class SysopDeleteScreen(Screen):
                 for record in records:
                     rkey = AtUri.parse(record["uri"]).rkey
                     try:
-                        await delete_record(
-                            client, session, collection, rkey, updater
-                        )
+                        await delete_record(client, session, collection, rkey, updater)
                     except Exception:
                         failed.append(f"{collection}/{rkey}")
             except Exception:

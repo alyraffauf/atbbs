@@ -1,7 +1,17 @@
 /** Authenticated PDS write helpers using an atcute Client from useAuth().agent. */
 
 import type { Client } from "@atcute/client";
-import { SITE, BOARD, NEWS, THREAD, REPLY, BAN, HIDE, PIN, PROFILE } from "./lexicon";
+import {
+  SITE,
+  BOARD,
+  NEWS,
+  THREAD,
+  REPLY,
+  BAN,
+  HIDE,
+  PIN,
+  PROFILE,
+} from "./lexicon";
 import { invalidateBBSCache } from "./bbs";
 import { nowIso } from "./util";
 import { getCurrentUser } from "./auth";

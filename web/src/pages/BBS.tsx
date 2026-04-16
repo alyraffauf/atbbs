@@ -13,7 +13,15 @@ import ListLink from "../components/nav/ListLink";
 import ActionBar from "../components/nav/ActionBar";
 import { ActionLink } from "../components/nav/ActionButton";
 import PinButton from "../components/PinButton";
-import { User, Pencil, Shield, LayoutGrid, Newspaper, Megaphone, ChevronDown } from "lucide-react";
+import {
+  User,
+  Pencil,
+  Shield,
+  LayoutGrid,
+  Newspaper,
+  Megaphone,
+  ChevronDown,
+} from "lucide-react";
 import type { News } from "../lib/bbs";
 import type { BBSLoaderData } from "../router/loaders";
 import PostBody from "../components/post/PostBody";
@@ -87,8 +95,16 @@ export default function BBSPage() {
           <ActionLink to={`/profile/${encodeURIComponent(handle)}`} icon={User}>
             owner
           </ActionLink>
-          {isSysop && <ActionLink to="/account/edit" icon={Pencil}>edit</ActionLink>}
-          {isSysop && <ActionLink to="/account/moderate" icon={Shield}>moderate</ActionLink>}
+          {isSysop && (
+            <ActionLink to="/account/edit" icon={Pencil}>
+              edit
+            </ActionLink>
+          )}
+          {isSysop && (
+            <ActionLink to="/account/moderate" icon={Shield}>
+              moderate
+            </ActionLink>
+          )}
         </ActionBar>
       </div>
 

@@ -20,10 +20,7 @@ export default function HeaderBreadcrumbs() {
               {crumb.label}
             </Link>
           ) : (
-            <span
-              key={`crumb-${index}`}
-              className="text-neutral-400 truncate"
-            >
+            <span key={`crumb-${index}`} className="text-neutral-400 truncate">
               {crumb.label}
             </span>
           );

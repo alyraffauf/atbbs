@@ -11,14 +11,18 @@ interface BBSPanelProps {
   onDelete: () => void;
 }
 
-export default function BBSPanel({ hasBBS, userHandle, onDelete }: BBSPanelProps) {
+export default function BBSPanel({
+  hasBBS,
+  userHandle,
+  onDelete,
+}: BBSPanelProps) {
   if (!hasBBS) {
     return (
       <>
-        <p className="text-neutral-400 mb-4">
-          No BBS yet.
-        </p>
-        <ActionLink to="/account/create" icon={Plus}>create a bbs</ActionLink>
+        <p className="text-neutral-400 mb-4">No BBS yet.</p>
+        <ActionLink to="/account/create" icon={Plus}>
+          create a bbs
+        </ActionLink>
       </>
     );
   }
@@ -26,22 +30,30 @@ export default function BBSPanel({ hasBBS, userHandle, onDelete }: BBSPanelProps
   return (
     <div className="grid grid-cols-2 gap-3 max-w-md">
       <Link to={`/bbs/${userHandle}`} className={cardStyle}>
-        <div className="flex items-center gap-2 text-neutral-200 mb-1"><Monitor size={14} /> Browse</div>
+        <div className="flex items-center gap-2 text-neutral-200 mb-1">
+          <Monitor size={14} /> Browse
+        </div>
         <div className="text-xs text-neutral-400">View your BBS.</div>
       </Link>
       <Link to="/account/edit" className={cardStyle}>
-        <div className="flex items-center gap-2 text-neutral-200 mb-1"><Pencil size={14} /> Edit</div>
+        <div className="flex items-center gap-2 text-neutral-200 mb-1">
+          <Pencil size={14} /> Edit
+        </div>
         <div className="text-xs text-neutral-400">Name, boards, intro.</div>
       </Link>
       <Link to="/account/moderate" className={cardStyle}>
-        <div className="flex items-center gap-2 text-neutral-200 mb-1"><Shield size={14} /> Moderate</div>
+        <div className="flex items-center gap-2 text-neutral-200 mb-1">
+          <Shield size={14} /> Moderate
+        </div>
         <div className="text-xs text-neutral-400">Bans and hidden posts.</div>
       </Link>
       <button
         onClick={onDelete}
         className="text-left bg-neutral-900 border border-neutral-800 rounded px-4 py-3 hover:border-red-900"
       >
-        <div className="flex items-center gap-2 text-neutral-400 mb-1"><Trash2 size={14} /> Delete</div>
+        <div className="flex items-center gap-2 text-neutral-400 mb-1">
+          <Trash2 size={14} /> Delete
+        </div>
         <div className="text-xs text-neutral-400">Remove your BBS.</div>
       </button>
     </div>
