@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Phone, Copy, Check } from "lucide-react";
 import { useDiscovery } from "../hooks/useDiscovery";
 import { usePageTitle } from "../hooks/usePageTitle";
 import DialBBS, { type Suggestion } from "../components/DialBBS";
@@ -16,14 +17,28 @@ export default function LoggedOutHome() {
     [discovered],
   );
   const [tab, setTab] = useState<"pip" | "uv" | "brew" | "telnet">("pip");
+  const [copied, setCopied] = useState(false);
   usePageTitle("atbbs");
+
+  const installCommands: Record<string, string> = {
+    pip: "pip install atbbs\natbbs",
+    uv: "uv tool install atbbs\natbbs",
+    brew: "brew install alyraffauf/tap/atbbs\natbbs",
+    telnet: "telnet tel.atbbs.xyz",
+  };
+
+  function handleCopy() {
+    navigator.clipboard.writeText(installCommands[tab]);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
 
   const activeTab = "py-2 border-b-2 text-neutral-200 border-neutral-200";
   const inactiveTab =
     "py-2 border-b-2 text-neutral-400 hover:text-neutral-300 border-transparent";
 
   return (
-    <div className="h-full flex flex-col justify-center overflow-hidden">
+    <div className="h-full flex flex-col justify-center">
       <div className="text-center pb-4">
         <picture>
           <source
@@ -54,7 +69,7 @@ export default function LoggedOutHome() {
       </div>
 
       <div className="border-t border-neutral-800 py-4">
-        <h2 className="text-neutral-300 mb-4">Dial a BBS</h2>
+        <h2 className="text-neutral-300 mb-4 flex items-center gap-2"><Phone size={16} /> Dial a BBS</h2>
         <div className="mb-6">
           <DialBBS discovered={discovered} suggestions={suggestions} />
         </div>
@@ -74,36 +89,23 @@ export default function LoggedOutHome() {
             </button>
           ))}
         </div>
-        {tab === "pip" && (
-          <pre className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-400 text-xs">
-            <span className="text-neutral-400 select-none">$ </span>pip install
-            atbbs
-            {"\n"}
-            <span className="text-neutral-400 select-none">$ </span>atbbs
+        <div className="relative">
+          <pre className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 pr-12 text-neutral-400 text-xs">
+            {installCommands[tab].split("\n").map((line, i) => (
+              <span key={`${tab}-${i}`}>
+                {i > 0 && "\n"}
+                <span className="select-none">$ </span>{line}
+              </span>
+            ))}
           </pre>
-        )}
-        {tab === "uv" && (
-          <pre className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-400 text-xs">
-            <span className="text-neutral-400 select-none">$ </span>uv tool
-            install atbbs
-            {"\n"}
-            <span className="text-neutral-400 select-none">$ </span>atbbs
-          </pre>
-        )}
-        {tab === "brew" && (
-          <pre className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-400 text-xs">
-            <span className="text-neutral-400 select-none">$ </span>brew install
-            alyraffauf/tap/atbbs
-            {"\n"}
-            <span className="text-neutral-400 select-none">$ </span>atbbs
-          </pre>
-        )}
-        {tab === "telnet" && (
-          <pre className="bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-neutral-400 text-xs">
-            <span className="text-neutral-400 select-none">$ </span>telnet
-            tel.atbbs.xyz
-          </pre>
-        )}
+          <button
+            onClick={handleCopy}
+            className="absolute top-2.5 right-2.5 text-neutral-500 hover:text-neutral-300"
+            aria-label="Copy to clipboard"
+          >
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+          </button>
+        </div>
       </div>
     </div>
   );

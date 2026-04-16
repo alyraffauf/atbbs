@@ -13,6 +13,7 @@ import ListLink from "../components/nav/ListLink";
 import ActionBar from "../components/nav/ActionBar";
 import { ActionLink } from "../components/nav/ActionButton";
 import PinButton from "../components/PinButton";
+import { User, Pencil, Shield, LayoutGrid, Newspaper, Megaphone, ChevronDown } from "lucide-react";
 import type { News } from "../lib/bbs";
 import type { BBSLoaderData } from "../router/loaders";
 import PostBody from "../components/post/PostBody";
@@ -83,11 +84,11 @@ export default function BBSPage() {
         <p className="text-neutral-400 mb-3">{bbs.site.description}</p>
         <ActionBar>
           <PinButton bbsDid={bbs.identity.did} initialRkey={pinRkey} />
-          <ActionLink to={`/profile/${encodeURIComponent(handle)}`}>
-            operator
+          <ActionLink to={`/profile/${encodeURIComponent(handle)}`} icon={User}>
+            owner
           </ActionLink>
-          {isSysop && <ActionLink to="/account/edit">edit</ActionLink>}
-          {isSysop && <ActionLink to="/account/moderate">moderate</ActionLink>}
+          {isSysop && <ActionLink to="/account/edit" icon={Pencil}>edit</ActionLink>}
+          {isSysop && <ActionLink to="/account/moderate" icon={Shield}>moderate</ActionLink>}
         </ActionBar>
       </div>
 
@@ -98,8 +99,8 @@ export default function BBSPage() {
       )}
 
       <section className="mb-8">
-        <h2 className="text-xs text-neutral-400 uppercase tracking-wide mb-3">
-          Boards
+        <h2 className="text-xs text-neutral-400 uppercase tracking-wide mb-3 inline-flex items-center gap-1.5">
+          <LayoutGrid size={12} /> Boards
         </h2>
         <div className="space-y-1">
           {bbs.site.boards.map((board) => (
@@ -114,14 +115,14 @@ export default function BBSPage() {
       </section>
 
       <section>
-        <h2 className="text-xs text-neutral-400 uppercase tracking-wide mb-3">
-          News
+        <h2 className="text-xs text-neutral-400 uppercase tracking-wide mb-3 inline-flex items-center gap-1.5">
+          <Newspaper size={12} /> News
         </h2>
 
         {isSysop && (
           <details className="mb-4 border border-neutral-800 rounded p-4">
-            <summary className="text-neutral-300 cursor-pointer">
-              post news
+            <summary className="text-neutral-300 cursor-pointer inline-flex items-center gap-1.5">
+              <Megaphone size={14} /> post news
             </summary>
             <ComposeForm
               className="mt-4"
@@ -180,9 +181,9 @@ export default function BBSPage() {
             {!showAllNews && allNews.length > 3 && (
               <button
                 onClick={() => setShowAllNews(true)}
-                className="text-neutral-400 hover:text-neutral-300 text-xs mt-2"
+                className="text-neutral-400 hover:text-neutral-300 text-xs mt-2 inline-flex items-center gap-1"
               >
-                show more
+                <ChevronDown size={12} /> show more
               </button>
             )}
           </>

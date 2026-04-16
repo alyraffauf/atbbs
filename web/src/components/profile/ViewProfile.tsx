@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Pencil, ChevronRight, Monitor } from "lucide-react";
 import PostBody from "../post/PostBody";
 import { ActionButton } from "../nav/ActionButton";
 import type { Profile } from "../../lib/profile";
@@ -23,7 +24,7 @@ export default function ViewProfile({
           {profile?.name ?? handle}
         </h1>
         {isOwner && (
-          <ActionButton onClick={onEdit}>edit profile</ActionButton>
+          <ActionButton onClick={onEdit} icon={Pencil}>edit</ActionButton>
         )}
       </div>
       <p className="text-neutral-400">
@@ -42,8 +43,8 @@ export default function ViewProfile({
       )}
       {profile?.bbsName && (
         <div className="mt-6">
-          <p className="text-xs text-neutral-400 uppercase tracking-wide mb-2">
-            BBS
+          <p className="text-xs text-neutral-400 uppercase tracking-wide mb-2 inline-flex items-center gap-1.5">
+            <Monitor size={12} /> BBS
           </p>
           <Link
             to={`/bbs/${handle}`}
@@ -57,9 +58,7 @@ export default function ViewProfile({
                 </div>
               )}
             </div>
-            <span className="text-neutral-400 group-hover:text-neutral-300 text-lg ml-4">
-              →
-            </span>
+            <ChevronRight size={18} className="text-neutral-400 group-hover:text-neutral-300 ml-4" />
           </Link>
         </div>
       )}

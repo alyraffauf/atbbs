@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { parseAtUri, formatFullDate, relativeDate } from "../lib/util";
 import type { MyThread } from "../router/loaders";
@@ -49,9 +50,9 @@ export default function MyThreadList({ threads }: MyThreadListProps) {
         <div className="mt-4 text-center">
           <button
             onClick={() => setShown((prev) => prev + PAGE_SIZE)}
-            className="text-neutral-400 hover:text-neutral-300"
+            className="text-neutral-400 hover:text-neutral-300 inline-flex items-center gap-1"
           >
-            show more
+            <ChevronDown size={14} /> show more
           </button>
         </div>
       )}

@@ -1,4 +1,5 @@
 import { useState, type SyntheticEvent } from "react";
+import { ArrowRight, Dices } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import HandleInput from "./form/HandleInput";
 import { Button } from "./form/Form";
@@ -92,8 +93,8 @@ export default function DialBBS({ discovered, suggestions }: DialBBSProps) {
           }
           aria-label="Dial a BBS by handle"
         />
-        <Button type="submit">go</Button>
-        <Button type="button" onClick={onRandom}>random</Button>
+        <Button type="submit"><ArrowRight size={16} /></Button>
+        <Button type="button" onClick={onRandom}><Dices size={16} /></Button>
       </form>
       {dropdownOpen && (
         <div className="relative">

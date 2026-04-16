@@ -1,4 +1,5 @@
 import { useState, type SyntheticEvent } from "react";
+import { LogIn, MessageSquare, Pin, User, Monitor } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { useHandleSearch } from "../hooks/useHandleSearch";
@@ -88,7 +89,7 @@ export default function Login() {
             aria-label="Enter your handle"
           />
           <Button type="submit" disabled={busy}>
-            {busy ? "..." : "log in"}
+            {busy ? "..." : <LogIn size={16} />}
           </Button>
         </form>
         {dropdownOpen && (
@@ -132,11 +133,11 @@ export default function Login() {
 
       <div className="bg-neutral-900 border border-neutral-800 rounded p-4 text-sm text-neutral-400 space-y-3">
         <p>Once signed in, you can:</p>
-        <ul className="list-disc list-inside space-y-1">
-          <li>Post threads and replies</li>
-          <li>Pin boards you like</li>
-          <li>Set up a profile</li>
-          <li>Start your own community</li>
+        <ul className="space-y-2">
+          <li className="flex items-center gap-2"><MessageSquare size={14} /> Post threads and replies</li>
+          <li className="flex items-center gap-2"><Pin size={14} /> Pin boards you like</li>
+          <li className="flex items-center gap-2"><User size={14} /> Set up a profile</li>
+          <li className="flex items-center gap-2"><Monitor size={14} /> Start your own community</li>
         </ul>
         <p className="text-neutral-400 pt-3 border-t border-neutral-800">
           We'll redirect you to your provider to continue.

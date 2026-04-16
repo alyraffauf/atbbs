@@ -1,4 +1,5 @@
 import { useEffect, useState, type SyntheticEvent } from "react";
+import { PenLine } from "lucide-react";
 import {
   useLoaderData,
   useNavigate,
@@ -111,8 +112,8 @@ export default function BoardPage() {
 
       {user && (
         <details className="mb-6 border border-neutral-800 rounded p-4">
-          <summary className="text-neutral-300 cursor-pointer">
-            new thread
+          <summary className="text-neutral-300 cursor-pointer inline-flex items-center gap-1.5">
+            <PenLine size={14} /> new thread
           </summary>
           <ComposeForm
             className="mt-4"

@@ -12,6 +12,7 @@
     "@atcute/atproto": "^3.1.11",
     "@atcute/client": "^4.2.1",
     "@atcute/oauth-browser-client": "^3.0.0",
+    "lucide-react": "^1.8.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-markdown": "^10.1.0",

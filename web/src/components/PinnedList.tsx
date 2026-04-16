@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import ListLink from "./nav/ListLink";
 import type { PinnedBBS } from "../router/loaders";
 
@@ -31,9 +32,9 @@ export default function PinnedList({ pins }: PinnedListProps) {
       {shown < pins.length && (
         <button
           onClick={() => setShown((prev) => prev + PAGE_SIZE)}
-          className="text-xs text-neutral-400 hover:text-neutral-300 mt-2"
+          className="text-xs text-neutral-400 hover:text-neutral-300 mt-2 inline-flex items-center gap-1"
         >
-          show more
+          <ChevronDown size={12} /> show more
         </button>
       )}
     </div>

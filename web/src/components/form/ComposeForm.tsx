@@ -1,4 +1,5 @@
 import type { SyntheticEvent } from "react";
+import { Send, Paperclip } from "lucide-react";
 import { Input, Textarea, Button } from "./Form";
 import FileChips from "./FileChips";
 import { MAX_ATTACHMENTS } from "../../lib/limits";
@@ -103,11 +104,11 @@ export default function ComposeForm({
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={posting}>
-          {posting ? "posting..." : submitLabel}
+          {posting ? "posting..." : <><Send size={14} className="inline -mt-0.5" /> {submitLabel}</>}
         </Button>
         {!attachmentsAtLimit && (
         <label className="text-neutral-200 cursor-pointer bg-neutral-800 hover:bg-neutral-700 px-4 py-2 rounded inline-block">
-          attach
+          <span className="inline-flex items-center gap-1.5"><Paperclip size={14} /> attach</span>
           <input
             name="attachments"
             type="file"

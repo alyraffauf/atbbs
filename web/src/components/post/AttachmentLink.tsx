@@ -1,3 +1,5 @@
+import { Paperclip } from "lucide-react";
+
 interface AttachmentLinkProps {
   pds: string;
   did: string;
@@ -37,9 +39,9 @@ export default function AttachmentLink({
     <a
       href={`${pds}/xrpc/com.atproto.sync.getBlob?did=${did}&cid=${cid}`}
       onClick={download}
-      className="text-xs text-neutral-400 hover:text-neutral-300 block mt-1 cursor-pointer"
+      className="text-xs text-neutral-400 hover:text-neutral-300 inline-flex items-center gap-1 mt-3 cursor-pointer"
     >
-      [{name}]
+      <Paperclip size={11} /> {name}
     </a>
   );
 }
