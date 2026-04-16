@@ -119,6 +119,7 @@ class Post:
     parent: str | None = None
     updated_at: str | None = None
     attachments: list[dict] | None = None
+    last_activity_at: str | None = None
 
     @property
     def is_root(self) -> bool:

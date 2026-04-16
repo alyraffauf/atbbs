@@ -70,7 +70,7 @@ class BoardScreen(Screen):
         thread_list = self.query_one("#thread-list", ListView)
         thread_list.clear()
         for thread in self.threads:
-            label = f"  {thread.title}  —  {thread.author.handle} · {format_datetime(thread.created_at)}"
+            label = f"  {thread.title}  —  {thread.author.handle} · {format_datetime(thread.last_activity_at or thread.created_at)}"
             await thread_list.append(ListItem(Static(label), name=thread.uri))
 
         if self.threads:

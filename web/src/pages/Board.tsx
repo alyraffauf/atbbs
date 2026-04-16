@@ -133,7 +133,7 @@ export default function BoardPage() {
               key={t.uri}
               to={`/bbs/${handle}/thread/${t.did}/${t.rkey}`}
               title={t.title}
-              meta={`${t.handle} · ${relativeDate(t.createdAt)}`}
+              meta={`${t.handle} · ${relativeDate(t.lastActivityAt)}`}
               preview={t.body.substring(0, 120)}
             />
           ))

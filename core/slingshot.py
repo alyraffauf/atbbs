@@ -3,7 +3,7 @@ import asyncio
 import httpx
 
 from core.cache import TTLCache
-from core.models import BacklinkRef, MiniDoc, Record
+from core.models import AtUri, BacklinkRef, MiniDoc, Record
 
 BASE_URL = "https://slingshot.microcosm.blue/xrpc"
 
@@ -64,6 +64,16 @@ async def resolve_identities_batch(
     tasks = [resolve_identity(client, did) for did in dids]
     results = await asyncio.gather(*tasks, return_exceptions=True)
     return {r.did: r for r in results if isinstance(r, MiniDoc)}
+
+
+async def get_records_by_uri(
+    client: httpx.AsyncClient, uris: list[str]
+) -> list[Record]:
+    """Fetch multiple records by AT-URI, skipping failures."""
+    parsed = [AtUri.parse(uri) for uri in uris]
+    tasks = [get_record(client, at_uri.did, at_uri.collection, at_uri.rkey) for at_uri in parsed]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    return [result for result in results if isinstance(result, Record)]
 
 
 async def get_records_batch(

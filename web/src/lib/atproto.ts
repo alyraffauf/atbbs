@@ -82,6 +82,20 @@ export async function getRecordByUri(uri: string): Promise<ATRecord> {
   return getRecord(did, collection, rkey);
 }
 
+export async function getRecordsByUri(
+  uris: string[],
+): Promise<ATRecord[]> {
+  const results = await Promise.allSettled(
+    uris.map((uri) => getRecordByUri(uri)),
+  );
+  return results
+    .filter(
+      (result): result is PromiseFulfilledResult<ATRecord> =>
+        result.status === "fulfilled",
+    )
+    .map((result) => result.value);
+}
+
 export async function getRecordsBatch(
   refs: BacklinkRef[],
 ): Promise<ATRecord[]> {

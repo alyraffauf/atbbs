@@ -37,6 +37,22 @@ async def get_backlinks(
     )
 
 
+async def get_board_activity(
+    client: httpx.AsyncClient,
+    board_uri: str,
+    limit: int = 100,
+    cursor: str | None = None,
+) -> BacklinksResponse:
+    """Get all posts (threads and replies) for a board, newest first."""
+    return await get_backlinks(
+        client,
+        subject=board_uri,
+        source=f"{lexicon.POST}:scope",
+        limit=limit,
+        cursor=cursor,
+    )
+
+
 async def get_root_posts(
     client: httpx.AsyncClient,
     scope_uri: str,

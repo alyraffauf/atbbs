@@ -8,10 +8,10 @@ from dataclasses import dataclass
 import httpx
 
 from core import lexicon
-from core.constellation import get_replies, get_root_posts
+from core.constellation import get_board_activity, get_replies, get_root_posts
 from core.filters import filter_moderated
 from core.models import AtUri, AuthError, BBS, Board, MiniDoc, Post, Record
-from core.slingshot import get_records_batch, resolve_identities_batch
+from core.slingshot import get_records_batch, get_records_by_uri, resolve_identities_batch
 from core.util import now_iso
 
 
@@ -38,27 +38,67 @@ async def hydrate_threads(
     banned_dids: set[str] | None = None,
     hidden_posts: set[str] | None = None,
     cursor: str | None = None,
+    page_size: int = 25,
 ) -> tuple[list[Post], str | None]:
-    """Fetch and hydrate root posts (threads) for a board."""
-    board_uri = str(AtUri(bbs.identity.did, lexicon.BOARD, board.slug))
-    backlinks = await get_root_posts(client, board_uri, cursor=cursor)
-    records = await get_records_batch(client, backlinks.records)
-    if banned_dids or hidden_posts:
-        records = filter_moderated(records, banned_dids or set(), hidden_posts or set())
+    """Fetch threads for a board, sorted by last activity (bump order).
 
-    parsed = {record.uri: AtUri.parse(record.uri) for record in records}
-    dids = [parsed_uri.did for parsed_uri in parsed.values()]
-    authors = await resolve_identities_batch(client, dids)
+    Scans recent board activity (threads + replies) and collects unique
+    thread URIs in the order they appear. Since Constellation returns
+    newest posts first, the first time a thread URI appears is its most
+    recent activity — giving us bump order naturally.
+    """
+    board_uri = str(AtUri(bbs.identity.did, lexicon.BOARD, board.slug))
+    max_scans = 4
+
+    # Phase 1: Scan board activity to find unique thread URIs
+    # Keys are thread URIs, values are the timestamp of their last activity.
+    last_activity: dict[str, str] = {}
+    scan_cursor = cursor
+
+    for scan in range(max_scans):
+        if len(last_activity) >= page_size:
+            break
+
+        backlinks = await get_board_activity(client, board_uri, cursor=scan_cursor)
+        if not backlinks.records:
+            break
+
+        records = await get_records_batch(client, backlinks.records)
+        if banned_dids or hidden_posts:
+            records = filter_moderated(records, banned_dids or set(), hidden_posts or set())
+
+        for record in records:
+            thread_uri = record.value.get("root") or record.uri
+            if thread_uri not in last_activity:
+                last_activity[thread_uri] = record.value.get("createdAt", "")
+
+        scan_cursor = backlinks.cursor
+        if not scan_cursor:
+            break
+
+    # Phase 2: Fetch root post records for the thread URIs
+    thread_uris = list(last_activity.keys())[:page_size]
+    root_records = await get_records_by_uri(client, thread_uris)
+    root_records = [record for record in root_records if not record.value.get("root")]
+    if banned_dids or hidden_posts:
+        root_records = filter_moderated(root_records, banned_dids or set(), hidden_posts or set())
+
+    # Phase 3: Resolve authors and build Post objects
+    uri_to_did = {record.uri: AtUri.parse(record.uri).did for record in root_records}
+    authors = await resolve_identities_batch(client, list(uri_to_did.values()))
 
     threads = [
-        post_from_record(record, authors[parsed[record.uri].did])
-        for record in records
-        if parsed[record.uri].did in authors
+        post_from_record(record, authors[uri_to_did[record.uri]])
+        for record in root_records
+        if uri_to_did[record.uri] in authors
     ]
-    # Filter to root posts only (no root field = thread, not a reply)
-    threads = [thread for thread in threads if thread.is_root]
-    threads.sort(key=lambda thread: thread.created_at, reverse=True)
-    return threads, backlinks.cursor
+
+    # Set last_activity_at and sort by it (bump order)
+    for thread in threads:
+        thread.last_activity_at = last_activity.get(thread.uri, thread.created_at)
+    threads.sort(key=lambda thread: thread.last_activity_at or thread.created_at, reverse=True)
+
+    return threads, scan_cursor
 
 
 @dataclass

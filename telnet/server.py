@@ -124,7 +124,7 @@ async def show_board(writer, board, threads, has_next):
         await write(writer, "  No threads yet.\r\n")
     else:
         for index, thread in enumerate(threads, 1):
-            date = format_datetime_utc(thread.created_at)
+            date = format_datetime_utc(thread.last_activity_at or thread.created_at)
             await write(
                 writer, f"  {index}. {thread.title}  ·  {thread.author.handle}  ·  {date}\r\n"
             )
