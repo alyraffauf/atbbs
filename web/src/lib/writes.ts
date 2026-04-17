@@ -115,14 +115,24 @@ export async function deleteRecord(
 
 // --- Blob upload ---
 
+async function stripImageMetadata(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+  const bitmap = await createImageBitmap(file);
+  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+  canvas.getContext("2d")!.drawImage(bitmap, 0, 0);
+  const blob = await canvas.convertToBlob({ type: file.type });
+  return new File([blob], file.name, { type: file.type });
+}
+
 async function uploadBlob(rpc: Client, file: File): Promise<BlobRef> {
-  const buf = new Uint8Array(await file.arrayBuffer());
+  const cleanedFile = await stripImageMetadata(file);
+  const fileBytes = new Uint8Array(await cleanedFile.arrayBuffer());
   // atcute's typed upload signature is awkward for raw binary; cast at boundary.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const resp = await rpc.post("com.atproto.repo.uploadBlob", {
-    input: buf,
+    input: fileBytes,
     headers: {
-      "content-type": file.type || "application/octet-stream",
+      "content-type": cleanedFile.type || "application/octet-stream",
     },
   } as any);
   if (!resp.ok) {
