@@ -1,19 +1,27 @@
 import { isRouteErrorResponse, useRouteError } from "react-router-dom";
 import { BBSNotFoundError, NoBBSError, NetworkError } from "../lib/bbs";
+import { useAuth } from "../lib/auth";
 import { ActionLink } from "./nav/ActionButton";
 
 export default function ErrorPage() {
   const error = useRouteError();
+  const { user } = useAuth();
 
   let title = "Something went wrong.";
   let detail: string | null = null;
+  let action: { to: string; label: string } = { to: "/", label: "← back to home" };
 
   if (error instanceof BBSNotFoundError) {
     title = "BBS not found.";
     detail = "Couldn't resolve that handle. Double-check the spelling.";
   } else if (error instanceof NoBBSError) {
     title = "No BBS here.";
-    detail = "This account isn't running a BBS yet.";
+    if (user) {
+      detail = "This account isn't running a BBS yet.";
+    } else {
+      detail = "This account isn't running a BBS yet. Is this you? Log in to start one.";
+      action = { to: "/login", label: "log in" };
+    }
   } else if (error instanceof NetworkError) {
     title = "Couldn't reach the network.";
     detail = "Try again in a moment.";
@@ -29,7 +37,7 @@ export default function ErrorPage() {
     <div className="py-16 text-center">
       <h1 className="text-lg text-neutral-200 mb-2">{title}</h1>
       {detail && <p className="text-neutral-400 mb-6">{detail}</p>}
-      <ActionLink to="/">← back to home</ActionLink>
+      <ActionLink to={action.to}>{action.label}</ActionLink>
     </div>
   );
 }
