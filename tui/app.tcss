@@ -23,6 +23,7 @@ Screen {
 
 .section-label {
     color: #8a8a8a;
+    margin-top: 1;
 }
 
 /* intro block */
@@ -110,8 +111,14 @@ ComposeNewsScreen Vertical {
 }
 
 SysopEditScreen VerticalScroll,
+SysopCreateScreen VerticalScroll,
 SysopModerateScreen VerticalScroll {
     padding: 1 4;
+}
+
+SysopEditScreen TextArea,
+SysopCreateScreen TextArea {
+    height: 8;
 }
 
 .page-status {
