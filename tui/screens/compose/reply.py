@@ -1,21 +1,17 @@
-from textual import work
 from textual.app import ComposeResult
 from textual.containers import Vertical
-from textual.screen import Screen
 from textual.widgets import Footer, Input, Static, TextArea
 
-from core import limits
-from core.models import AuthError, BBS, Post as PostModel
-from core.records import create_post_record
-from tui.util import require_session
+from core.models import BBS, Post as PostModel
+from tui.screens.compose.base import ComposeScreen
 from tui.widgets.breadcrumb import Breadcrumb
-from tui.screens.compose.upload import upload_file
 
 
-class ComposeReplyScreen(Screen):
+class ComposeReplyScreen(ComposeScreen):
+    requires_title = False
+    post_type = "reply"
+
     BINDINGS = [
-        ("escape", "app.pop_screen", "back"),
-        ("ctrl+s", "post", "post"),
         ("ctrl+g", "toggle_reply_to", "toggle reply to"),
     ]
 
@@ -47,12 +43,12 @@ class ComposeReplyScreen(Screen):
                     classes="subtitle",
                     id="reply-to-info",
                 )
-            yield TextArea(id="reply-body", language=None)
-            yield Input(placeholder="attach file (path, optional)", id="reply-file")
+            yield TextArea(id="compose-body", language=None)
+            yield Input(placeholder="attach file (path, optional)", id="compose-file")
         yield Footer()
 
     def on_mount(self) -> None:
-        self.query_one("#reply-body", TextArea).focus()
+        self.query_one("#compose-body", TextArea).focus()
 
     def action_toggle_reply_to(self) -> None:
         if not self.original_parent:
@@ -73,51 +69,13 @@ class ComposeReplyScreen(Screen):
                     classes="subtitle",
                     id="reply-to-info",
                 ),
-                before=self.query_one("#reply-body"),
+                before=self.query_one("#compose-body"),
             )
 
-    def action_post(self) -> None:
-        self.post_reply()
-
-    @work(exclusive=True)
-    async def post_reply(self) -> None:
-        session = require_session(self)
-        if not session:
-            return
-
-        body = self.query_one("#reply-body", TextArea).text.strip()
-        if not body:
-            self.notify("Message body cannot be empty.", severity="error")
-            return
-        if len(body) > limits.POST_BODY:
-            self.notify(
-                f"Body too long ({len(body)}/{limits.POST_BODY}).", severity="error"
-            )
-            return
-
-        attachments = []
-        file_path = self.query_one("#reply-file", Input).value.strip()
-        if file_path:
-            attachments = await upload_file(self, file_path, session)
-            if attachments is None:
-                return
-
-        try:
-            resp = await create_post_record(
-                self.app.http_client,
-                session,
-                scope=self.thread.scope,
-                body=body,
-                root=self.thread.uri,
-                parent=self.parent_post.uri if self.parent_post else None,
-                attachments=attachments or None,
-            )
-            resp.raise_for_status()
-        except AuthError:
-            self.notify("Session expired. Please log in again.", severity="error")
-            return
-        except Exception as error:
-            self.notify(f"Failed to post reply: {error}", severity="error")
-            return
-
-        self.app.pop_screen()
+    def get_post_params(self, title: str | None, body: str) -> dict:
+        return {
+            "scope": self.thread.scope,
+            "body": body,
+            "root": self.thread.uri,
+            "parent": self.parent_post.uri if self.parent_post else None,
+        }
