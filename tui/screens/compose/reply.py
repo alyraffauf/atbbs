@@ -37,7 +37,7 @@ class ComposeReplyScreen(Screen):
             ("reply", 0),
         )
         with Vertical():
-            yield Static(f"reply to: {self.thread.title}", classes="title")
+            yield Static(f"thread: {self.thread.title}", classes="title")
             if self.parent_post:
                 body_preview = self.parent_post.body[:60] + (
                     "..." if len(self.parent_post.body) > 60 else ""
