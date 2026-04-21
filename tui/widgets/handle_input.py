@@ -23,7 +23,7 @@ class HandleInput(Input):
         self._placeholder_index = 0
 
     def on_mount(self) -> None:
-        self.set_interval(3, self._cycle_placeholder)
+        self.set_interval(6, self._cycle_placeholder)
 
     def _cycle_placeholder(self) -> None:
         # Don't cycle if the user has typed something.

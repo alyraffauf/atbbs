@@ -1,0 +1,10 @@
+[
+  { "name": "Blacksky", "url": "https://blacksky.community" },
+  { "name": "Bluesky", "url": "https://bsky.app" },
+  { "name": "Grain Social", "url": "https://grain.social" },
+  { "name": "Leaflet", "url": "https://leaflet.pub" },
+  { "name": "pckt.blog", "url": "https://pckt.blog" },
+  { "name": "Streamplace", "url": "https://stream.place" },
+  { "name": "Tangled", "url": "https://tangled.sh" },
+  { "name": "wisp.place", "url": "https://wisp.place" }
+]

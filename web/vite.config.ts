@@ -115,6 +115,11 @@ export default defineConfig(({ command }) => {
         },
       },
     ],
-    server: { host: SERVER_HOST, port: SERVER_PORT },
+    server: {
+      host: SERVER_HOST,
+      port: SERVER_PORT,
+      // Allow importing ../core/atproto_apps.json (shared with the Python TUI).
+      fs: { allow: [".."] },
+    },
   };
 });

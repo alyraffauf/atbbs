@@ -11,6 +11,7 @@ from textual.widgets import Footer, Input, Static
 
 from tui.widgets.handle_input import HandleInput
 
+from core.atproto_apps import pick_random_apps
 from core.auth.config import load_secrets
 from core.auth.oauth import (
     exchange_code,
@@ -37,12 +38,22 @@ class LoginScreen(Screen):
         )
         with Vertical():
             yield Static("log in", classes="title")
-            yield Static(
-                "Sign in with your AT Protocol handle. A browser window will open.",
-                classes="subtitle",
-            )
+            yield Static("Use any AT Protocol account.", classes="subtitle")
             yield HandleInput(id="login-handle")
+            yield self._apps_card()
         yield Footer()
+
+    def _apps_card(self) -> Static:
+        lines = ["The same account works for apps like:"]
+        for app in pick_random_apps(3):
+            # Textual markup: clicking the name triggers action_open_url below.
+            lines.append(
+                f"  • [@click=open_url('{app['url']}')]{app['name']}[/]"
+            )
+        return Static("\n".join(lines), markup=True, classes="apps-card")
+
+    def action_open_url(self, url: str) -> None:
+        webbrowser.open(url)
 
     def on_mount(self) -> None:
         self.query_one("#login-handle", Input).focus()
@@ -61,7 +72,10 @@ class LoginScreen(Screen):
         try:
             identity = await resolve_identity(client, handle)
         except Exception:
-            self.notify("Could not resolve handle.", severity="error")
+            self.notify(
+                "Couldn't find that handle. Double-check the spelling?",
+                severity="error",
+            )
             return
 
         pds_url = identity.pds

@@ -29,12 +29,13 @@ export default function HandleInput({
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
   useEffect(() => {
+    // Don't cycle placeholders while the user has something typed.
+    if (value) return;
     const timer = setInterval(() => {
-      setPlaceholderIndex((i) => (i + 1) % PLACEHOLDERS.length);
+      setPlaceholderIndex((current) => (current + 1) % PLACEHOLDERS.length);
     }, 6000);
-
     return () => clearInterval(timer);
-  }, []);
+  }, [value]);
 
   return (
     <input
