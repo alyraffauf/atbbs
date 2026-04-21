@@ -23,6 +23,8 @@ export default function PinnedList({ pins }: PinnedListProps) {
           to={`/bbs/${entry.handle}`}
           name={entry.name}
           description={entry.handle}
+          avatar={entry.avatar}
+          showAvatar
         />
       ))}
       {shown < pins.length && (
