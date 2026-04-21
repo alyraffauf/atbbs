@@ -2,16 +2,7 @@
 
 from textual.widgets import Input
 
-PLACEHOLDERS = [
-    "handle.blacksky.app",
-    "handle.bsky.social",
-    "handle.eurosky.social",
-    "handle.northsky.social",
-    "handle.selfhosted.social",
-    "handle.tngl.sh",
-    "handle.pds.witchcraft.systems",
-    "handle.your-domain.com",
-]
+from core.shared import HANDLE_PLACEHOLDERS as PLACEHOLDERS
 
 
 class HandleInput(Input):

@@ -2,8 +2,9 @@ import httpx
 
 from core import lexicon
 from core.models import BacklinkRef, BacklinksResponse
+from core.shared import SERVICES
 
-BASE_URL = "https://constellation.microcosm.blue/xrpc"
+BASE_URL = SERVICES["constellation"]
 
 
 async def get_backlinks(

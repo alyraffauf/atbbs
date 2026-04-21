@@ -4,5 +4,6 @@ COPY pyproject.toml .
 RUN pip install --no-cache-dir httpx
 COPY core/ core/
 COPY telnet/ telnet/
+COPY data/ data/
 EXPOSE 2323
 CMD ["python", "-m", "telnet.server"]

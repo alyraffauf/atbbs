@@ -4,7 +4,7 @@ WORKDIR /repo/web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci
 COPY web/ .
-COPY core/atproto_apps.json /repo/core/atproto_apps.json
+COPY data/shared.json /repo/data/shared.json
 RUN npm run build
 
 FROM nginx:alpine

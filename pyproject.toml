@@ -24,5 +24,8 @@ atbbs = "cli.__main__:main"
 [tool.hatch.build.targets.wheel]
 packages = ["cli", "core", "telnet", "tui"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"data/shared.json" = "core/_shared.json"
+
 [dependency-groups]
 dev = []

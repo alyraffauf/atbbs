@@ -13,6 +13,7 @@ from tui.widgets.handle_input import HandleInput
 from core import lexicon
 from core.models import BBSNotFoundError, NetworkError, NoBBSError
 from core.resolver import resolve_bbs
+from core.shared import SERVICES
 from core.slingshot import get_record, resolve_identities_batch
 from tui.screens.site import SiteScreen
 
@@ -137,7 +138,7 @@ class HomeScreen(Screen):
         client = self.app.http_client
         try:
             resp = await client.get(
-                "https://lightrail.microcosm.blue/xrpc/com.atproto.sync.listReposByCollection",
+                f"{SERVICES['lightrail']}/com.atproto.sync.listReposByCollection",
                 params={"collection": lexicon.SITE, "limit": 50},
             )
             if resp.status_code != 200:

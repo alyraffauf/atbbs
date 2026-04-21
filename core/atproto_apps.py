@@ -1,12 +1,10 @@
 """Shared AT Protocol apps list — used by both the TUI and the web frontend."""
 
-import json
 import random
-from pathlib import Path
 
-_JSON_PATH = Path(__file__).parent / "atproto_apps.json"
+from core.shared import ATPROTO_APPS
 
-ATPROTO_APPS: list[dict[str, str]] = json.loads(_JSON_PATH.read_text())
+__all__ = ["ATPROTO_APPS", "pick_random_apps"]
 
 
 def pick_random_apps(count: int) -> list[dict[str, str]]:

@@ -1,0 +1,42 @@
+{
+  "atproto_apps": [
+    { "name": "Blacksky", "url": "https://blacksky.community" },
+    { "name": "Bluesky", "url": "https://bsky.app" },
+    { "name": "Grain Social", "url": "https://grain.social" },
+    { "name": "Leaflet", "url": "https://leaflet.pub" },
+    { "name": "pckt.blog", "url": "https://pckt.blog" },
+    { "name": "Streamplace", "url": "https://stream.place" },
+    { "name": "Tangled", "url": "https://tangled.sh" },
+    { "name": "wisp.place", "url": "https://wisp.place" }
+  ],
+  "lexicon_collections": {
+    "site": "xyz.atbbs.site",
+    "board": "xyz.atbbs.board",
+    "post": "xyz.atbbs.post",
+    "ban": "xyz.atbbs.ban",
+    "hide": "xyz.atbbs.hide",
+    "pin": "xyz.atbbs.pin",
+    "profile": "xyz.atbbs.profile"
+  },
+  "oauth_base_scopes": ["atproto", "blob:*/*"],
+  "services": {
+    "slingshot": "https://slingshot.microcosm.blue/xrpc",
+    "constellation": "https://constellation.microcosm.blue/xrpc",
+    "lightrail": "https://lightrail.microcosm.blue/xrpc"
+  },
+  "default_board": {
+    "slug": "general",
+    "name": "General",
+    "description": "Whatever's on your mind."
+  },
+  "handle_placeholders": [
+    "handle.blacksky.app",
+    "handle.bsky.social",
+    "handle.eurosky.social",
+    "handle.northsky.social",
+    "handle.selfhosted.social",
+    "handle.tngl.sh",
+    "handle.pds.witchcraft.systems",
+    "handle.your-domain.com"
+  ]
+}

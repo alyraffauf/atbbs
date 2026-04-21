@@ -1,16 +1,6 @@
 import { useEffect, useState, type InputHTMLAttributes } from "react";
+import { HANDLE_PLACEHOLDERS as PLACEHOLDERS } from "../../lib/shared";
 import { inputStyles } from "./Form";
-
-const PLACEHOLDERS = [
-  "handle.blacksky.app",
-  "handle.bsky.social",
-  "handle.eurosky.social",
-  "handle.northsky.social",
-  "handle.selfhosted.social",
-  "handle.tngl.sh",
-  "handle.pds.witchcraft.systems",
-  "handle.your-domain.com",
-];
 
 interface HandleInputProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,

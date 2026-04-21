@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { TTLCache } from "../lib/cache";
 import { getRecord, resolveIdentitiesBatch } from "../lib/atproto";
 import { SITE } from "../lib/lexicon";
+import { SERVICES } from "../lib/shared";
 import { is } from "@atcute/lexicons/validations";
 import { mainSchema as siteSchema } from "../lexicons/types/xyz/atbbs/site";
 import type { XyzAtbbsSite } from "../lexicons";
@@ -33,7 +34,7 @@ export function useDiscovery(): DiscoveredBBS[] {
     (async () => {
       try {
         const response = await fetch(
-          `https://lightrail.microcosm.blue/xrpc/com.atproto.sync.listReposByCollection?collection=${SITE}&limit=50`,
+          `${SERVICES.lightrail}/com.atproto.sync.listReposByCollection?collection=${SITE}&limit=50`,
         );
         const data = (await response.json()) as { repos: LightrailRepo[] };
         if (!data.repos.length) return;

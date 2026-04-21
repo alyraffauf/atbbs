@@ -4,8 +4,9 @@ import httpx
 
 from core.cache import TTLCache
 from core.models import AtUri, BacklinkRef, MiniDoc, Record
+from core.shared import SERVICES
 
-BASE_URL = "https://slingshot.microcosm.blue/xrpc"
+BASE_URL = SERVICES["slingshot"]
 
 _identity_cache = TTLCache(ttl_seconds=300)  # 5 minutes
 

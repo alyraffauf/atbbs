@@ -1,11 +1,15 @@
 """AT Protocol collection names for atbbs lexicons."""
 
-SITE = "xyz.atbbs.site"
-BOARD = "xyz.atbbs.board"
-POST = "xyz.atbbs.post"
-BAN = "xyz.atbbs.ban"
-HIDE = "xyz.atbbs.hide"
-PIN = "xyz.atbbs.pin"
-PROFILE = "xyz.atbbs.profile"
+from core.shared import LEXICON_COLLECTIONS, OAUTH_BASE_SCOPES
 
-OAUTH_SCOPE = f"atproto blob:*/* repo:{SITE} repo:{BOARD} repo:{POST} repo:{BAN} repo:{HIDE} repo:{PIN} repo:{PROFILE}"
+SITE = LEXICON_COLLECTIONS["site"]
+BOARD = LEXICON_COLLECTIONS["board"]
+POST = LEXICON_COLLECTIONS["post"]
+BAN = LEXICON_COLLECTIONS["ban"]
+HIDE = LEXICON_COLLECTIONS["hide"]
+PIN = LEXICON_COLLECTIONS["pin"]
+PROFILE = LEXICON_COLLECTIONS["profile"]
+
+OAUTH_SCOPE = " ".join(
+    [*OAUTH_BASE_SCOPES, *(f"repo:{nsid}" for nsid in LEXICON_COLLECTIONS.values())]
+)

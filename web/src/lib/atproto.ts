@@ -1,10 +1,11 @@
 /** Read-side wrappers for Slingshot and Constellation (no auth needed). */
 
 import { TTLCache } from "./cache";
+import { SERVICES } from "./shared";
 import { parseAtUri } from "./util";
 
-const SLINGSHOT = "https://slingshot.microcosm.blue/xrpc";
-const CONSTELLATION = "https://constellation.microcosm.blue/xrpc";
+const SLINGSHOT = SERVICES.slingshot;
+const CONSTELLATION = SERVICES.constellation;
 
 export interface MiniDoc {
   did: string;

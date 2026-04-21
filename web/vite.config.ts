@@ -1,21 +1,18 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import shared from "../data/shared.json";
 
 const SERVER_HOST = "127.0.0.1";
 const SERVER_PORT = 5173;
 
 const SCOPE = [
-  "atproto",
-  "blob:*/*",
-  "repo:xyz.atbbs.site",
-  "repo:xyz.atbbs.board",
-  "repo:xyz.atbbs.post",
-  "repo:xyz.atbbs.ban",
-  "repo:xyz.atbbs.hide",
-  "repo:xyz.atbbs.pin",
-  "repo:xyz.atbbs.profile",
+  ...shared.oauth_base_scopes,
+  ...Object.values(shared.lexicon_collections).map((nsid) => `repo:${nsid}`),
 ].join(" ");
+
+// Placeholder the Docker entrypoint replaces at runtime with PUBLIC_URL.
+const PUBLIC_URL_TOKEN = "__PUBLIC_URL__";
 
 interface ClientMetadata {
   client_id: string;
@@ -46,6 +43,15 @@ function buildMetadata(publicUrl: string): ClientMetadata {
   };
 }
 
+function buildConfig(publicUrl: string) {
+  const u = publicUrl.replace(/\/$/, "");
+  return {
+    client_id: `${u}/client-metadata.json`,
+    redirect_uri: `${u}/oauth/callback`,
+    scope: SCOPE,
+  };
+}
+
 /**
  * Dev: synthesizes a loopback client_id (atproto OAuth forbids `localhost`,
  * so the redirect goes to 127.0.0.1).
@@ -53,9 +59,9 @@ function buildMetadata(publicUrl: string): ClientMetadata {
  * Build with VITE_PUBLIC_URL: emits config.json + client-metadata.json for
  * static deploys (Cloudflare Pages, etc.).
  *
- * Build without VITE_PUBLIC_URL: produces a generic bundle. The Docker
- * entrypoint generates config.json + client-metadata.json at runtime from
- * the PUBLIC_URL env var.
+ * Build without VITE_PUBLIC_URL: emits *.template.json files with a
+ * __PUBLIC_URL__ token. The Docker entrypoint substitutes at runtime from
+ * the PUBLIC_URL env var. NSIDs/scope live in data/shared.json only.
  */
 export default defineConfig(({ command }) => {
   const isBuild = command === "build";
@@ -71,35 +77,37 @@ export default defineConfig(({ command }) => {
     process.env.VITE_OAUTH_SCOPE = SCOPE;
   }
 
-  // Static deploy: emit config.json and client-metadata.json at build time.
-  let staticFiles: Array<{ fileName: string; source: string }> = [];
-  if (isBuild && publicUrl) {
-    if (!publicUrl.startsWith("https://")) {
-      throw new Error(
-        `VITE_PUBLIC_URL must use https:// (got ${publicUrl}).`,
+  const staticFiles: Array<{ fileName: string; source: string }> = [];
+  if (isBuild) {
+    if (publicUrl) {
+      if (!publicUrl.startsWith("https://")) {
+        throw new Error(
+          `VITE_PUBLIC_URL must use https:// (got ${publicUrl}).`,
+        );
+      }
+      staticFiles.push(
+        {
+          fileName: "client-metadata.json",
+          source: JSON.stringify(buildMetadata(publicUrl), null, 2) + "\n",
+        },
+        {
+          fileName: "config.json",
+          source: JSON.stringify(buildConfig(publicUrl), null, 2) + "\n",
+        },
+      );
+    } else {
+      staticFiles.push(
+        {
+          fileName: "client-metadata.template.json",
+          source:
+            JSON.stringify(buildMetadata(PUBLIC_URL_TOKEN), null, 2) + "\n",
+        },
+        {
+          fileName: "config.template.json",
+          source: JSON.stringify(buildConfig(PUBLIC_URL_TOKEN), null, 2) + "\n",
+        },
       );
     }
-    const u = publicUrl.replace(/\/$/, "");
-    const metadata = buildMetadata(u);
-    staticFiles = [
-      {
-        fileName: "client-metadata.json",
-        source: JSON.stringify(metadata, null, 2) + "\n",
-      },
-      {
-        fileName: "config.json",
-        source:
-          JSON.stringify(
-            {
-              client_id: metadata.client_id,
-              redirect_uri: metadata.redirect_uris[0],
-              scope: SCOPE,
-            },
-            null,
-            2,
-          ) + "\n",
-      },
-    ];
   }
 
   return {
@@ -118,7 +126,7 @@ export default defineConfig(({ command }) => {
     server: {
       host: SERVER_HOST,
       port: SERVER_PORT,
-      // Allow importing ../core/atproto_apps.json (shared with the Python TUI).
+      // Allow importing ../../data/shared.json (shared with the Python TUI).
       fs: { allow: [".."] },
     },
   };

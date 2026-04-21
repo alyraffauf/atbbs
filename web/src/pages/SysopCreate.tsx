@@ -3,6 +3,7 @@ import { useNavigate, useLoaderData } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { putBoard, putSite } from "../lib/writes";
 import { BOARD } from "../lib/lexicon";
+import { DEFAULT_BOARD } from "../lib/shared";
 import { makeAtUri, nowIso } from "../lib/util";
 import * as limits from "../lib/limits";
 import { usePageTitle } from "../hooks/usePageTitle";
@@ -22,9 +23,9 @@ export default function SysopCreate() {
   const [intro, setIntro] = useState("");
   const [boards, setBoards] = useState<BoardRow[]>([
     {
-      slug: "general",
-      name: "General",
-      desc: "Whatever's on your mind.",
+      slug: DEFAULT_BOARD.slug,
+      name: DEFAULT_BOARD.name,
+      desc: DEFAULT_BOARD.description,
     },
   ]);
   const [error, setError] = useState<string | null>(null);

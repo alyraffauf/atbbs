@@ -9,14 +9,10 @@ from textual.containers import VerticalScroll
 from textual.widgets import Input, Static, TextArea
 
 from core import limits
+from core.shared import DEFAULT_BOARD as _DEFAULT_BOARD
 from core.util import now_iso
 
-DEFAULT_BOARD = {
-    "slug": "general",
-    "name": "General",
-    "description": "Whatever's on your mind.",
-    "created_at": "",
-}
+DEFAULT_BOARD = {**_DEFAULT_BOARD, "created_at": ""}
 
 
 class BBSFormMixin:
