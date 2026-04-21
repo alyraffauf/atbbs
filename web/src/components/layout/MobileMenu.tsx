@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import type { useAuth } from "../../lib/auth";
+import { useLoginModal } from "../../lib/loginModal";
 
 interface MobileMenuProps {
   user: ReturnType<typeof useAuth>["user"];
@@ -18,6 +19,7 @@ const panelStyle = [
 
 export default function MobileMenu({ user, onLogout }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
+  const { openLogin } = useLoginModal();
 
   function close() {
     setOpen(false);
@@ -56,13 +58,16 @@ export default function MobileMenu({ user, onLogout }: MobileMenuProps) {
               </button>
             </>
           ) : (
-            <Link
-              to="/login"
-              onClick={close}
+            <button
+              type="button"
+              onClick={() => {
+                close();
+                openLogin();
+              }}
               className="text-neutral-300 hover:text-neutral-200"
             >
               log in
-            </Link>
+            </button>
           )}
         </div>
       )}

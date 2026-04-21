@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
+import { useLoginModal } from "../../lib/loginModal";
 import Logo from "./Logo";
 import HeaderBreadcrumbs from "./HeaderBreadcrumbs";
 import MobileMenu from "./MobileMenu";
@@ -8,6 +9,7 @@ const linkStyle = "text-neutral-400 hover:text-neutral-300";
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const { openLogin } = useLoginModal();
   const navigate = useNavigate();
 
   async function onLogout() {
@@ -39,9 +41,9 @@ export default function Header() {
               </button>
             </>
           ) : (
-            <Link to="/login" className={linkStyle}>
+            <button type="button" onClick={openLogin} className={linkStyle}>
               log in
-            </Link>
+            </button>
           )}
         </div>
         <MobileMenu user={user} onLogout={onLogout} />
