@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Pencil, ChevronRight, Monitor } from "lucide-react";
+import Avatar from "../Avatar";
 import PostBody from "../post/PostBody";
 import { ActionButton } from "../nav/ActionButton";
 import type { Profile } from "../../lib/profile";
@@ -19,25 +20,34 @@ export default function ViewProfile({
 }: ViewProfileProps) {
   return (
     <>
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-lg text-neutral-200 mb-1">
-          {profile?.name ?? handle}
-        </h1>
-        {isOwner && (
-          <ActionButton onClick={onEdit} icon={Pencil}>
-            edit
-          </ActionButton>
-        )}
+      <div className="flex items-center gap-4">
+        <Avatar
+          url={profile?.avatar}
+          name={profile?.name ?? handle}
+          size={48}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline justify-between gap-2">
+            <h1 className="text-lg text-neutral-200 mb-1 truncate">
+              {profile?.name ?? handle}
+            </h1>
+            {isOwner && (
+              <ActionButton onClick={onEdit} icon={Pencil}>
+                edit
+              </ActionButton>
+            )}
+          </div>
+          <p className="text-neutral-400 truncate">
+            {handle}
+            {profile?.pronouns && (
+              <>
+                <span className="text-neutral-400 mx-1">·</span>
+                {profile.pronouns}
+              </>
+            )}
+          </p>
+        </div>
       </div>
-      <p className="text-neutral-400">
-        {handle}
-        {profile?.pronouns && (
-          <>
-            <span className="text-neutral-400 mx-1">·</span>
-            {profile.pronouns}
-          </>
-        )}
-      </p>
       {profile?.bio && (
         <div className="mt-4">
           <PostBody>{profile.bio}</PostBody>

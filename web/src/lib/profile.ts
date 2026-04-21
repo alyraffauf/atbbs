@@ -1,6 +1,6 @@
 /** Fetch a user's atbbs profile and BBS info. */
 
-import { getRecord, resolveIdentity } from "./atproto";
+import { getAvatar, getRecord, resolveIdentity } from "./atproto";
 import { PROFILE, SITE } from "./lexicon";
 import { is } from "@atcute/lexicons/validations";
 import { mainSchema as profileSchema } from "../lexicons/types/xyz/atbbs/profile";
@@ -11,6 +11,7 @@ export interface Profile {
   did: string;
   handle: string;
   pdsUrl: string;
+  avatar?: string;
   name?: string;
   pronouns?: string;
   bio?: string;
@@ -27,15 +28,19 @@ export async function fetchProfile(handle: string): Promise<Profile | null> {
     return null;
   }
 
-  const [profileResult, siteResult] = await Promise.allSettled([
-    getRecord(identity.did, PROFILE, "self"),
-    getRecord(identity.did, SITE, "self"),
+  const [[profileResult, siteResult], avatar] = await Promise.all([
+    Promise.allSettled([
+      getRecord(identity.did, PROFILE, "self"),
+      getRecord(identity.did, SITE, "self"),
+    ]),
+    getAvatar(identity.did),
   ]);
 
   const profile: Profile = {
     did: identity.did,
     handle: identity.handle,
     pdsUrl: identity.pds ?? "",
+    avatar,
   };
 
   if (
