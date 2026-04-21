@@ -2,6 +2,7 @@ import { useState, type SyntheticEvent } from "react";
 import { ArrowRight, Dices } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import HandleInput from "./form/HandleInput";
+import IdentityRow from "./IdentityRow";
 import { Button } from "./form/Form";
 import { useDropdown } from "../hooks/useDropdown";
 import { useResolvedBBS } from "../hooks/useResolvedBBS";
@@ -113,16 +114,18 @@ export default function DialBBS({ discovered, suggestions }: DialBBSProps) {
                 to={entry.to}
                 role="option"
                 aria-selected={index === dropdown.activeIndex}
-                className={`block px-3 py-2 text-sm text-neutral-300 first:rounded-t last:rounded-b ${
+                className={`block px-3 py-2 first:rounded-t last:rounded-b ${
                   index === dropdown.activeIndex
                     ? "bg-neutral-800"
                     : "hover:bg-neutral-800"
                 }`}
               >
-                {entry.name}
-                {entry.name !== entry.handle && (
-                  <span className="text-neutral-400 ml-2">{entry.handle}</span>
-                )}
+                <IdentityRow
+                  primary={entry.name}
+                  secondary={
+                    entry.name !== entry.handle ? entry.handle : undefined
+                  }
+                />
               </Link>
             ))}
           </div>

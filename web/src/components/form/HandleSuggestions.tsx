@@ -1,3 +1,4 @@
+import IdentityRow from "../IdentityRow";
 import type { HandleMatch } from "../../lib/bsky";
 
 interface HandleSuggestionsProps {
@@ -29,25 +30,15 @@ export default function HandleSuggestions({
               role="option"
               aria-selected={isActive}
               onClick={() => onSelect(suggestion.handle)}
-              className={`flex items-center gap-3 w-full px-3 py-2 text-left first:rounded-t last:rounded-b ${
+              className={`w-full px-3 py-2 text-left first:rounded-t last:rounded-b ${
                 isActive ? "bg-neutral-800" : "hover:bg-neutral-800"
               }`}
             >
-              {suggestion.avatar && (
-                <img
-                  src={suggestion.avatar}
-                  alt=""
-                  className="w-6 h-6 rounded-full shrink-0"
-                />
-              )}
-              <div className="min-w-0">
-                <div className="text-sm text-neutral-200 truncate">
-                  {suggestion.displayName}
-                </div>
-                <div className="text-xs text-neutral-400 truncate">
-                  {suggestion.handle}
-                </div>
-              </div>
+              <IdentityRow
+                avatar={suggestion.avatar}
+                primary={suggestion.displayName}
+                secondary={suggestion.handle}
+              />
             </button>
           );
         })}
