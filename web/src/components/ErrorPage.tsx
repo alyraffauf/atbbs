@@ -9,7 +9,10 @@ export default function ErrorPage() {
 
   let title = "Something went wrong.";
   let detail: string | null = null;
-  let action: { to: string; label: string } = { to: "/", label: "← back to home" };
+  let action: { to: string; label: string } = {
+    to: "/",
+    label: "← back to home",
+  };
 
   if (error instanceof BBSNotFoundError) {
     title = "BBS not found.";
@@ -19,7 +22,8 @@ export default function ErrorPage() {
     if (user) {
       detail = "This account isn't running a BBS yet.";
     } else {
-      detail = "This account isn't running a BBS yet. Is this you? Log in to start one.";
+      detail =
+        "This account isn't running a BBS yet. Is this you? Log in to start one.";
       action = { to: "/login", label: "log in" };
     }
   } else if (error instanceof NetworkError) {

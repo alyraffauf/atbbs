@@ -82,9 +82,7 @@ export async function getRecordByUri(uri: string): Promise<ATRecord> {
   return getRecord(did, collection, rkey);
 }
 
-export async function getRecordsByUri(
-  uris: string[],
-): Promise<ATRecord[]> {
+export async function getRecordsByUri(uris: string[]): Promise<ATRecord[]> {
   const results = await Promise.allSettled(
     uris.map((uri) => getRecordByUri(uri)),
   );

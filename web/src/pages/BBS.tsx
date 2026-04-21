@@ -67,7 +67,9 @@ export default function BBSPage() {
       setNewsBody("");
       setNewsFiles([]);
     } catch (error: unknown) {
-      alert(`Could not post: ${error instanceof Error ? error.message : error}`);
+      alert(
+        `Could not post: ${error instanceof Error ? error.message : error}`,
+      );
     } finally {
       setPostingNews(false);
     }

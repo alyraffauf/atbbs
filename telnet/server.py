@@ -126,7 +126,8 @@ async def show_board(writer, board, threads, has_next):
         for index, thread in enumerate(threads, 1):
             date = format_datetime_utc(thread.last_activity_at or thread.created_at)
             await write(
-                writer, f"  {index}. {thread.title}  ·  {thread.author.handle}  ·  {date}\r\n"
+                writer,
+                f"  {index}. {thread.title}  ·  {thread.author.handle}  ·  {date}\r\n",
             )
 
     cmds = ["[#] open thread"]
@@ -151,7 +152,8 @@ async def show_thread_header(writer, thread):
 async def show_replies(writer, replies):
     for reply in replies:
         await write(
-            writer, f"  {reply.author.handle}  ·  {format_datetime_utc(reply.created_at)}\r\n"
+            writer,
+            f"  {reply.author.handle}  ·  {format_datetime_utc(reply.created_at)}\r\n",
         )
         for line in reply.body.splitlines():
             await write(writer, f"    {line}\r\n")

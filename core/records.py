@@ -11,7 +11,11 @@ from core import lexicon
 from core.constellation import get_board_activity, get_replies, get_root_posts
 from core.filters import filter_moderated
 from core.models import AtUri, AuthError, BBS, Board, MiniDoc, Post, Record
-from core.slingshot import get_records_batch, get_records_by_uri, resolve_identities_batch
+from core.slingshot import (
+    get_records_batch,
+    get_records_by_uri,
+    resolve_identities_batch,
+)
 from core.util import now_iso
 
 
@@ -65,7 +69,9 @@ async def hydrate_threads(
 
         records = await get_records_batch(client, backlinks.records)
         if banned_dids or hidden_posts:
-            records = filter_moderated(records, banned_dids or set(), hidden_posts or set())
+            records = filter_moderated(
+                records, banned_dids or set(), hidden_posts or set()
+            )
 
         for record in records:
             thread_uri = record.value.get("root") or record.uri
@@ -81,7 +87,9 @@ async def hydrate_threads(
     root_records = await get_records_by_uri(client, thread_uris)
     root_records = [record for record in root_records if not record.value.get("root")]
     if banned_dids or hidden_posts:
-        root_records = filter_moderated(root_records, banned_dids or set(), hidden_posts or set())
+        root_records = filter_moderated(
+            root_records, banned_dids or set(), hidden_posts or set()
+        )
 
     # Phase 3: Resolve authors and build Post objects
     uri_to_did = {record.uri: AtUri.parse(record.uri).did for record in root_records}
@@ -96,7 +104,9 @@ async def hydrate_threads(
     # Set last_activity_at and sort by it (bump order)
     for thread in threads:
         thread.last_activity_at = last_activity.get(thread.uri, thread.created_at)
-    threads.sort(key=lambda thread: thread.last_activity_at or thread.created_at, reverse=True)
+    threads.sort(
+        key=lambda thread: thread.last_activity_at or thread.created_at, reverse=True
+    )
 
     return threads, scan_cursor
 
@@ -553,7 +563,9 @@ async def fetch_inbox(
                 backlinks = await get_replies(client, post_uri, limit=BACKLINK_LIMIT)
                 records = await get_records_batch(client, backlinks.records)
                 parsed = {record.uri: AtUri.parse(record.uri) for record in records}
-                records = [record for record in records if parsed[record.uri].did != did]
+                records = [
+                    record for record in records if parsed[record.uri].did != did
+                ]
                 if not records:
                     return []
 
@@ -598,7 +610,9 @@ async def fetch_inbox(
 
                 records = await get_records_batch(client, backlinks.records)
                 parsed = {record.uri: AtUri.parse(record.uri) for record in records}
-                records = [record for record in records if parsed[record.uri].did != did]
+                records = [
+                    record for record in records if parsed[record.uri].did != did
+                ]
                 if not records:
                     return []
 

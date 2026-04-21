@@ -30,7 +30,9 @@ async def get_backlinks(
     return BacklinksResponse(
         total=data["total"],
         records=[
-            BacklinkRef(did=entry["did"], collection=entry["collection"], rkey=entry["rkey"])
+            BacklinkRef(
+                did=entry["did"], collection=entry["collection"], rkey=entry["rkey"]
+            )
             for entry in data["records"]
         ],
         cursor=data.get("cursor"),

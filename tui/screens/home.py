@@ -80,9 +80,7 @@ class HomeScreen(Screen):
         """Check the user doesn't already have a BBS, then open the create screen."""
         session = self.app.user_session
         try:
-            await get_record(
-                self.app.http_client, session["did"], lexicon.SITE, "self"
-            )
+            await get_record(self.app.http_client, session["did"], lexicon.SITE, "self")
             # If we got here the record exists — they already have a BBS.
             self.notify(
                 "You already have a BBS. Dial your handle to manage it.",

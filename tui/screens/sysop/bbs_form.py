@@ -53,9 +53,7 @@ class BBSFormMixin:
         )
         for board in self._boards:
             slug = board["slug"]
-            yield Static(
-                f"  {slug}", classes="subtitle", id=f"board-label-{slug}"
-            )
+            yield Static(f"  {slug}", classes="subtitle", id=f"board-label-{slug}")
             yield Input(
                 value=board["name"],
                 id=f"board-name-{slug}",

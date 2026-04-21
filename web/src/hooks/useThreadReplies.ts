@@ -178,7 +178,9 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
           parseAtUri(uri),
         );
         const parentRecords = await getRecordsBatch(parentRefs);
-        const parentDids = parentRecords.map((record) => parseAtUri(record.uri).did);
+        const parentDids = parentRecords.map(
+          (record) => parseAtUri(record.uri).did,
+        );
         const parentAuthors = await resolveIdentitiesBatch(parentDids);
         for (const record of parentRecords) {
           const reply = recordToReply(record, parentAuthors);

@@ -172,16 +172,12 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
               reply={reply}
               userDid={user?.did ?? ""}
               sysopDid={bbs.identity.did}
-              parentPost={
-                reply.parent ? replyCache[reply.parent] : undefined
-              }
+              parentPost={reply.parent ? replyCache[reply.parent] : undefined}
               onReplyTo={() =>
                 setReplyingTo({ uri: reply.uri, handle: reply.handle })
               }
               onParentClick={
-                reply.parent
-                  ? () => scrollToReply(reply.parent!)
-                  : undefined
+                reply.parent ? () => scrollToReply(reply.parent!) : undefined
               }
               onDelete={() => onDeleteReply(reply)}
               onBan={() => onBan(reply.did)}

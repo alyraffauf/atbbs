@@ -60,7 +60,9 @@ export default function SysopCreate() {
         name: name.trim(),
         description: description.trim(),
         intro,
-        boards: cleanBoards.map((board) => makeAtUri(user.did, BOARD, board.slug)),
+        boards: cleanBoards.map((board) =>
+          makeAtUri(user.did, BOARD, board.slug),
+        ),
         createdAt: now,
       });
       navigate(`/bbs/${user.handle}`);

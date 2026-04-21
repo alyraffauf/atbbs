@@ -36,7 +36,11 @@ async def upload_file(screen, file_path: str, session: dict) -> list[dict] | Non
 
     try:
         blob_ref = await upload_blob(
-            screen.app.http_client, session, cleaned_bytes, mime_type, session_updater=nonce_updater
+            screen.app.http_client,
+            session,
+            cleaned_bytes,
+            mime_type,
+            session_updater=nonce_updater,
         )
         return [{"file": blob_ref, "name": path.name}]
     except Exception as error:

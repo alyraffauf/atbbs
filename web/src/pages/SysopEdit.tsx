@@ -62,7 +62,9 @@ export default function SysopEdit() {
         name: name.trim(),
         description: description.trim(),
         intro,
-        boards: cleanBoards.map((board) => makeAtUri(user.did, BOARD, board.slug)),
+        boards: cleanBoards.map((board) =>
+          makeAtUri(user.did, BOARD, board.slug),
+        ),
         createdAt: bbs.site.createdAt || now,
         updatedAt: now,
       });

@@ -15,11 +15,7 @@ import { is } from "@atcute/lexicons/validations";
 import { mainSchema as siteSchema } from "../lexicons/types/xyz/atbbs/site";
 import { mainSchema as boardSchema } from "../lexicons/types/xyz/atbbs/board";
 import { mainSchema as postSchema } from "../lexicons/types/xyz/atbbs/post";
-import type {
-  XyzAtbbsSite,
-  XyzAtbbsBoard,
-  XyzAtbbsPost,
-} from "../lexicons";
+import type { XyzAtbbsSite, XyzAtbbsBoard, XyzAtbbsPost } from "../lexicons";
 
 export class BBSNotFoundError extends Error {}
 export class NoBBSError extends Error {}

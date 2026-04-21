@@ -58,12 +58,12 @@ async def _resolve_bbs(client: httpx.AsyncClient, handle: str) -> BBS:
     board_tasks = []
     for uri in board_uris:
         parsed = AtUri.parse(uri)
-        board_tasks.append(get_record(client, parsed.did, parsed.collection, parsed.rkey))
+        board_tasks.append(
+            get_record(client, parsed.did, parsed.collection, parsed.rkey)
+        )
     news_task = get_root_posts(client, site_uri)
 
-    results = await asyncio.gather(
-        *board_tasks, news_task, return_exceptions=True
-    )
+    results = await asyncio.gather(*board_tasks, news_task, return_exceptions=True)
     board_records = results[: len(board_uris)]
     news_result = results[len(board_uris)]
 
@@ -88,10 +88,7 @@ async def _resolve_bbs(client: httpx.AsyncClient, handle: str) -> BBS:
     else:
         sysop_news = [ref for ref in news_result.records if ref.did == identity.did]
         news_records = await get_records_batch(client, sysop_news)
-    news = [
-        post_from_record(record, identity)
-        for record in news_records
-    ]
+    news = [post_from_record(record, identity) for record in news_records]
     news.sort(key=lambda post: post.created_at, reverse=True)
 
     site = Site(

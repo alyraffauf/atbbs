@@ -49,7 +49,12 @@ export async function hydrateThreadPage(
   for (let scanCount = 0; scanCount < MAX_SCANS; scanCount++) {
     if (lastActivity.size >= PAGE_SIZE) break;
 
-    const backlinks = await getBacklinks(boardUri, `${POST}:scope`, 100, scanCursor);
+    const backlinks = await getBacklinks(
+      boardUri,
+      `${POST}:scope`,
+      100,
+      scanCursor,
+    );
     if (!backlinks.records.length) break;
 
     const records = await getRecordsBatch(backlinks.records);

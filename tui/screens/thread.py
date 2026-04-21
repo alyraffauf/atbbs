@@ -11,7 +11,11 @@ from textual.widgets import Footer, Static
 
 from core import lexicon
 from core.models import BBS, AtUri, AuthError, Post as PostModel
-from core.records import delete_record, hydrate_replies as fetch_replies, post_from_record
+from core.records import (
+    delete_record,
+    hydrate_replies as fetch_replies,
+    post_from_record,
+)
 from core.slingshot import get_record, resolve_identity
 from tui.screens.compose import ComposeReplyScreen
 from tui.util import ban_user, hide_post, require_session, require_sysop
@@ -171,9 +175,7 @@ class ThreadScreen(Screen):
             )
 
         # Focus first reply
-        replies = [
-            post for post in self.query(Post) if self._is_reply_widget(post)
-        ]
+        replies = [post for post in self.query(Post) if self._is_reply_widget(post)]
         if replies:
             replies[0].focus()
 
