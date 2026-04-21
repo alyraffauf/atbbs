@@ -141,6 +141,7 @@ class ThreadScreen(Screen):
                 if isinstance(parent_result, tuple):
                     self._replies_map[parent_result[0]] = parent_result[1]
 
+        post_widgets = []
         for reply in result.replies:
             parent_preview = None
             if reply.parent and reply.parent in self._replies_map:
@@ -150,7 +151,7 @@ class ThreadScreen(Screen):
                 )
                 parent_preview = f"{parent_post.author.handle}: {body_preview}"
 
-            await scroll.mount(
+            post_widgets.append(
                 Post(
                     author=reply.author.handle,
                     date=reply.created_at,
@@ -161,8 +162,12 @@ class ThreadScreen(Screen):
                     collection=lexicon.POST,
                     attachments=reply.attachments,
                     parent_preview=parent_preview,
-                ),
-                before=self.query_one("#page-status-bottom"),
+                )
+            )
+
+        if post_widgets:
+            await scroll.mount(
+                *post_widgets, before=self.query_one("#page-status-bottom")
             )
 
         # Focus first reply
