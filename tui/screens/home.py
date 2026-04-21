@@ -1,3 +1,4 @@
+import asyncio
 import random
 
 from textual import work
@@ -146,32 +147,38 @@ class HomeScreen(Screen):
             dids = [repo["did"] for repo in repos]
             authors = await resolve_identities_batch(client, dids)
 
-            items = []
-            for repo in repos:
-                did = repo["did"]
-                if did not in authors:
-                    continue
+            resolved_dids = [did for did in dids if did in authors]
+
+            async def fetch_site(did: str):
                 try:
-                    site_record = await get_record(client, did, lexicon.SITE, "self")
-                    name = site_record.value.get("name", "")
-                    desc = site_record.value.get("description", "")
+                    return did, await get_record(client, did, lexicon.SITE, "self")
                 except Exception:
+                    return None
+
+            results = await asyncio.gather(*[fetch_site(did) for did in resolved_dids])
+
+            items = []
+            for result in results:
+                if result is None:
                     continue
+                did, site_record = result
+                name = site_record.value.get("name", "")
                 handle = authors[did].handle
-                items.append((handle, name, desc))
+                items.append((handle, name))
 
             if not items:
                 return
 
             discover_list = self.query_one("#discover-list", ListView)
-            for handle, name, desc in items:
-                await discover_list.append(
-                    ListItem(Static(f"  {name or handle}"), name=handle)
-                )
+            list_items = [
+                ListItem(Static(f"  {name or handle}"), name=handle)
+                for handle, name in items
+            ]
+            await discover_list.mount(*list_items)
 
             self.query_one("#discover-label").display = True
             discover_list.display = True
-            lv.index = 0  # select first bbs
+            discover_list.index = 0
 
         except Exception:
             pass
