@@ -7,6 +7,7 @@ import {
 
 import Layout from "../components/layout/Layout";
 import ErrorPage from "../components/ErrorPage";
+import HydrateFallback from "../components/layout/HydrateFallback";
 
 import Home from "../pages/Home";
 import OAuthCallback from "../pages/OAuthCallback";
@@ -35,6 +36,7 @@ const routes: RouteObject[] = [
   {
     element: <Layout />,
     errorElement: <ErrorPage />,
+    HydrateFallback,
     children: [
       { path: "/", loader: homeLoader, element: <Home /> },
       { path: "/oauth/callback", element: <OAuthCallback /> },
