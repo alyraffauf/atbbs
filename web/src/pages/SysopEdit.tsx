@@ -35,7 +35,7 @@ export default function SysopEdit() {
   );
   const [error, setError] = useState<string | null>(null);
 
-  usePageTitle("Edit BBS — atbbs");
+  usePageTitle("Edit community — atbbs");
 
   async function onSubmit(e: SyntheticEvent) {
     e.preventDefault();
@@ -70,19 +70,19 @@ export default function SysopEdit() {
       });
       navigate(`/bbs/${user.handle}`);
     } catch {
-      setError("Could not update BBS.");
+      setError("Could not update community.");
     }
   }
 
   return (
     <>
-      <h1 className="text-lg text-neutral-200 mb-1">Edit BBS</h1>
-      <p className="text-neutral-400 mb-6">Update your BBS.</p>
+      <h1 className="text-lg text-neutral-200 mb-1">Edit community</h1>
+      <p className="text-neutral-400 mb-6">Update your community.</p>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       <form onSubmit={onSubmit} className="space-y-6">
         <div>
           <label className="text-xs text-neutral-400 uppercase tracking-wide">
-            BBS Name
+            Community Name
           </label>
           <Input
             name="name"

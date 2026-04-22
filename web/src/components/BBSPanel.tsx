@@ -19,9 +19,9 @@ export default function BBSPanel({
   if (!hasBBS) {
     return (
       <>
-        <p className="text-neutral-400 mb-4">No BBS yet.</p>
+        <p className="text-neutral-400 mb-4">No community yet.</p>
         <ActionLink to="/account/create" icon={Plus}>
-          create a bbs
+          create a community
         </ActionLink>
       </>
     );
@@ -33,7 +33,7 @@ export default function BBSPanel({
         <div className="flex items-center gap-2 text-neutral-200 mb-1">
           <Monitor size={14} /> Browse
         </div>
-        <div className="text-xs text-neutral-400">View your BBS.</div>
+        <div className="text-xs text-neutral-400">View your community.</div>
       </Link>
       <Link to="/account/edit" className={cardStyle}>
         <div className="flex items-center gap-2 text-neutral-200 mb-1">
@@ -54,7 +54,7 @@ export default function BBSPanel({
         <div className="flex items-center gap-2 text-neutral-400 mb-1">
           <Trash2 size={14} /> Delete
         </div>
-        <div className="text-xs text-neutral-400">Remove your BBS.</div>
+        <div className="text-xs text-neutral-400">Remove your community.</div>
       </button>
     </div>
   );

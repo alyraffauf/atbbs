@@ -106,7 +106,7 @@ export default function DialBBS({ discovered, suggestions }: DialBBSProps) {
               ? `dial-option-${dropdown.activeIndex}`
               : undefined
           }
-          aria-label="Dial a BBS by handle"
+          aria-label="Find a community by handle"
         />
         <Button type="submit">
           <ArrowRight size={16} />

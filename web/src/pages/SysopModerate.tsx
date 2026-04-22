@@ -28,7 +28,7 @@ export default function SysopModerate() {
   const revalidator = useRevalidator();
   const [identifier, setIdentifier] = useState("");
   const [hideUri, setHideUri] = useState("");
-  usePageTitle("Moderate BBS — atbbs");
+  usePageTitle("Moderate community — atbbs");
 
   async function ban() {
     if (!agent) return;
@@ -77,7 +77,7 @@ export default function SysopModerate() {
 
   return (
     <>
-      <h1 className="text-lg text-neutral-200 mb-1">Moderate BBS</h1>
+      <h1 className="text-lg text-neutral-200 mb-1">Moderate community</h1>
       <p className="text-neutral-400 mb-6">
         Manage banned users and hidden posts.
       </p>

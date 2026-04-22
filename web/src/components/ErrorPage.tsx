@@ -15,15 +15,15 @@ export default function ErrorPage() {
   };
 
   if (error instanceof BBSNotFoundError) {
-    title = "BBS not found.";
+    title = "Community not found.";
     detail = "Couldn't resolve that handle. Double-check the spelling.";
   } else if (error instanceof NoBBSError) {
-    title = "No BBS here.";
+    title = "No community here.";
     if (user) {
-      detail = "This account isn't running a BBS yet.";
+      detail = "This account isn't running a community yet.";
     } else {
       detail =
-        "This account isn't running a BBS yet. Is this you? Log in to start one.";
+        "This account isn't running a community yet. Is this you? Log in to start one.";
       action = { to: "/?login=1", label: "log in" };
     }
   } else if (error instanceof NetworkError) {

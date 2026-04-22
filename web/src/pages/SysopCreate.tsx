@@ -30,7 +30,7 @@ export default function SysopCreate() {
   ]);
   const [error, setError] = useState<string | null>(null);
 
-  usePageTitle("Create BBS — atbbs");
+  usePageTitle("Create community — atbbs");
 
   async function onSubmit(e: SyntheticEvent) {
     e.preventDefault();
@@ -68,28 +68,28 @@ export default function SysopCreate() {
       });
       navigate(`/bbs/${user.handle}`);
     } catch {
-      setError("Could not create BBS.");
+      setError("Could not create community.");
     }
   }
 
   return (
     <>
-      <h1 className="text-lg text-neutral-200 mb-1">Create a BBS</h1>
+      <h1 className="text-lg text-neutral-200 mb-1">Create a community</h1>
       <p className="text-neutral-400 mb-6">
-        Set up your BBS. Your handle becomes the address.
+        Set up your community. Your handle becomes the address.
       </p>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       <form onSubmit={onSubmit} className="space-y-6">
         <div>
           <label className="text-xs text-neutral-400 uppercase tracking-wide">
-            BBS Name
+            Community Name
           </label>
           <Input
             name="name"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="My Cool BBS"
+            placeholder="My Cool Community"
             maxLength={limits.SITE_NAME}
           />
         </div>
@@ -101,7 +101,7 @@ export default function SysopCreate() {
             name="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="A short description of your BBS"
+            placeholder="A short description of your community"
             maxLength={limits.SITE_DESCRIPTION}
           />
         </div>

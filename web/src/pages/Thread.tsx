@@ -133,7 +133,7 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
 
   async function onBan(banDid: string) {
     if (!agent) return;
-    if (!confirm("Ban this user from your BBS?")) return;
+    if (!confirm("Ban this user from your community?")) return;
     await createBan(agent, banDid);
     revalidator.revalidate();
   }

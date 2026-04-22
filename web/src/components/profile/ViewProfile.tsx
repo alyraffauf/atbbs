@@ -56,7 +56,7 @@ export default function ViewProfile({
       {profile?.bbsName && (
         <div className="mt-6">
           <p className="text-xs text-neutral-400 uppercase tracking-wide mb-2 inline-flex items-center gap-1.5">
-            <Monitor size={12} /> BBS
+            <Monitor size={12} /> Community
           </p>
           <Link
             to={`/bbs/${handle}`}

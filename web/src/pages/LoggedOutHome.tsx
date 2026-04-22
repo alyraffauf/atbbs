@@ -67,7 +67,7 @@ export default function LoggedOutHome() {
 
       <div className="border-t border-neutral-800 py-4">
         <h2 className="text-neutral-300 mb-4 flex items-center gap-2">
-          <Phone size={16} /> Dial a BBS
+          <Phone size={16} /> Find a community
         </h2>
         <div className="mb-6">
           <DialBBS discovered={discovered} suggestions={suggestions} />

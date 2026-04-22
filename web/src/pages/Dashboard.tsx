@@ -70,7 +70,9 @@ export default function Dashboard({
       await deleteBBS(agent, user.did, user.pdsUrl);
       revalidator.revalidate();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Could not delete BBS.");
+      alert(
+        error instanceof Error ? error.message : "Could not delete community.",
+      );
     }
   }
 
@@ -78,7 +80,7 @@ export default function Dashboard({
     { key: "inbox", label: "Activity" },
     { key: "threads", label: "Threads" },
     { key: "pinned", label: "Pins" },
-    { key: "bbs", label: "My BBS" },
+    { key: "bbs", label: "Community" },
   ];
 
   const loadingFallback = <p className="text-neutral-400">loading...</p>;
@@ -126,7 +128,7 @@ export default function Dashboard({
       {tab === "threads" && (
         <>
           <p className="text-neutral-400 text-xs mb-4">
-            Threads you've posted across all BBSes.
+            Threads you've posted across all communities.
           </p>
           <Suspense fallback={loadingFallback}>
             <Await resolve={threadsPromise}>
@@ -139,7 +141,7 @@ export default function Dashboard({
       {tab === "pinned" && (
         <>
           <p className="text-neutral-400 text-xs mb-4">
-            BBSes you've pinned for quick access.
+            Communities you've pinned for quick access.
           </p>
           <Suspense fallback={loadingFallback}>
             <Await resolve={pinsPromise}>
@@ -151,7 +153,7 @@ export default function Dashboard({
 
       {tab === "bbs" && (
         <>
-          <p className="text-neutral-400 text-xs mb-4">Manage your BBS.</p>
+          <p className="text-neutral-400 text-xs mb-4">Manage your community.</p>
           <BBSPanel
             hasBBS={hasBBS}
             userHandle={user.handle}

@@ -13,7 +13,7 @@ export default function PinnedList({ pins }: PinnedListProps) {
   const [shown, setShown] = useState(PAGE_SIZE);
 
   if (pins.length === 0)
-    return <p className="text-neutral-400">No pinned BBSes yet.</p>;
+    return <p className="text-neutral-400">No pinned communities yet.</p>;
 
   return (
     <div className="space-y-1">
