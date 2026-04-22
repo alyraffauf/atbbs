@@ -42,9 +42,9 @@ export default function BBSPanel({
     <>
       <Link
         to={`/bbs/${encodeURIComponent(userHandle)}`}
-        className="group flex items-center justify-between py-3 border-b border-neutral-800"
+        className="flex items-center justify-between py-3 -mx-3 px-3 rounded hover:bg-neutral-800 mb-3"
       >
-        <div className="flex items-center gap-3 min-w-0 text-neutral-300 group-hover:text-neutral-200">
+        <div className="flex items-center gap-3 min-w-0 text-neutral-200">
           {avatar && (
             <img
               src={avatar}
@@ -54,7 +54,7 @@ export default function BBSPanel({
           )}
           <span className="truncate">{bbsName ?? `@${userHandle}`}</span>
         </div>
-        <span className="flex items-center gap-1 text-sm text-neutral-400 group-hover:text-neutral-300">
+        <span className="flex items-center gap-1 text-sm text-neutral-400">
           view <ArrowRight size={12} />
         </span>
       </Link>
@@ -78,7 +78,7 @@ export default function BBSPanel({
       <button
         type="button"
         onClick={onDelete}
-        className="group w-full flex items-center justify-between py-3 text-left border-t border-red-400/30"
+        className="group flex items-center justify-between py-3 -mx-3 px-3 rounded text-left hover:bg-red-400/10"
       >
         <div className="flex items-center gap-3">
           <Trash2
@@ -92,10 +92,6 @@ export default function BBSPanel({
             </div>
           </div>
         </div>
-        <ArrowRight
-          size={12}
-          className="text-neutral-500 group-hover:text-neutral-300"
-        />
       </button>
     </>
   );
@@ -112,24 +108,16 @@ function SettingsRow({ to, icon: Icon, label, hint }: SettingsRowProps) {
   return (
     <Link
       to={to}
-      className="group flex items-center justify-between py-3 border-b border-neutral-800"
+      className="flex items-center justify-between py-3 -mx-3 px-3 rounded hover:bg-neutral-800"
     >
       <div className="flex items-center gap-3">
-        <Icon
-          size={16}
-          className="text-neutral-400 group-hover:text-neutral-200"
-        />
+        <Icon size={16} className="text-neutral-400" />
         <div>
-          <div className="text-neutral-300 group-hover:text-neutral-200">
-            {label}
-          </div>
+          <div className="text-neutral-200">{label}</div>
           <div className="text-xs text-neutral-400">{hint}</div>
         </div>
       </div>
-      <ArrowRight
-        size={12}
-        className="text-neutral-500 group-hover:text-neutral-300"
-      />
+      <ArrowRight size={12} className="text-neutral-500" />
     </Link>
   );
 }
