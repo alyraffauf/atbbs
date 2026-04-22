@@ -160,16 +160,22 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
         }
       }
 
-      items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-      setReplies(items);
+      // Drop just-deleted replies; Constellation and Slingshot can lag
+      // behind the PDS and briefly return stale copies.
+      const visibleItems = items.filter(
+        (item) => !pendingDeletes.has(item.uri),
+      );
+
+      visibleItems.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      setReplies(visibleItems);
       setLoading(false);
 
       // Add current page replies to the cache
       const newCache: Record<string, Reply> = {};
-      for (const item of items) newCache[item.uri] = item;
+      for (const item of visibleItems) newCache[item.uri] = item;
 
       // Fetch any parent replies not already known
-      const missingParents = items
+      const missingParents = visibleItems
         .filter((item) => item.parent && !newCache[item.parent!])
         .map((item) => item.parent!)
         .filter((uri) => !replyCache[uri]);
@@ -191,8 +197,9 @@ export function useThreadReplies(loaded: ThreadLoaderData) {
       setReplyCache((prev) => ({ ...prev, ...newCache }));
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- pendingAdds
-    // is included so the merge step always sees the latest optimistic set
-    [bbs, pendingAdds],
+    // and pendingDeletes are included so the merge/filter steps always see
+    // the latest optimistic set
+    [bbs, pendingAdds, pendingDeletes],
   );
 
   // Re-fetch whenever the visible page or the underlying ref list changes.
