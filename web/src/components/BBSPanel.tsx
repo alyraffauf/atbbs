@@ -42,7 +42,7 @@ export default function BBSPanel({
     <>
       <Link
         to={`/bbs/${encodeURIComponent(userHandle)}`}
-        className="flex items-center justify-between py-3 border-b border-neutral-800 text-neutral-300 hover:text-neutral-100"
+        className="flex items-center justify-between py-3 border-b border-neutral-800 text-neutral-300 hover:text-neutral-200"
       >
         <div className="flex items-center gap-3 min-w-0">
           {avatar && (
@@ -78,12 +78,15 @@ export default function BBSPanel({
       <button
         type="button"
         onClick={onDelete}
-        className="group w-full flex items-center justify-between py-3 text-left border-t border-red-900/40 hover:bg-red-950/20"
+        className="group w-full flex items-center justify-between py-3 text-left border-t border-red-400/30 hover:bg-red-500/5"
       >
         <div className="flex items-center gap-3">
-          <Trash2 size={16} className="text-red-400" />
+          <Trash2
+            size={16}
+            className="text-red-400 group-hover:text-red-500"
+          />
           <div>
-            <div className="text-red-400">Delete</div>
+            <div className="text-red-400 group-hover:text-red-500">Delete</div>
             <div className="text-xs text-neutral-400">
               Remove your community.
             </div>
@@ -117,9 +120,7 @@ function SettingsRow({ to, icon: Icon, label, hint }: SettingsRowProps) {
           className="text-neutral-400 group-hover:text-neutral-200"
         />
         <div>
-          <div className="text-neutral-200 group-hover:text-neutral-100">
-            {label}
-          </div>
+          <div className="text-neutral-200">{label}</div>
           <div className="text-xs text-neutral-400">{hint}</div>
         </div>
       </div>
