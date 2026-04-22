@@ -2,9 +2,9 @@ import { useState, type SyntheticEvent } from "react";
 import { Link, useRouteLoaderData } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
-import { createPost, deleteRecord, uploadAttachments } from "../lib/writes";
+import { createPost, uploadAttachments } from "../lib/writes";
 import ComposeForm from "../components/form/ComposeForm";
-import { POST, SITE } from "../lib/lexicon";
+import { SITE } from "../lib/lexicon";
 import { makeAtUri, nowIso, parseAtUri } from "../lib/util";
 import * as limits from "../lib/limits";
 import { usePageTitle } from "../hooks/usePageTitle";
@@ -33,7 +33,6 @@ export default function BBSPage() {
   const [newsBody, setNewsBody] = useState("");
   const [newsFiles, setNewsFiles] = useState<File[]>([]);
   const [pendingNews, setPendingNews] = useState<NewsPost[]>([]);
-  const [deletedTids, setDeletedTids] = useState<Set<string>>(new Set());
   const [showAllNews, setShowAllNews] = useState(false);
   const [postingNews, setPostingNews] = useState(false);
 
@@ -75,21 +74,11 @@ export default function BBSPage() {
     }
   }
 
-  async function removeNews(rkey: string) {
-    if (!agent) return;
-    if (!confirm("Delete this news post?")) return;
-    await deleteRecord(agent, POST, rkey);
-    setPendingNews((prev) => prev.filter((n) => n.rkey !== rkey));
-    setDeletedTids((prev) => new Set(prev).add(rkey));
-  }
-
-  // Merge pending news with loader data, deduplicating by rkey and filtering deletes.
+  // Merge pending news with loader data, deduplicating by rkey.
   const loaderTids = new Set(bbs.news.map((n) => n.rkey));
   const allNews = [
-    ...pendingNews.filter(
-      (n) => !loaderTids.has(n.rkey) && !deletedTids.has(n.rkey),
-    ),
-    ...bbs.news.filter((n) => !deletedTids.has(n.rkey)),
+    ...pendingNews.filter((n) => !loaderTids.has(n.rkey)),
+    ...bbs.news,
   ];
   const visibleNews = showAllNews ? allNews : allNews.slice(0, 3);
 
@@ -176,26 +165,10 @@ export default function BBSPage() {
                 to={`/bbs/${handle}/news/${item.rkey}`}
                 className={`reply-card block bg-neutral-900 border border-neutral-800 rounded p-4 hover:border-neutral-700 ${i < visibleNews.length - 1 ? "mb-2" : ""}`}
               >
-                <div className="flex items-baseline justify-between mb-2">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-neutral-200">{item.title}</span>
-                    <span className="text-neutral-400">·</span>
-                    <Localtime iso={item.createdAt} />
-                  </div>
-                  {isSysop && (
-                    <span className="reply-actions">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          removeNews(item.rkey);
-                        }}
-                        className="text-xs text-neutral-400 hover:text-red-400"
-                      >
-                        delete
-                      </button>
-                    </span>
-                  )}
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-neutral-200">{item.title}</span>
+                  <span className="text-neutral-400">·</span>
+                  <Localtime iso={item.createdAt} />
                 </div>
                 <div className="line-clamp-3 text-neutral-400">
                   {item.body.substring(0, 200) +

@@ -4,6 +4,7 @@ import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { POST } from "../lib/lexicon";
 import { deleteRecord } from "../lib/writes";
+import { invalidateBBSCache } from "../lib/bbs";
 import type { BBSLoaderData } from "../router/loaders";
 import NewsCard from "../components/post/NewsCard";
 
@@ -36,6 +37,7 @@ export default function NewsPage() {
     if (!agent || !tid) return;
     if (!confirm("Delete this news post?")) return;
     await deleteRecord(agent, POST, tid);
+    invalidateBBSCache();
     navigate(`/bbs/${handle}`);
   }
 
