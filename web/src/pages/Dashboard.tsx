@@ -18,6 +18,7 @@ import type { AuthUser } from "../lib/auth";
 export interface DashboardData {
   user: AuthUser;
   hasBBS: boolean;
+  bbsName: string | null;
   pins: Promise<PinnedBBS[]>;
   threads: Promise<MyThread[]>;
   activity: Promise<ActivityItem[]>;
@@ -33,6 +34,7 @@ const TAB_STYLE_INACTIVE =
 export default function Dashboard({
   user,
   hasBBS,
+  bbsName,
   pins: pinsPromise,
   threads: threadsPromise,
   activity: activityPromise,
@@ -153,10 +155,14 @@ export default function Dashboard({
 
       {tab === "bbs" && (
         <>
-          <p className="text-neutral-400 text-xs mb-4">Manage your community.</p>
+          <p className="text-neutral-400 text-xs mb-4">
+            Manage your community.
+          </p>
           <BBSPanel
             hasBBS={hasBBS}
             userHandle={user.handle}
+            userDid={user.did}
+            bbsName={bbsName}
             onDelete={handleDeleteBBS}
           />
         </>
