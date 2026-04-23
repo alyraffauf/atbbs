@@ -120,8 +120,7 @@ export default function ThreadPage() {
         attachments: attachments as Reply["attachments"],
       };
 
-      const updatedRefs = appendRef(threadUri, newRef);
-      seedPageWithReply(threadUri, updatedRefs, newReply);
+      const updatedRefs = appendRefAndReply(threadUri, newRef, newReply);
 
       setBody("");
       setFiles([]);
@@ -145,11 +144,17 @@ export default function ThreadPage() {
       await deleteRecord(agent, POST, reply.rkey);
       return reply;
     },
-    onSuccess: (reply) => {
+    onMutate: async (reply) => {
+      const refsKey = threadRefsQuery(threadUri).queryKey;
+      await queryClient.cancelQueries({ queryKey: refsKey });
+      const previousRefs = getRefs(threadUri);
       removeRefAndReply(threadUri, reply.uri, page);
+      return { previousRefs };
     },
-    onError: (err) =>
-      alert(`Could not delete: ${err instanceof Error ? err.message : err}`),
+    onError: (err, _reply, context) => {
+      if (context) setRefs(threadUri, context.previousRefs);
+      alert(`Could not delete: ${err instanceof Error ? err.message : err}`);
+    },
   });
 
   const deleteThreadMutation = useMutation({
@@ -344,29 +349,37 @@ function setRefs(threadUri: string, refs: BacklinkRef[]) {
   queryClient.setQueryData(threadRefsQuery(threadUri).queryKey, refs);
 }
 
-function appendRef(threadUri: string, newRef: BacklinkRef): BacklinkRef[] {
-  const updated = [...getRefs(threadUri), newRef];
-  setRefs(threadUri, updated);
-  return updated;
-}
-
 function pageSlice(refs: BacklinkRef[], page: number): BacklinkRef[] {
   const start = (page - 1) * REPLIES_PER_PAGE;
   return refs.slice(start, start + REPLIES_PER_PAGE);
 }
 
-function seedPageWithReply(
+function appendRefAndReply(
   threadUri: string,
-  refs: BacklinkRef[],
-  reply: Reply,
-) {
-  const newLastPage = Math.max(1, Math.ceil(refs.length / REPLIES_PER_PAGE));
-  const pageRefs = pageSlice(refs, newLastPage);
-  const key = threadPageQuery(threadUri, newLastPage, pageRefs).queryKey;
-  queryClient.setQueryData<ReplyPage>(key, (prev) => ({
-    replies: [...(prev?.replies ?? []), reply],
-    parentReplies: prev?.parentReplies ?? {},
-  }));
+  newRef: BacklinkRef,
+  newReply: Reply,
+): BacklinkRef[] {
+  const previousRefs = getRefs(threadUri);
+  const updatedRefs = [...previousRefs, newRef];
+
+  const newLastPage = Math.max(
+    1,
+    Math.ceil(updatedRefs.length / REPLIES_PER_PAGE),
+  );
+  const oldPageRefs = pageSlice(previousRefs, newLastPage);
+  const oldKey = threadPageQuery(threadUri, newLastPage, oldPageRefs).queryKey;
+  const oldData = queryClient.getQueryData<ReplyPage>(oldKey);
+
+  setRefs(threadUri, updatedRefs);
+
+  const pageRefs = pageSlice(updatedRefs, newLastPage);
+  const newKey = threadPageQuery(threadUri, newLastPage, pageRefs).queryKey;
+  queryClient.setQueryData<ReplyPage>(newKey, {
+    replies: [...(oldData?.replies ?? []), newReply],
+    parentReplies: oldData?.parentReplies ?? {},
+  });
+
+  return updatedRefs;
 }
 
 function removeRefAndReply(
@@ -374,17 +387,21 @@ function removeRefAndReply(
   replyUri: string,
   currentPage: number,
 ) {
-  const updatedRefs = getRefs(threadUri).filter(
-    (ref) => refToUri(ref) !== replyUri,
-  );
+  const previousRefs = getRefs(threadUri);
+  const oldPageRefs = pageSlice(previousRefs, currentPage);
+  const oldKey = threadPageQuery(threadUri, currentPage, oldPageRefs).queryKey;
+  const oldData = queryClient.getQueryData<ReplyPage>(oldKey);
+
+  const updatedRefs = previousRefs.filter((ref) => refToUri(ref) !== replyUri);
   setRefs(threadUri, updatedRefs);
+
+  if (!oldData) return;
   const pageRefs = pageSlice(updatedRefs, currentPage);
-  const key = threadPageQuery(threadUri, currentPage, pageRefs).queryKey;
-  queryClient.setQueryData<ReplyPage>(key, (prev) =>
-    prev
-      ? { ...prev, replies: prev.replies.filter((r) => r.uri !== replyUri) }
-      : prev,
-  );
+  const newKey = threadPageQuery(threadUri, currentPage, pageRefs).queryKey;
+  queryClient.setQueryData<ReplyPage>(newKey, {
+    ...oldData,
+    replies: oldData.replies.filter((r) => r.uri !== replyUri),
+  });
 }
 
 function buildBreadcrumb(
