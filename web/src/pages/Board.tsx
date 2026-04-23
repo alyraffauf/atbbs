@@ -13,7 +13,7 @@ import { makeAtUri, parseAtUri, relativeDate } from "../lib/util";
 import { BOARD } from "../lib/lexicon";
 import { createPost, uploadAttachments } from "../lib/writes";
 import * as limits from "../lib/limits";
-import ThreadLink from "../components/nav/ThreadLink";
+import ThreadLink, { ThreadListHeader } from "../components/nav/ThreadLink";
 import ComposeForm from "../components/form/ComposeForm";
 import {
   hydrateThreadPage,
@@ -130,15 +130,21 @@ export default function BoardPage() {
 
       <div>
         {threads.length ? (
-          threads.map((t) => (
-            <ThreadLink
-              key={t.uri}
-              to={`/bbs/${handle}/thread/${t.did}/${t.rkey}`}
-              title={t.title}
-              meta={`${t.handle} · ${relativeDate(t.lastActivityAt)}`}
-              preview={t.body.substring(0, 120)}
-            />
-          ))
+          <>
+            <ThreadListHeader />
+            {threads.map((t) => (
+              <ThreadLink
+                key={t.uri}
+                to={`/bbs/${handle}/thread/${t.did}/${t.rkey}`}
+                title={t.title}
+                preview={t.body.substring(0, 120)}
+                authorHandle={t.handle}
+                participants={t.participants}
+                replyCount={t.replyCount}
+                activity={relativeDate(t.lastActivityAt)}
+              />
+            ))}
+          </>
         ) : (
           <p className="text-neutral-400">No threads yet.</p>
         )}

@@ -45,6 +45,7 @@ async function fetchJson<T>(url: string): Promise<T> {
 const identityCache = new TTLCache<string, MiniDoc>(5 * 60 * 1000);
 // `null` means we've looked and there's no avatar — cache that too so we don't refetch.
 const avatarCache = new TTLCache<string, string | null>(5 * 60 * 1000);
+const backlinkCountCache = new TTLCache<string, number>(60 * 1000);
 
 const BSKY_CDN = "https://cdn.bsky.app";
 const BSKY_PROFILE = "app.bsky.actor.profile";
@@ -156,6 +157,37 @@ export async function getBacklinks(
   let url = `${CONSTELLATION}/blue.microcosm.links.getBacklinks?subject=${encodeURIComponent(subject)}&source=${encodeURIComponent(source)}&limit=${limit}`;
   if (cursor) url += `&cursor=${encodeURIComponent(cursor)}`;
   return fetchJson<BacklinksResponse>(url);
+}
+
+export async function getBacklinkCount(
+  subject: string,
+  source: string,
+): Promise<number> {
+  const key = `${source}\t${subject}`;
+  const cached = backlinkCountCache.get(key);
+  if (cached !== undefined) return cached;
+  try {
+    const { total } = await getBacklinks(subject, source, 1);
+    backlinkCountCache.set(key, total);
+    return total;
+  } catch {
+    return 0;
+  }
+}
+
+export async function getBacklinkCountsBatch(
+  subjects: string[],
+  source: string,
+): Promise<Record<string, number>> {
+  const unique = [...new Set(subjects)];
+  const counts = await Promise.all(
+    unique.map((subject) => getBacklinkCount(subject, source)),
+  );
+  const map: Record<string, number> = {};
+  unique.forEach((subject, index) => {
+    map[subject] = counts[index];
+  });
+  return map;
 }
 
 interface HydratedRecord {

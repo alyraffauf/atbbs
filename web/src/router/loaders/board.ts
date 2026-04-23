@@ -1,6 +1,8 @@
 import type { LoaderFunctionArgs } from "react-router-dom";
 import { resolveBBS, type BBS } from "../../lib/bbs";
 import {
+  getAvatars,
+  getBacklinkCountsBatch,
   getBacklinks,
   getRecordsBatch,
   getRecordsByUri,
@@ -12,6 +14,12 @@ import { is } from "@atcute/lexicons/validations";
 import { mainSchema as postSchema } from "../../lexicons/types/xyz/atbbs/post";
 import type { XyzAtbbsPost } from "../../lexicons";
 
+export interface Participant {
+  did: string;
+  handle: string;
+  avatar?: string;
+}
+
 export interface ThreadItem {
   uri: string;
   did: string;
@@ -21,6 +29,8 @@ export interface ThreadItem {
   body: string;
   createdAt: string;
   lastActivityAt: string;
+  replyCount: number;
+  participants: Participant[];
 }
 
 const MAX_SCANS = 4;
@@ -41,12 +51,14 @@ export async function hydrateThreadPage(
 ): Promise<{ threads: ThreadItem[]; cursor: string | null }> {
   const boardUri = makeAtUri(bbs.identity.did, BOARD, slug);
 
-  // Phase 1: Scan board activity to find unique thread URIs.
-  // Keys are thread URIs, values are the timestamp of their last activity.
+  // Phase 1: Scan board activity to find unique thread URIs and their posters.
+  // Constellation returns newest-first, so first-seen activity per thread = most
+  // recent, and Set insertion order preserves newest-first poster order.
   const lastActivity = new Map<string, string>();
+  const postersByThread = new Map<string, Set<string>>();
   let scanCursor = cursor;
 
-  for (let scanCount = 0; scanCount < MAX_SCANS; scanCount++) {
+  for (let scan = 0; scan < MAX_SCANS; scan++) {
     if (lastActivity.size >= PAGE_SIZE) break;
 
     const backlinks = await getBacklinks(
@@ -65,6 +77,12 @@ export async function hydrateThreadPage(
       if (!lastActivity.has(threadUri)) {
         lastActivity.set(threadUri, value.createdAt);
       }
+      let posters = postersByThread.get(threadUri);
+      if (!posters) {
+        posters = new Set();
+        postersByThread.set(threadUri, posters);
+      }
+      posters.add(parseAtUri(record.uri).did);
     }
 
     scanCursor = backlinks.cursor;
@@ -81,28 +99,48 @@ export async function hydrateThreadPage(
     return value.title && !value.root;
   });
 
-  // Phase 3: Resolve authors and build ThreadItems.
-  const authors = await resolveIdentitiesBatch(
-    validRoots.map((record) => parseAtUri(record.uri).did),
-  );
+  // Phase 3: Resolve identities+avatars for every poster across all threads,
+  // count replies, and build ThreadItems.
+  const allDids = new Set<string>();
+  for (const record of validRoots) {
+    allDids.add(parseAtUri(record.uri).did);
+    const posters = postersByThread.get(record.uri);
+    if (posters) for (const did of posters) allDids.add(did);
+  }
+
+  const [identities, replyCounts, avatars] = await Promise.all([
+    resolveIdentitiesBatch([...allDids]),
+    getBacklinkCountsBatch(
+      validRoots.map((record) => record.uri),
+      `${POST}:root`,
+    ),
+    getAvatars([...allDids]),
+  ]);
 
   const threads: ThreadItem[] = validRoots
-    .filter((record) => {
-      const authorDid = parseAtUri(record.uri).did;
-      return authorDid in authors;
-    })
+    .filter((record) => parseAtUri(record.uri).did in identities)
     .map((record) => {
       const { did, rkey } = parseAtUri(record.uri);
       const value = record.value as unknown as XyzAtbbsPost.Main;
+      const posterDids = postersByThread.get(record.uri) ?? new Set([did]);
+      const participants: Participant[] = [...posterDids]
+        .filter((posterDid) => posterDid in identities)
+        .map((posterDid) => ({
+          did: posterDid,
+          handle: identities[posterDid].handle,
+          avatar: avatars[posterDid],
+        }));
       return {
         uri: record.uri,
         did,
         rkey,
-        handle: authors[did].handle,
+        handle: identities[did].handle,
         title: value.title ?? "",
         body: value.body,
         createdAt: value.createdAt,
         lastActivityAt: lastActivity.get(record.uri) ?? value.createdAt,
+        replyCount: replyCounts[record.uri] ?? 0,
+        participants,
       };
     })
     .sort((a, b) => b.lastActivityAt.localeCompare(a.lastActivityAt));
