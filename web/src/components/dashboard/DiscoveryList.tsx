@@ -1,5 +1,5 @@
 import ListLink from "../nav/ListLink";
-import type { DiscoveredBBS } from "../../hooks/useDiscovery";
+import type { DiscoveredBBS } from "../../lib/discovery";
 
 interface DiscoveryListProps {
   discovered: DiscoveredBBS[];

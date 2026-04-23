@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import ListLink from "../nav/ListLink";
-import type { PinnedBBS } from "../../router/loaders";
+import type { PinnedBBS } from "../../lib/pins";
 
 const PAGE_SIZE = 5;
 

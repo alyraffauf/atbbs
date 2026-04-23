@@ -1,11 +1,11 @@
-import { useEffect, useState, type SyntheticEvent } from "react";
+import { useState, type SyntheticEvent } from "react";
 import { PenLine } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
-  useLoaderData,
-  useNavigate,
-  useRevalidator,
-  useRouteLoaderData,
-} from "react-router-dom";
+  useMutation,
+  useSuspenseInfiniteQuery,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
@@ -13,45 +13,48 @@ import { makeAtUri, parseAtUri, relativeDate } from "../lib/util";
 import { BOARD } from "../lib/lexicon";
 import { createPost, uploadAttachments } from "../lib/writes";
 import * as limits from "../lib/limits";
+import {
+  bbsModerationQuery,
+  bbsQuery,
+  boardThreadsInfiniteQuery,
+} from "../lib/queries";
+import { queryClient } from "../lib/queryClient";
 import ThreadLink, { ThreadListHeader } from "../components/nav/ThreadLink";
 import ComposeForm from "../components/form/ComposeForm";
-import {
-  hydrateThreadPage,
-  type BBSLoaderData,
-  type ThreadItem,
-} from "../router/loaders";
-import type { Board as BoardType } from "../lib/bbs";
-
-interface LoaderData {
-  handle: string;
-  board: BoardType;
-  threads: ThreadItem[];
-  cursor: string | null;
-}
 
 export default function BoardPage() {
-  const { bbs } = useRouteLoaderData("bbs") as BBSLoaderData;
-  const loaded = useLoaderData() as LoaderData;
-  const { handle, board } = loaded;
+  const { handle, slug } = useParams();
   const { user, agent } = useAuth();
-  const revalidator = useRevalidator();
   const navigate = useNavigate();
 
-  const [extraThreads, setExtraThreads] = useState<ThreadItem[]>([]);
-  const [cursor, setCursor] = useState<string | null>(loaded.cursor);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const { data: bbs } = useSuspenseQuery(bbsQuery(handle!));
+  const board = bbs.site.boards.find((b) => b.slug === slug);
+  if (!board) throw new Response("Board not found", { status: 404 });
 
-  useEffect(() => {
-    setExtraThreads([]);
-    setCursor(loaded.cursor);
-  }, [loaded.threads, loaded.cursor]);
-
-  const threads = [...loaded.threads, ...extraThreads];
+  const {
+    data: threadPages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useSuspenseInfiniteQuery(
+    boardThreadsInfiniteQuery(bbs.identity.did, slug!),
+  );
+  const { data: moderation } = useSuspenseQuery(
+    bbsModerationQuery(bbs.identity.pds ?? "", bbs.identity.did),
+  );
+  const isSysop = !!(user && user.did === bbs.identity.did);
+  const allThreads = threadPages.pages.flatMap((page) => page.threads);
+  const threads = isSysop
+    ? allThreads
+    : allThreads.filter(
+        (t) =>
+          !moderation.bannedDids.has(t.did) &&
+          !moderation.hiddenUris.has(t.uri),
+      );
 
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [files, setFiles] = useState<File[]>([]);
-  const [posting, setPosting] = useState(false);
 
   usePageTitle(`${board.name} — ${bbs.site.name}`);
   useBreadcrumb(
@@ -62,41 +65,50 @@ export default function BoardPage() {
     [bbs, board, handle],
   );
 
-  async function loadMore() {
-    if (!cursor) return;
-    setLoadingMore(true);
-    try {
-      const page = await hydrateThreadPage(bbs, board.slug, cursor);
-      setExtraThreads((prev) => [...prev, ...page.threads]);
-      setCursor(page.cursor);
-    } finally {
-      setLoadingMore(false);
-    }
-  }
-
-  async function onCreate(e: SyntheticEvent) {
-    e.preventDefault();
-    if (!agent || !user || posting) return;
-    setPosting(true);
-    try {
+  const createThreadMutation = useMutation({
+    mutationFn: async (input: {
+      title: string;
+      body: string;
+      files: File[];
+    }) => {
+      if (!agent) throw new Error("Not signed in");
       const boardUri = makeAtUri(bbs.identity.did, BOARD, board.slug);
-      const attachments = await uploadAttachments(agent, files);
-      const resp = await createPost(agent, boardUri, body.trim(), {
-        title: title.trim(),
+      const attachments = await uploadAttachments(agent, input.files);
+      const resp = await createPost(agent, boardUri, input.body, {
+        title: input.title,
         attachments,
       });
+      return resp;
+    },
+    onSuccess: (resp) => {
+      // Constellation lags a few seconds behind the PDS write. Wait
+      // before invalidating or we'll refetch before the index is fresh.
+      setTimeout(() => {
+        queryClient.invalidateQueries(
+          boardThreadsInfiniteQuery(bbs.identity.did, board.slug),
+        );
+      }, 1500);
       setTitle("");
       setBody("");
       setFiles([]);
-      setTimeout(() => revalidator.revalidate(), 1500);
       const { did, rkey } = parseAtUri(resp.data.uri);
       navigate(`/bbs/${handle}/thread/${did}/${rkey}`);
-    } catch (err: unknown) {
-      console.error("createPost failed:", err);
-      alert(`Could not post: ${err instanceof Error ? err.message : err}`);
-    } finally {
-      setPosting(false);
-    }
+    },
+    onError: (error) => {
+      alert(
+        `Could not post: ${error instanceof Error ? error.message : error}`,
+      );
+    },
+  });
+
+  function onCreate(event: SyntheticEvent) {
+    event.preventDefault();
+    if (createThreadMutation.isPending) return;
+    createThreadMutation.mutate({
+      title: title.trim(),
+      body: body.trim(),
+      files,
+    });
   }
 
   return (
@@ -123,7 +135,7 @@ export default function BoardPage() {
             bodyMaxLength={limits.POST_BODY}
             files={files}
             onFilesChange={setFiles}
-            posting={posting}
+            posting={createThreadMutation.isPending}
           />
         </details>
       )}
@@ -150,14 +162,14 @@ export default function BoardPage() {
         )}
       </div>
 
-      {cursor && (
+      {hasNextPage && (
         <div className="mt-6 text-center">
           <button
-            onClick={loadMore}
-            disabled={loadingMore}
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
             className="text-neutral-400 hover:text-neutral-300"
           >
-            {loadingMore ? "loading..." : "next page →"}
+            {isFetchingNextPage ? "loading..." : "next page →"}
           </button>
         </div>
       )}

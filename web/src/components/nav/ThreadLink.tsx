@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import Avatar from "../Avatar";
-import type { Participant } from "../../router/loaders/board";
+import type { Participant } from "../../lib/boardThreads";
 
 const COL_POSTERS = "w-20";
 const COL_REPLIES = "w-14";

@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { Phone, Copy, Check } from "lucide-react";
-import { useDiscovery } from "../hooks/useDiscovery";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { usePageTitle } from "../hooks/usePageTitle";
+import { discoveryQuery } from "../lib/queries";
 import DialBBS, {
   bbsToSuggestion,
   type Suggestion,
@@ -9,7 +10,7 @@ import DialBBS, {
 import DiscoveryList from "../components/dashboard/DiscoveryList";
 
 export default function LoggedOutHome() {
-  const discovered = useDiscovery();
+  const { data: discovered } = useSuspenseQuery(discoveryQuery());
   const suggestions = useMemo<Suggestion[]>(
     () => discovered.map(bbsToSuggestion),
     [discovered],

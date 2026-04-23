@@ -1,27 +1,25 @@
 import { useState, type SyntheticEvent } from "react";
-import { useLoaderData, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
 import { putBoard, putSite } from "../lib/writes";
 import { BOARD } from "../lib/lexicon";
 import { makeAtUri, nowIso } from "../lib/util";
 import * as limits from "../lib/limits";
 import { usePageTitle } from "../hooks/usePageTitle";
+import { bbsQuery } from "../lib/queries";
 import { Input, Textarea, Button } from "../components/form/Form";
 import BoardRowEditor, {
   type BoardRow,
 } from "../components/form/BoardRowEditor";
-import type { BBS } from "../lib/bbs";
-import type { AuthUser } from "../lib/auth";
-
-interface LoaderData {
-  user: AuthUser;
-  bbs: BBS;
-}
 
 export default function SysopEdit() {
-  const { user, bbs } = useLoaderData() as LoaderData;
-  const { agent } = useAuth();
+  const { user, agent } = useAuth();
   const navigate = useNavigate();
+
+  // requireAuthLoader has already redirected unauthenticated users, so
+  // `user` is non-null at render time.
+  const { data: bbs } = useSuspenseQuery(bbsQuery(user!.handle));
 
   const [name, setName] = useState(bbs.site.name);
   const [description, setDescription] = useState(bbs.site.description);
@@ -39,7 +37,7 @@ export default function SysopEdit() {
 
   async function onSubmit(e: SyntheticEvent) {
     e.preventDefault();
-    if (!agent || !name.trim()) return;
+    if (!agent || !user || !name.trim()) return;
     const cleanBoards = boards
       .map((board) => ({
         slug: board.slug.trim(),

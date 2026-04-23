@@ -1,5 +1,10 @@
-import type { LoaderFunctionArgs } from "react-router-dom";
-import { resolveBBS, type BBS } from "../../lib/bbs";
+/** Build a page of thread summaries for a board, sorted by last activity.
+ *
+ *  Scans recent board activity (threads + replies) from Constellation and
+ *  collects unique thread URIs in the order they appear. Since Constellation
+ *  returns newest posts first, the first time a thread URI appears is its
+ *  most recent activity — giving us bump order naturally. */
+
 import {
   getAvatars,
   getBacklinkCountsBatch,
@@ -7,12 +12,12 @@ import {
   getRecordsBatch,
   getRecordsByUri,
   resolveIdentitiesBatch,
-} from "../../lib/atproto";
-import { POST, BOARD } from "../../lib/lexicon";
-import { makeAtUri, parseAtUri } from "../../lib/util";
+} from "./atproto";
+import { POST, BOARD } from "./lexicon";
+import { makeAtUri, parseAtUri } from "./util";
 import { is } from "@atcute/lexicons/validations";
-import { mainSchema as postSchema } from "../../lexicons/types/xyz/atbbs/post";
-import type { XyzAtbbsPost } from "../../lexicons";
+import { mainSchema as postSchema } from "../lexicons/types/xyz/atbbs/post";
+import type { XyzAtbbsPost } from "../lexicons";
 
 export interface Participant {
   did: string;
@@ -33,27 +38,21 @@ export interface ThreadItem {
   participants: Participant[];
 }
 
+export interface ThreadPageResult {
+  threads: ThreadItem[];
+  cursor: string | null;
+}
+
 const MAX_SCANS = 4;
 const PAGE_SIZE = 25;
 
-/**
- * Fetch threads for a board, sorted by last activity (bump order).
- *
- * Scans recent board activity (threads + replies) and collects unique
- * thread URIs in the order they appear. Since Constellation returns
- * newest posts first, the first time a thread URI appears is its most
- * recent activity — giving us bump order naturally.
- */
 export async function hydrateThreadPage(
-  bbs: BBS,
+  bbsDid: string,
   slug: string,
   cursor?: string,
-): Promise<{ threads: ThreadItem[]; cursor: string | null }> {
-  const boardUri = makeAtUri(bbs.identity.did, BOARD, slug);
+): Promise<ThreadPageResult> {
+  const boardUri = makeAtUri(bbsDid, BOARD, slug);
 
-  // Phase 1: Scan board activity to find unique thread URIs and their posters.
-  // Constellation returns newest-first, so first-seen activity per thread = most
-  // recent, and Set insertion order preserves newest-first poster order.
   const lastActivity = new Map<string, string>();
   const postersByThread = new Map<string, Set<string>>();
   let scanCursor = cursor;
@@ -89,7 +88,6 @@ export async function hydrateThreadPage(
     if (!scanCursor) break;
   }
 
-  // Phase 2: Fetch root post records for the thread URIs.
   const threadUris = [...lastActivity.keys()].slice(0, PAGE_SIZE);
   const rootRecords = await getRecordsByUri(threadUris);
 
@@ -99,8 +97,6 @@ export async function hydrateThreadPage(
     return value.title && !value.root;
   });
 
-  // Phase 3: Resolve identities+avatars for every poster across all threads,
-  // count replies, and build ThreadItems.
   const allDids = new Set<string>();
   for (const record of validRoots) {
     allDids.add(parseAtUri(record.uri).did);
@@ -146,15 +142,4 @@ export async function hydrateThreadPage(
     .sort((a, b) => b.lastActivityAt.localeCompare(a.lastActivityAt));
 
   return { threads, cursor: scanCursor ?? null };
-}
-
-export async function boardLoader({ params }: LoaderFunctionArgs) {
-  const handle = params.handle!;
-  const slug = params.slug!;
-  const bbs = await resolveBBS(handle);
-  const board = bbs.site.boards.find((board) => board.slug === slug);
-  if (!board) throw new Response("Board not found", { status: 404 });
-
-  const { threads, cursor } = await hydrateThreadPage(bbs, slug);
-  return { handle, bbs, board, threads, cursor };
 }

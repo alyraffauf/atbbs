@@ -1,31 +1,23 @@
-import {
-  useLocation,
-  useNavigate,
-  useParams,
-  useRouteLoaderData,
-} from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { POST } from "../lib/lexicon";
 import { deleteRecord } from "../lib/writes";
-import { invalidateBBSCache, type NewsPost } from "../lib/bbs";
-import type { BBSLoaderData } from "../router/loaders";
+import { bbsQuery, newsQuery } from "../lib/queries";
+import { queryClient } from "../lib/queryClient";
+import type { NewsPost } from "../lib/bbs";
 import NewsCard from "../components/post/NewsCard";
 
 export default function NewsPage() {
   const { handle, tid } = useParams();
-  const { bbs } = useRouteLoaderData("bbs") as BBSLoaderData;
   const { user, agent } = useAuth();
   const navigate = useNavigate();
 
-  // Fallback for posts that were just created but haven't made it into the
-  // cached BBS loader data yet.
-  const stateItem = (useLocation().state as { pendingNewsItem?: NewsPost })
-    ?.pendingNewsItem;
-  const item =
-    bbs.news.find((news) => news.rkey === tid) ??
-    (stateItem?.rkey === tid ? stateItem : undefined);
+  const { data: bbs } = useSuspenseQuery(bbsQuery(handle!));
+  const { data: news } = useSuspenseQuery(newsQuery(bbs.identity.did));
+  const item = news.find((n) => n.rkey === tid);
 
   useBreadcrumb(
     [
@@ -38,18 +30,29 @@ export default function NewsPage() {
     item ? `${item.title} — ${bbs.site.name}` : `News — ${bbs.site.name}`,
   );
 
-  if (!item) {
-    return <p className="text-neutral-400">News post not found.</p>;
-  }
-
   const isSysop = !!(user && user.did === bbs.identity.did);
 
-  async function onDelete() {
-    if (!agent || !tid) return;
-    if (!confirm("Delete this news post?")) return;
-    await deleteRecord(agent, POST, tid);
-    invalidateBBSCache();
-    navigate(`/bbs/${handle}`, { state: { deletedNewsRkey: tid } });
+  const deleteNewsMutation = useMutation({
+    mutationFn: async () => {
+      if (!agent || !tid) throw new Error("Not signed in");
+      await deleteRecord(agent, POST, tid);
+    },
+    onSuccess: () => {
+      queryClient.setQueryData<NewsPost[]>(
+        newsQuery(bbs.identity.did).queryKey,
+        (prev) => (prev ?? []).filter((n) => n.rkey !== tid),
+      );
+      navigate(`/bbs/${handle}`);
+    },
+    onError: (error) => {
+      alert(
+        `Could not delete: ${error instanceof Error ? error.message : error}`,
+      );
+    },
+  });
+
+  if (!item) {
+    return <p className="text-neutral-400">News post not found.</p>;
   }
 
   return (
@@ -59,7 +62,10 @@ export default function NewsPage() {
       pds={bbs.identity.pds ?? ""}
       did={bbs.identity.did}
       isSysop={isSysop}
-      onDelete={onDelete}
+      onDelete={() => {
+        if (!confirm("Delete this news post?")) return;
+        deleteNewsMutation.mutate();
+      }}
     />
   );
 }

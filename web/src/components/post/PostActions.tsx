@@ -1,21 +1,29 @@
 import { useRef, useState, useEffect } from "react";
-import { Reply, MoreHorizontal, Trash2, Ban, EyeOff } from "lucide-react";
+import { Reply, MoreHorizontal, Trash2, Ban, EyeOff, Eye } from "lucide-react";
 
 interface PostActionsProps {
   isAuthor: boolean;
   isSysop: boolean;
+  banRkey?: string | null;
+  hideRkey?: string | null;
   onDelete?: () => void;
   onBan?: () => void;
+  onUnban?: (rkey: string) => void;
   onHide?: () => void;
+  onUnhide?: (rkey: string) => void;
   onReplyTo?: () => void;
 }
 
 export default function PostActions({
   isAuthor,
   isSysop,
+  banRkey,
+  hideRkey,
   onDelete,
   onBan,
+  onUnban,
   onHide,
+  onUnhide,
   onReplyTo,
 }: PostActionsProps) {
   const [open, setOpen] = useState(false);
@@ -33,9 +41,11 @@ export default function PostActions({
   }, [open]);
 
   const canDelete = isAuthor && !!onDelete;
-  const canBan = isSysop && !isAuthor && !!onBan;
-  const canHide = isSysop && !!onHide;
-  const hasModActions = canDelete || canBan || canHide;
+  const canBan = isSysop && !isAuthor && !!onBan && !banRkey;
+  const canUnban = isSysop && !!onUnban && !!banRkey;
+  const canHide = isSysop && !!onHide && !hideRkey;
+  const canUnhide = isSysop && !!onUnhide && !!hideRkey;
+  const hasModActions = canDelete || canBan || canUnban || canHide || canUnhide;
 
   if (!onReplyTo && !hasModActions) return null;
 
@@ -79,9 +89,25 @@ export default function PostActions({
               <Ban size={12} /> ban
             </button>
           )}
+          {canUnban && (
+            <button
+              onClick={() => select(() => onUnban!(banRkey!))}
+              className={menuItem}
+            >
+              <Ban size={12} /> unban
+            </button>
+          )}
           {canHide && (
             <button onClick={() => select(onHide)} className={dangerItem}>
               <EyeOff size={12} /> hide
+            </button>
+          )}
+          {canUnhide && (
+            <button
+              onClick={() => select(() => onUnhide!(hideRkey!))}
+              className={menuItem}
+            >
+              <Eye size={12} /> unhide
             </button>
           )}
         </div>

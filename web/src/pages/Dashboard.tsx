@@ -1,9 +1,17 @@
-import { Await, useRevalidator } from "react-router-dom";
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useAuth } from "../lib/auth";
+import { useMemo, useState } from "react";
+import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
+import { useAuth, type AuthUser } from "../lib/auth";
 import { deleteBBS } from "../lib/deletebbs";
-import { useDiscovery } from "../hooks/useDiscovery";
 import { usePageTitle } from "../hooks/usePageTitle";
+import {
+  activityQuery,
+  discoveryQuery,
+  homeSysopQuery,
+  myThreadsQuery,
+  pinsQuery,
+} from "../lib/queries";
+import { queryClient } from "../lib/queryClient";
+import { invalidateAllBBSCaches } from "../lib/bbs";
 import DialBBS, {
   bbsToSuggestion,
   type Suggestion,
@@ -12,17 +20,6 @@ import PinnedList from "../components/dashboard/PinnedList";
 import MyThreadList from "../components/dashboard/MyThreadList";
 import ActivityList from "../components/dashboard/ActivityList";
 import BBSPanel from "../components/dashboard/BBSPanel";
-import type { ActivityItem, PinnedBBS, MyThread } from "../router/loaders";
-import type { AuthUser } from "../lib/auth";
-
-export interface DashboardData {
-  user: AuthUser;
-  hasBBS: boolean;
-  bbsName: string | null;
-  pins: Promise<PinnedBBS[]>;
-  threads: Promise<MyThread[]>;
-  activity: Promise<ActivityItem[]>;
-}
 
 type Tab = "inbox" | "threads" | "pinned" | "bbs";
 
@@ -31,51 +28,59 @@ const TAB_STYLE_ACTIVE =
 const TAB_STYLE_INACTIVE =
   "py-2 border-b-2 text-neutral-400 hover:text-neutral-300 border-transparent whitespace-nowrap";
 
-export default function Dashboard({
-  user,
-  hasBBS,
-  bbsName,
-  pins: pinsPromise,
-  threads: threadsPromise,
-  activity: activityPromise,
-}: DashboardData) {
+interface DashboardProps {
+  user: AuthUser;
+}
+
+export default function Dashboard({ user }: DashboardProps) {
   const { agent } = useAuth();
-  const revalidator = useRevalidator();
-  const discoveredBBSes = useDiscovery();
   const [tab, setTab] = useState<Tab>("inbox");
-  const [pins, setPins] = useState<PinnedBBS[]>([]);
   usePageTitle("atbbs");
 
-  useEffect(() => {
-    pinsPromise.then(setPins);
-  }, [pinsPromise]);
+  const { data: sysopInfo } = useSuspenseQuery(homeSysopQuery(user.did));
+  const { data: pins } = useSuspenseQuery(pinsQuery(user.pdsUrl, user.did));
+  const { data: threads } = useSuspenseQuery(
+    myThreadsQuery(user.pdsUrl, user.did),
+  );
+  const { data: activity } = useSuspenseQuery(
+    activityQuery(user.pdsUrl, user.did),
+  );
+  const { data: discovered } = useSuspenseQuery(discoveryQuery());
 
   const suggestions = useMemo<Suggestion[]>(() => {
     const pinnedDids = new Set(pins.map((pin) => pin.did));
     const fromPins = pins.map(bbsToSuggestion);
-    const fromDiscovery = discoveredBBSes
+    const fromDiscovery = discovered
       .filter((bbs) => !pinnedDids.has(bbs.did))
       .slice(0, 5)
       .map(bbsToSuggestion);
     return [...fromPins, ...fromDiscovery];
-  }, [pins, discoveredBBSes]);
+  }, [pins, discovered]);
 
-  async function handleDeleteBBS() {
-    if (!agent) return;
+  const deleteBBSMutation = useMutation({
+    mutationFn: async () => {
+      if (!agent) throw new Error("Not signed in");
+      await deleteBBS(agent, user.did, user.pdsUrl);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(homeSysopQuery(user.did));
+      invalidateAllBBSCaches();
+    },
+    onError: (error: unknown) => {
+      alert(
+        error instanceof Error ? error.message : "Could not delete community.",
+      );
+    },
+  });
+
+  function handleDeleteBBS() {
     if (
       !confirm(
         "Are you sure? This will delete your site record, all board records, and all news records. Threads and replies from users will remain in their repos.",
       )
     )
       return;
-    try {
-      await deleteBBS(agent, user.did, user.pdsUrl);
-      revalidator.revalidate();
-    } catch (error) {
-      alert(
-        error instanceof Error ? error.message : "Could not delete community.",
-      );
-    }
+    deleteBBSMutation.mutate();
   }
 
   const tabs: { key: Tab; label: string }[] = [
@@ -85,12 +90,10 @@ export default function Dashboard({
     { key: "bbs", label: "Community" },
   ];
 
-  const loadingFallback = <p className="text-neutral-400">loading...</p>;
-
   return (
     <>
       <div className="border-b border-neutral-800 mb-6 pb-4">
-        <DialBBS discovered={discoveredBBSes} suggestions={suggestions} />
+        <DialBBS discovered={discovered} suggestions={suggestions} />
       </div>
 
       <div
@@ -117,13 +120,7 @@ export default function Dashboard({
           <p className="text-neutral-400 text-xs mb-4">
             Recent replies from other users.
           </p>
-          <Suspense fallback={loadingFallback}>
-            <Await resolve={activityPromise}>
-              {(items: ActivityItem[]) => (
-                <ActivityList items={items} userHandle={user.handle} />
-              )}
-            </Await>
-          </Suspense>
+          <ActivityList items={activity} userHandle={user.handle} />
         </>
       )}
 
@@ -132,11 +129,7 @@ export default function Dashboard({
           <p className="text-neutral-400 text-xs mb-4">
             Threads you've posted across all communities.
           </p>
-          <Suspense fallback={loadingFallback}>
-            <Await resolve={threadsPromise}>
-              {(threads: MyThread[]) => <MyThreadList threads={threads} />}
-            </Await>
-          </Suspense>
+          <MyThreadList threads={threads} />
         </>
       )}
 
@@ -145,11 +138,7 @@ export default function Dashboard({
           <p className="text-neutral-400 text-xs mb-4">
             Communities you've pinned for quick access.
           </p>
-          <Suspense fallback={loadingFallback}>
-            <Await resolve={pinsPromise}>
-              {(pins: PinnedBBS[]) => <PinnedList pins={pins} />}
-            </Await>
-          </Suspense>
+          <PinnedList pins={pins} />
         </>
       )}
 
@@ -159,10 +148,10 @@ export default function Dashboard({
             Manage your community.
           </p>
           <BBSPanel
-            hasBBS={hasBBS}
+            hasBBS={sysopInfo.hasBBS}
             userHandle={user.handle}
             userDid={user.did}
-            bbsName={bbsName}
+            bbsName={sysopInfo.bbsName}
             onDelete={handleDeleteBBS}
           />
         </>

@@ -1,16 +1,12 @@
 import { useState, type SyntheticEvent } from "react";
-import {
-  useLoaderData,
-  useNavigate,
-  useRevalidator,
-  useRouteLoaderData,
-} from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { useThreadReplies } from "../hooks/useThreadReplies";
-import { BOARD, POST } from "../lib/lexicon";
-import { makeAtUri, parseAtUri } from "../lib/util";
+import { BAN, BOARD, HIDE, POST } from "../lib/lexicon";
+import { makeAtUri, nowIso, parseAtUri } from "../lib/util";
 import * as limits from "../lib/limits";
 import {
   createBan,
@@ -19,49 +15,58 @@ import {
   deleteRecord,
   uploadAttachments,
 } from "../lib/writes";
-import type { BBSLoaderData, ThreadObj } from "../router/loaders";
+import {
+  bbsModerationQuery,
+  bbsQuery,
+  threadPageQuery,
+  threadRefsQuery,
+  threadRootQuery,
+} from "../lib/queries";
+import { queryClient } from "../lib/queryClient";
+import { threadUriFor } from "../lib/thread";
+import { REPLIES_PER_PAGE, refToUri } from "../lib/replies";
+import { invalidateAllBBSCaches } from "../lib/bbs";
+import type { BacklinkRef } from "../lib/atproto";
+import type { ReplyPage } from "../lib/thread";
+import type { BBS } from "../lib/bbs";
 import PageNav from "../components/nav/PageNav";
 import ReplyCard, { type Reply } from "../components/post/ReplyCard";
 import ComposeForm from "../components/form/ComposeForm";
 import ThreadCard from "../components/post/ThreadCard";
 
-interface LoaderData {
-  handle: string;
-  bbs: BBSLoaderData["bbs"];
-  thread: ThreadObj;
-  allRefs: { did: string; collection: string; rkey: string }[];
-}
-
-/**
- * Outer wrapper: re-keys the inner page on thread URI so navigating between
- * threads gives us a fresh component instance (and fresh hook state). Without
- * this, react-router reuses the same Thread component on param change and
- * state from the previous thread (page index, optimistic adds) bleeds in.
- */
-export default function ThreadRoute() {
-  const loaded = useLoaderData() as LoaderData;
-  return <ThreadPage key={loaded.thread.uri} loaded={loaded} />;
-}
-
-function ThreadPage({ loaded }: { loaded: LoaderData }) {
-  const { bbs } = useRouteLoaderData("bbs") as BBSLoaderData;
-  const { handle, thread } = loaded;
+export default function ThreadPage() {
+  const { handle, did, tid } = useParams();
+  const threadUri = threadUriFor(did!, tid!);
   const { user, agent } = useAuth();
-  const revalidator = useRevalidator();
   const navigate = useNavigate();
 
+  const { data: bbs } = useSuspenseQuery(bbsQuery(handle!));
+  const { data: thread } = useSuspenseQuery(threadRootQuery(did!, tid!));
+  const { data: moderation } = useSuspenseQuery(
+    bbsModerationQuery(bbs.identity.pds ?? "", bbs.identity.did),
+  );
   const {
     page,
     setPage,
     totalPages,
-    replies,
-    loading: loadingPage,
     refs,
-    replyCache,
+    replies,
+    parentReplies,
     scrollToReply,
-    addOptimisticReply,
-    removeReply,
-  } = useThreadReplies(loaded);
+  } = useThreadReplies(threadUri);
+
+  const isSysop = !!(user && user.did === bbs.identity.did);
+  const threadHidden =
+    !isSysop &&
+    (moderation.bannedDids.has(thread.did) ||
+      moderation.hiddenUris.has(thread.uri));
+  const visibleReplies = isSysop
+    ? replies
+    : replies.filter(
+        (reply) =>
+          !moderation.bannedDids.has(reply.did) &&
+          !moderation.hiddenUris.has(reply.uri),
+      );
 
   const [body, setBody] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -69,80 +74,176 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
     uri: string;
     handle: string;
   } | null>(null);
-  const [posting, setPosting] = useState(false);
 
   usePageTitle(`${thread.title} — ${bbs.site.name}`);
-  useBreadcrumb(buildBreadcrumb(bbs, thread, handle), [bbs, thread, handle]);
+  useBreadcrumb(buildBreadcrumb(bbs, thread.title, thread.boardSlug, handle!), [
+    bbs,
+    thread,
+    handle,
+  ]);
 
-  const isSysop = user && user.did === bbs.identity.did;
+  // --- Mutations ---
 
-  async function onReply(e: SyntheticEvent) {
-    e.preventDefault();
-    if (!agent || !user) return;
-    setPosting(true);
-    try {
-      const threadUri = makeAtUri(thread.did, POST, thread.rkey);
-      const attachments = await uploadAttachments(agent, files);
+  const createReplyMutation = useMutation({
+    mutationFn: async (input: {
+      body: string;
+      parent: string | null;
+      files: File[];
+    }) => {
+      if (!agent || !user) throw new Error("Not signed in");
       const boardUri = makeAtUri(bbs.identity.did, BOARD, thread.boardSlug);
-      const resp = await createPost(agent, boardUri, body.trim(), {
+      const attachments = await uploadAttachments(agent, input.files);
+      const resp = await createPost(agent, boardUri, input.body, {
         root: threadUri,
-        parent: replyingTo?.uri ?? undefined,
+        parent: input.parent ?? undefined,
         attachments,
       });
-      addOptimisticReply({
+      return { resp, input, attachments };
+    },
+    onSuccess: ({ resp, input, attachments }) => {
+      if (!user) return;
+      const { did: newDid, rkey: newRkey } = parseAtUri(resp.data.uri);
+      const newRef: BacklinkRef = {
+        did: newDid,
+        collection: POST,
+        rkey: newRkey,
+      };
+      const newReply: Reply = {
         uri: resp.data.uri,
-        did: parseAtUri(resp.data.uri).did,
-        rkey: parseAtUri(resp.data.uri).rkey,
+        did: newDid,
+        rkey: newRkey,
         handle: user.handle,
         pds: user.pdsUrl,
-        body: body.trim(),
-        createdAt: new Date().toISOString(),
-        parent: replyingTo?.uri ?? null,
+        body: input.body,
+        createdAt: nowIso(),
+        parent: input.parent,
         attachments: attachments as Reply["attachments"],
-      });
+      };
+
+      const updatedRefs = appendRef(threadUri, newRef);
+      seedPageWithReply(threadUri, updatedRefs, newReply);
+
       setBody("");
       setFiles([]);
       setReplyingTo(null);
-    } catch {
-      alert("Could not post reply.");
-    } finally {
-      setPosting(false);
-    }
-  }
 
-  async function onDeleteThread() {
-    if (!agent) return;
-    if (!confirm("Delete this thread?")) return;
-    await deleteRecord(agent, POST, thread.rkey);
-    navigate(`/bbs/${handle}`);
-  }
+      const newLastPage = Math.max(
+        1,
+        Math.ceil(updatedRefs.length / REPLIES_PER_PAGE),
+      );
+      if (page !== newLastPage) setPage(newLastPage);
+    },
+    onError: (err) =>
+      alert(
+        `Could not post reply: ${err instanceof Error ? err.message : err}`,
+      ),
+  });
 
-  async function onDeleteReply(reply: Reply) {
-    if (!agent) return;
-    if (!confirm("Delete this reply?")) return;
-    try {
+  const deleteReplyMutation = useMutation({
+    mutationFn: async (reply: Reply) => {
+      if (!agent) throw new Error("Not signed in");
       await deleteRecord(agent, POST, reply.rkey);
-    } catch (e: unknown) {
-      console.error("deleteRecord failed:", e);
-      alert(`Could not delete: ${e instanceof Error ? e.message : e}`);
-      return;
-    }
-    removeReply(reply.uri);
-    revalidator.revalidate();
+      return reply;
+    },
+    onSuccess: (reply) => {
+      removeRefAndReply(threadUri, reply.uri, page);
+    },
+    onError: (err) =>
+      alert(`Could not delete: ${err instanceof Error ? err.message : err}`),
+  });
+
+  const deleteThreadMutation = useMutation({
+    mutationFn: async () => {
+      if (!agent) throw new Error("Not signed in");
+      await deleteRecord(agent, POST, thread.rkey);
+    },
+    onSuccess: () => navigate(`/bbs/${handle}`),
+    onError: (err) =>
+      alert(`Could not delete: ${err instanceof Error ? err.message : err}`),
+  });
+
+  const moderationMutationDefaults = { onSuccess: invalidateAllBBSCaches };
+
+  const banMutation = useMutation({
+    ...moderationMutationDefaults,
+    mutationFn: async (banDid: string) => {
+      if (!agent) throw new Error("Not signed in");
+      await createBan(agent, banDid);
+    },
+  });
+
+  const unbanMutation = useMutation({
+    ...moderationMutationDefaults,
+    mutationFn: async (rkey: string) => {
+      if (!agent) throw new Error("Not signed in");
+      await deleteRecord(agent, BAN, rkey);
+    },
+  });
+
+  const hideMutation = useMutation({
+    ...moderationMutationDefaults,
+    mutationFn: async (uri: string) => {
+      if (!agent) throw new Error("Not signed in");
+      await createHide(agent, uri);
+    },
+  });
+
+  const unhideMutation = useMutation({
+    ...moderationMutationDefaults,
+    mutationFn: async (rkey: string) => {
+      if (!agent) throw new Error("Not signed in");
+      await deleteRecord(agent, HIDE, rkey);
+    },
+  });
+
+  // --- Handlers ---
+
+  function onReply(event: SyntheticEvent) {
+    event.preventDefault();
+    if (createReplyMutation.isPending) return;
+    createReplyMutation.mutate({
+      body: body.trim(),
+      parent: replyingTo?.uri ?? null,
+      files,
+    });
   }
 
-  async function onBan(banDid: string) {
-    if (!agent) return;
+  function onDeleteThread() {
+    if (!confirm("Delete this thread?")) return;
+    deleteThreadMutation.mutate();
+  }
+
+  function onDeleteReply(reply: Reply) {
+    if (!confirm("Delete this reply?")) return;
+    deleteReplyMutation.mutate(reply);
+  }
+
+  function onBan(banDid: string) {
     if (!confirm("Ban this user from your community?")) return;
-    await createBan(agent, banDid);
-    revalidator.revalidate();
+    banMutation.mutate(banDid);
   }
 
-  async function onHide(uri: string) {
-    if (!agent) return;
+  function onUnban(rkey: string) {
+    if (!confirm("Unban this user?")) return;
+    unbanMutation.mutate(rkey);
+  }
+
+  function onHide(uri: string) {
     if (!confirm("Hide this post?")) return;
-    await createHide(agent, uri);
-    revalidator.revalidate();
+    hideMutation.mutate(uri);
+  }
+
+  function onUnhide(rkey: string) {
+    if (!confirm("Unhide this post?")) return;
+    unhideMutation.mutate(rkey);
+  }
+
+  if (threadHidden) {
+    return (
+      <p className="text-neutral-400 py-16 text-center">
+        This thread has been hidden by the sysop.
+      </p>
+    );
   }
 
   return (
@@ -151,9 +252,13 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
         thread={thread}
         userDid={user?.did}
         sysopDid={bbs.identity.did}
+        banRkey={moderation.banRkeys[thread.did] ?? null}
+        hideRkey={moderation.hideRkeys[thread.uri] ?? null}
         onDelete={onDeleteThread}
         onBan={() => onBan(thread.did)}
+        onUnban={onUnban}
         onHide={() => onHide(thread.uri)}
+        onUnhide={onUnhide}
       />
 
       {totalPages > 1 && (
@@ -161,29 +266,43 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
       )}
 
       <div className="space-y-2 mt-4">
-        {loadingPage ? (
-          <p className="text-neutral-400">loading...</p>
-        ) : replies.length === 0 && !user ? (
+        {visibleReplies.length === 0 && !user ? (
           <p className="text-neutral-400">No replies yet.</p>
         ) : (
-          replies.map((reply) => (
-            <ReplyCard
-              key={reply.uri}
-              reply={reply}
-              userDid={user?.did ?? ""}
-              sysopDid={bbs.identity.did}
-              parentPost={reply.parent ? replyCache[reply.parent] : undefined}
-              onReplyTo={() =>
-                setReplyingTo({ uri: reply.uri, handle: reply.handle })
-              }
-              onParentClick={
-                reply.parent ? () => scrollToReply(reply.parent!) : undefined
-              }
-              onDelete={() => onDeleteReply(reply)}
-              onBan={() => onBan(reply.did)}
-              onHide={() => onHide(reply.uri)}
-            />
-          ))
+          visibleReplies.map((reply) => {
+            const parentReply = reply.parent
+              ? parentReplies[reply.parent]
+              : null;
+            const parentHidden =
+              !!parentReply &&
+              !isSysop &&
+              (moderation.bannedDids.has(parentReply.did) ||
+                moderation.hiddenUris.has(parentReply.uri));
+            return (
+              <ReplyCard
+                key={reply.uri}
+                reply={reply}
+                userDid={user?.did ?? ""}
+                sysopDid={bbs.identity.did}
+                parentPost={
+                  parentHidden ? undefined : (parentReply ?? undefined)
+                }
+                banRkey={moderation.banRkeys[reply.did] ?? null}
+                hideRkey={moderation.hideRkeys[reply.uri] ?? null}
+                onReplyTo={() =>
+                  setReplyingTo({ uri: reply.uri, handle: reply.handle })
+                }
+                onParentClick={
+                  reply.parent ? () => scrollToReply(reply.parent!) : undefined
+                }
+                onDelete={() => onDeleteReply(reply)}
+                onBan={() => onBan(reply.did)}
+                onUnban={onUnban}
+                onHide={() => onHide(reply.uri)}
+                onUnhide={onUnhide}
+              />
+            );
+          })
         )}
       </div>
 
@@ -207,26 +326,79 @@ function ThreadPage({ loaded }: { loaded: LoaderData }) {
           replyingTo={replyingTo}
           onClearReplyTo={() => setReplyingTo(null)}
           submitLabel="reply"
-          posting={posting}
+          posting={createReplyMutation.isPending}
         />
       )}
     </>
   );
 }
 
+// --- Cache-update helpers ---
+
+function getRefs(threadUri: string): BacklinkRef[] {
+  const key = threadRefsQuery(threadUri).queryKey;
+  return queryClient.getQueryData<BacklinkRef[]>(key) ?? [];
+}
+
+function setRefs(threadUri: string, refs: BacklinkRef[]) {
+  queryClient.setQueryData(threadRefsQuery(threadUri).queryKey, refs);
+}
+
+function appendRef(threadUri: string, newRef: BacklinkRef): BacklinkRef[] {
+  const updated = [...getRefs(threadUri), newRef];
+  setRefs(threadUri, updated);
+  return updated;
+}
+
+function pageSlice(refs: BacklinkRef[], page: number): BacklinkRef[] {
+  const start = (page - 1) * REPLIES_PER_PAGE;
+  return refs.slice(start, start + REPLIES_PER_PAGE);
+}
+
+function seedPageWithReply(
+  threadUri: string,
+  refs: BacklinkRef[],
+  reply: Reply,
+) {
+  const newLastPage = Math.max(1, Math.ceil(refs.length / REPLIES_PER_PAGE));
+  const pageRefs = pageSlice(refs, newLastPage);
+  const key = threadPageQuery(threadUri, newLastPage, pageRefs).queryKey;
+  queryClient.setQueryData<ReplyPage>(key, (prev) => ({
+    replies: [...(prev?.replies ?? []), reply],
+    parentReplies: prev?.parentReplies ?? {},
+  }));
+}
+
+function removeRefAndReply(
+  threadUri: string,
+  replyUri: string,
+  currentPage: number,
+) {
+  const updatedRefs = getRefs(threadUri).filter(
+    (ref) => refToUri(ref) !== replyUri,
+  );
+  setRefs(threadUri, updatedRefs);
+  const pageRefs = pageSlice(updatedRefs, currentPage);
+  const key = threadPageQuery(threadUri, currentPage, pageRefs).queryKey;
+  queryClient.setQueryData<ReplyPage>(key, (prev) =>
+    prev
+      ? { ...prev, replies: prev.replies.filter((r) => r.uri !== replyUri) }
+      : prev,
+  );
+}
+
 function buildBreadcrumb(
-  bbs: BBSLoaderData["bbs"],
-  thread: ThreadObj,
+  bbs: BBS,
+  threadTitle: string,
+  boardSlug: string,
   handle: string,
 ) {
-  const board = bbs.site.boards.find(
-    (board) => board.slug === thread.boardSlug,
-  );
+  const board = bbs.site.boards.find((b) => b.slug === boardSlug);
   return [
     { label: bbs.site.name, to: `/bbs/${handle}` },
     ...(board
       ? [{ label: board.name, to: `/bbs/${handle}/board/${board.slug}` }]
       : []),
-    { label: thread.title },
+    { label: threadTitle },
   ];
 }

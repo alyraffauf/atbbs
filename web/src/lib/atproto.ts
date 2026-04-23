@@ -1,11 +1,16 @@
 /** Read-side wrappers for Slingshot and Constellation (no auth needed). */
 
-import { TTLCache } from "./cache";
+import { queryClient, STALE_SLOW } from "./queryClient";
 import { SERVICES } from "./shared";
 import { parseAtUri } from "./util";
 
 const SLINGSHOT = SERVICES.slingshot;
 const CONSTELLATION = SERVICES.constellation;
+
+const BSKY_CDN = "https://cdn.bsky.app";
+const BSKY_PROFILE = "app.bsky.actor.profile";
+
+// --- Types ---
 
 export interface MiniDoc {
   did: string;
@@ -36,78 +41,17 @@ interface ListRecordsResponse {
   cursor?: string;
 }
 
+// --- Low-level JSON fetcher ---
+
 async function fetchJson<T>(url: string): Promise<T> {
   const resp = await fetch(url);
   if (!resp.ok) throw new Error(`${resp.status} ${url}`);
   return resp.json() as Promise<T>;
 }
 
-const identityCache = new TTLCache<string, MiniDoc>(5 * 60 * 1000);
-// `null` means we've looked and there's no avatar — cache that too so we don't refetch.
-const avatarCache = new TTLCache<string, string | null>(5 * 60 * 1000);
-const backlinkCountCache = new TTLCache<string, number>(60 * 1000);
+// --- Records ---
 
-const BSKY_CDN = "https://cdn.bsky.app";
-const BSKY_PROFILE = "app.bsky.actor.profile";
-
-function extractAvatarCid(value: Record<string, unknown>): string | null {
-  const avatar = value.avatar as { ref?: { $link?: string } } | undefined;
-  return avatar?.ref?.$link ?? null;
-}
-
-export async function getAvatar(did: string): Promise<string | undefined> {
-  const cached = avatarCache.get(did);
-  if (cached !== undefined) return cached ?? undefined;
-  try {
-    const record = await getRecord(did, BSKY_PROFILE, "self");
-    const cid = extractAvatarCid(record.value);
-    const url = cid ? `${BSKY_CDN}/img/avatar/plain/${did}/${cid}` : null;
-    avatarCache.set(did, url);
-    return url ?? undefined;
-  } catch {
-    avatarCache.set(did, null);
-    return undefined;
-  }
-}
-
-export async function getAvatars(
-  dids: string[],
-): Promise<Record<string, string>> {
-  const unique = [...new Set(dids)];
-  const urls = await Promise.all(unique.map(getAvatar));
-  const map: Record<string, string> = {};
-  unique.forEach((did, index) => {
-    const url = urls[index];
-    if (url) map[did] = url;
-  });
-  return map;
-}
-
-export async function resolveIdentity(identifier: string): Promise<MiniDoc> {
-  const cached = identityCache.get(identifier);
-  if (cached) return cached;
-
-  const doc = await fetchJson<MiniDoc>(
-    `${SLINGSHOT}/blue.microcosm.identity.resolveMiniDoc?identifier=${encodeURIComponent(identifier)}`,
-  );
-  identityCache.set(identifier, doc);
-  identityCache.set(doc.did, doc);
-  return doc;
-}
-
-export async function resolveIdentitiesBatch(
-  dids: string[],
-): Promise<Record<string, MiniDoc>> {
-  const unique = [...new Set(dids)];
-  const results = await Promise.allSettled(unique.map(resolveIdentity));
-  const map: Record<string, MiniDoc> = {};
-  for (const result of results) {
-    if (result.status === "fulfilled") map[result.value.did] = result.value;
-  }
-  return map;
-}
-
-export async function getRecord(
+async function fetchRecord(
   did: string,
   collection: string,
   rkey: string,
@@ -117,15 +61,25 @@ export async function getRecord(
   );
 }
 
+export async function getRecord(
+  did: string,
+  collection: string,
+  rkey: string,
+): Promise<ATRecord> {
+  return queryClient.ensureQueryData({
+    queryKey: ["record", did, collection, rkey],
+    queryFn: () => fetchRecord(did, collection, rkey),
+    staleTime: STALE_SLOW,
+  });
+}
+
 export async function getRecordByUri(uri: string): Promise<ATRecord> {
   const { did, collection, rkey } = parseAtUri(uri);
   return getRecord(did, collection, rkey);
 }
 
 export async function getRecordsByUri(uris: string[]): Promise<ATRecord[]> {
-  const results = await Promise.allSettled(
-    uris.map((uri) => getRecordByUri(uri)),
-  );
+  const results = await Promise.allSettled(uris.map(getRecordByUri));
   return results
     .filter(
       (result): result is PromiseFulfilledResult<ATRecord> =>
@@ -148,6 +102,103 @@ export async function getRecordsBatch(
     .map((result) => result.value);
 }
 
+export async function listRecords(
+  pdsUrl: string,
+  did: string,
+  collection: string,
+  limit = 100,
+): Promise<{ uri: string; cid: string; value: Record<string, unknown> }[]> {
+  const all: ListRecordsResponse["records"] = [];
+  let cursor: string | undefined;
+  while (true) {
+    let url = `${pdsUrl}/xrpc/com.atproto.repo.listRecords?repo=${encodeURIComponent(did)}&collection=${encodeURIComponent(collection)}&limit=${limit}`;
+    if (cursor) url += `&cursor=${encodeURIComponent(cursor)}`;
+    try {
+      const data = await fetchJson<ListRecordsResponse>(url);
+      all.push(...data.records);
+      if (!data.cursor) break;
+      cursor = data.cursor;
+    } catch {
+      break;
+    }
+  }
+  return all;
+}
+
+// --- Identity (DID doc) ---
+
+export async function fetchIdentityDoc(identifier: string): Promise<MiniDoc> {
+  return fetchJson<MiniDoc>(
+    `${SLINGSHOT}/blue.microcosm.identity.resolveMiniDoc?identifier=${encodeURIComponent(identifier)}`,
+  );
+}
+
+export async function resolveIdentity(identifier: string): Promise<MiniDoc> {
+  const doc = await queryClient.ensureQueryData({
+    queryKey: ["identity", identifier],
+    queryFn: () => fetchIdentityDoc(identifier),
+    staleTime: STALE_SLOW,
+  });
+  // Seed the DID-keyed entry too, so later DID lookups hit cache.
+  if (doc.did !== identifier) {
+    queryClient.setQueryData(["identity", doc.did], doc);
+  }
+  return doc;
+}
+
+export async function resolveIdentitiesBatch(
+  ids: string[],
+): Promise<Record<string, MiniDoc>> {
+  const unique = [...new Set(ids)];
+  const results = await Promise.allSettled(unique.map(resolveIdentity));
+  const map: Record<string, MiniDoc> = {};
+  for (const result of results) {
+    if (result.status === "fulfilled") map[result.value.did] = result.value;
+  }
+  return map;
+}
+
+// --- Avatar ---
+
+function extractAvatarCid(value: Record<string, unknown>): string | null {
+  const avatar = value.avatar as { ref?: { $link?: string } } | undefined;
+  return avatar?.ref?.$link ?? null;
+}
+
+export async function fetchAvatarUrl(did: string): Promise<string | null> {
+  try {
+    const record = await getRecord(did, BSKY_PROFILE, "self");
+    const cid = extractAvatarCid(record.value);
+    return cid ? `${BSKY_CDN}/img/avatar/plain/${did}/${cid}` : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getAvatar(did: string): Promise<string | undefined> {
+  const url = await queryClient.ensureQueryData({
+    queryKey: ["avatar", did],
+    queryFn: () => fetchAvatarUrl(did),
+    staleTime: STALE_SLOW,
+  });
+  return url ?? undefined;
+}
+
+export async function getAvatars(
+  dids: string[],
+): Promise<Record<string, string>> {
+  const unique = [...new Set(dids)];
+  const urls = await Promise.all(unique.map(getAvatar));
+  const map: Record<string, string> = {};
+  unique.forEach((did, index) => {
+    const url = urls[index];
+    if (url) map[did] = url;
+  });
+  return map;
+}
+
+// --- Backlinks (Constellation) ---
+
 export async function getBacklinks(
   subject: string,
   source: string,
@@ -159,20 +210,26 @@ export async function getBacklinks(
   return fetchJson<BacklinksResponse>(url);
 }
 
-export async function getBacklinkCount(
+export async function fetchBacklinkCount(
   subject: string,
   source: string,
 ): Promise<number> {
-  const key = `${source}\t${subject}`;
-  const cached = backlinkCountCache.get(key);
-  if (cached !== undefined) return cached;
   try {
     const { total } = await getBacklinks(subject, source, 1);
-    backlinkCountCache.set(key, total);
     return total;
   } catch {
     return 0;
   }
+}
+
+export async function getBacklinkCount(
+  subject: string,
+  source: string,
+): Promise<number> {
+  return queryClient.ensureQueryData({
+    queryKey: ["backlink-count", source, subject],
+    queryFn: () => fetchBacklinkCount(subject, source),
+  });
 }
 
 export async function getBacklinkCountsBatch(
@@ -189,6 +246,8 @@ export async function getBacklinkCountsBatch(
   });
   return map;
 }
+
+// --- Fetch-and-hydrate (backlinks -> records -> identities) ---
 
 interface HydratedRecord {
   uri: string;
@@ -247,27 +306,4 @@ export async function fetchAndHydrate(
     });
 
   return { records: hydrated, cursor: backlinks.cursor ?? null };
-}
-
-export async function listRecords(
-  pdsUrl: string,
-  did: string,
-  collection: string,
-  limit = 100,
-): Promise<{ uri: string; cid: string; value: Record<string, unknown> }[]> {
-  const all: ListRecordsResponse["records"] = [];
-  let cursor: string | undefined;
-  while (true) {
-    let url = `${pdsUrl}/xrpc/com.atproto.repo.listRecords?repo=${encodeURIComponent(did)}&collection=${encodeURIComponent(collection)}&limit=${limit}`;
-    if (cursor) url += `&cursor=${encodeURIComponent(cursor)}`;
-    try {
-      const data = await fetchJson<ListRecordsResponse>(url);
-      all.push(...data.records);
-      if (!data.cursor) break;
-      cursor = data.cursor;
-    } catch {
-      break;
-    }
-  }
-  return all;
 }

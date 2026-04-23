@@ -1,18 +1,17 @@
-import { isRouteErrorResponse, useRouteError } from "react-router-dom";
-import { BBSNotFoundError, NoBBSError, NetworkError } from "../../lib/bbs";
+import { BBSNotFoundError, NoBBSError } from "../../lib/bbs";
 import { useAuth } from "../../lib/auth";
 import { ActionLink } from "../nav/ActionButton";
 
-export default function ErrorPage() {
-  const error = useRouteError();
+interface ErrorPageProps {
+  error: unknown;
+}
+
+export default function ErrorPage({ error }: ErrorPageProps) {
   const { user } = useAuth();
 
   let title = "Something went wrong.";
   let detail: string | null = null;
-  let action: { to: string; label: string } = {
-    to: "/",
-    label: "← back to home",
-  };
+  let action = { to: "/", label: "← back to home" };
 
   if (error instanceof BBSNotFoundError) {
     title = "Community not found.";
@@ -26,13 +25,6 @@ export default function ErrorPage() {
         "This account isn't running a community yet. Is this you? Log in to start one.";
       action = { to: "/?login=1", label: "log in" };
     }
-  } else if (error instanceof NetworkError) {
-    title = "Couldn't reach the network.";
-    detail = "Try again in a moment.";
-  } else if (isRouteErrorResponse(error)) {
-    if (error.status === 404) title = "Not found.";
-    else title = error.statusText || `Error ${error.status}`;
-    if (typeof error.data === "string") detail = error.data;
   } else if (error instanceof Error) {
     detail = error.message;
   }

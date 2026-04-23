@@ -1,85 +1,108 @@
 import { useState } from "react";
-import { useLoaderData, useRevalidator } from "react-router-dom";
+import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
 import { resolveIdentity } from "../lib/atproto";
 import { BAN, HIDE } from "../lib/lexicon";
-import { invalidateBBSCache } from "../lib/bbs";
+import { invalidateAllBBSCaches } from "../lib/bbs";
+import { bbsQuery, sysopModerationQuery } from "../lib/queries";
+import { queryClient } from "../lib/queryClient";
 import HandleInput from "../components/form/HandleInput";
 import { Button } from "../components/form/Form";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { createBan, createHide, deleteRecord } from "../lib/writes";
-import type { BBS } from "../lib/bbs";
-import type { AuthUser } from "../lib/auth";
-import type { HiddenInfo } from "../router/loaders";
-
-interface LoaderData {
-  user: AuthUser;
-  bbs: BBS;
-  banRkeys: Record<string, string>;
-  bannedHandles: Record<string, string>;
-  hideRkeys: Record<string, string>;
-  hidden: HiddenInfo[];
-}
 
 export default function SysopModerate() {
-  const { bbs, banRkeys, bannedHandles, hideRkeys, hidden } =
-    useLoaderData() as LoaderData;
-  const { agent } = useAuth();
-  const revalidator = useRevalidator();
+  const { user, agent } = useAuth();
   const [identifier, setIdentifier] = useState("");
   const [hideUri, setHideUri] = useState("");
   usePageTitle("Moderate community — atbbs");
 
-  async function ban() {
-    if (!agent) return;
-    let id = identifier.trim();
+  // requireAuthLoader guarantees user is present at render time.
+  const { data: bbs } = useSuspenseQuery(bbsQuery(user!.handle));
+  const { data: moderation } = useSuspenseQuery(
+    sysopModerationQuery(user!.pdsUrl, user!.did),
+  );
+  const { banRkeys, bannedHandles, hideRkeys, hidden } = moderation;
+
+  function refreshModeration() {
+    queryClient.invalidateQueries(
+      sysopModerationQuery(user!.pdsUrl, user!.did),
+    );
+    invalidateAllBBSCaches();
+  }
+
+  const banMutation = useMutation({
+    mutationFn: async (identifier: string) => {
+      if (!agent) throw new Error("Not signed in");
+      let did = identifier;
+      if (!did.startsWith("did:")) did = (await resolveIdentity(did)).did;
+      await createBan(agent, did);
+    },
+    onSuccess: () => {
+      setIdentifier("");
+      refreshModeration();
+    },
+    onError: (err) =>
+      alert(`Could not ban: ${err instanceof Error ? err.message : err}`),
+  });
+
+  const unbanMutation = useMutation({
+    mutationFn: async (rkey: string) => {
+      if (!agent) throw new Error("Not signed in");
+      await deleteRecord(agent, BAN, rkey);
+    },
+    onSuccess: refreshModeration,
+  });
+
+  const hideMutation = useMutation({
+    mutationFn: async (uri: string) => {
+      if (!agent) throw new Error("Not signed in");
+      await createHide(agent, uri);
+    },
+    onSuccess: () => {
+      setHideUri("");
+      refreshModeration();
+    },
+  });
+
+  const unhideMutation = useMutation({
+    mutationFn: async (rkey: string) => {
+      if (!agent) throw new Error("Not signed in");
+      await deleteRecord(agent, HIDE, rkey);
+    },
+    onSuccess: refreshModeration,
+  });
+
+  function ban() {
+    const id = identifier.trim();
     if (!id) return;
-    if (!id.startsWith("did:")) {
-      try {
-        id = (await resolveIdentity(id)).did;
-      } catch {
-        alert("Could not resolve handle.");
-        return;
-      }
-    }
-    await createBan(agent, id);
-    setIdentifier("");
-    revalidator.revalidate();
+    banMutation.mutate(id);
   }
 
-  async function unban(rkey: string) {
-    if (!agent) return;
+  function unban(rkey: string) {
     if (!confirm("Unban this user?")) return;
-    await deleteRecord(agent, BAN, rkey);
-    invalidateBBSCache();
-    revalidator.revalidate();
+    unbanMutation.mutate(rkey);
   }
 
-  async function hide() {
-    if (!agent) return;
+  function hide() {
     const u = hideUri.trim();
     if (!u.startsWith("at://")) {
       alert("Enter a valid AT-URI.");
       return;
     }
-    await createHide(agent, u);
-    setHideUri("");
-    revalidator.revalidate();
+    hideMutation.mutate(u);
   }
 
-  async function unhide(rkey: string) {
-    if (!agent) return;
+  function unhide(rkey: string) {
     if (!confirm("Unhide this post?")) return;
-    await deleteRecord(agent, HIDE, rkey);
-    invalidateBBSCache();
-    revalidator.revalidate();
+    unhideMutation.mutate(rkey);
   }
 
   return (
     <>
       <h1 className="text-lg text-neutral-200 mb-1">Moderate community</h1>
       <p className="text-neutral-400 mb-6">
-        Manage banned users and hidden posts.
+        Manage banned users and hidden posts for {bbs.site.name}.
       </p>
 
       <div className="space-y-8">

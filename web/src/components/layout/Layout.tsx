@@ -1,19 +1,25 @@
-import { Outlet, useNavigation } from "react-router-dom";
+import { Suspense } from "react";
+import { Outlet, useLocation, useNavigation } from "react-router-dom";
+import { useIsFetching } from "@tanstack/react-query";
 import Header from "./Header";
 import MobileBackButton from "./MobileBackButton";
 import Footer from "./Footer";
+import ErrorBoundary from "./ErrorBoundary";
 import LoginModal from "../auth/LoginModal";
 import { LoginModalProvider } from "../../lib/loginModal";
-import { useRevalidateOnFocus } from "../../hooks/useRevalidateOnFocus";
 
 export default function Layout() {
-  const isLoading = useNavigation().state === "loading";
-  useRevalidateOnFocus();
+  const routeLoading = useNavigation().state === "loading";
+  const queriesLoading = useIsFetching() > 0;
+  const showProgress = routeLoading || queriesLoading;
+  // Remount ErrorBoundary + Suspense on navigation so a fresh page doesn't
+  // inherit the previous page's error or fallback state.
+  const routeKey = useLocation().pathname;
 
   return (
     <LoginModalProvider>
       <div className="flex flex-col h-dvh">
-        {isLoading && (
+        {showProgress && (
           <div
             className="fixed top-0 left-0 right-0 h-0.5 bg-neutral-400 z-50"
             style={{ animation: "atbbs-progress 1.5s ease-out infinite" }}
@@ -22,7 +28,11 @@ export default function Layout() {
         <Header />
         <main className="max-w-2xl mx-auto px-4 py-8 flex-1 w-full">
           <MobileBackButton />
-          <Outlet />
+          <ErrorBoundary key={routeKey}>
+            <Suspense fallback={null}>
+              <Outlet />
+            </Suspense>
+          </ErrorBoundary>
         </main>
         <Footer />
         <LoginModal />

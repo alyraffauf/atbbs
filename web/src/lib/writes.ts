@@ -2,7 +2,7 @@
 
 import type { Client } from "@atcute/client";
 import { SITE, BOARD, POST, BAN, HIDE, PIN, PROFILE } from "./lexicon";
-import { invalidateBBSCache } from "./bbs";
+import { invalidateAllBBSCaches } from "./bbs";
 import { nowIso } from "./util";
 import { getCurrentUser } from "./auth";
 import type {
@@ -188,7 +188,7 @@ export async function createPost(
 
 export async function putSite(rpc: Client, site: SiteValue) {
   const resp = await putRecord(rpc, SITE, "self", site);
-  invalidateBBSCache();
+  invalidateAllBBSCaches();
   return resp;
 }
 
@@ -205,7 +205,7 @@ export async function putBoard(
     createdAt: createdAt as BoardValue["createdAt"],
   };
   const resp = await putRecord(rpc, BOARD, slug, value);
-  invalidateBBSCache();
+  invalidateAllBBSCaches();
   return resp;
 }
 
@@ -217,7 +217,7 @@ export async function createBan(rpc: Client, did: string) {
     createdAt: nowIso(),
   };
   const resp = await createRecord(rpc, BAN, value);
-  invalidateBBSCache();
+  invalidateAllBBSCaches();
   return resp;
 }
 
@@ -227,7 +227,7 @@ export async function createHide(rpc: Client, uri: string) {
     createdAt: nowIso(),
   };
   const resp = await createRecord(rpc, HIDE, value);
-  invalidateBBSCache();
+  invalidateAllBBSCaches();
   return resp;
 }
 

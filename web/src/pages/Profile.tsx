@@ -1,29 +1,44 @@
-import { Suspense, useState } from "react";
+import { useState } from "react";
+import { useParams } from "react-router-dom";
+import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
 import { MessageSquare } from "lucide-react";
-import { Await, useLoaderData, useRevalidator } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { putProfile } from "../lib/writes";
+import { myThreadsQuery, profileQuery } from "../lib/queries";
+import { queryClient } from "../lib/queryClient";
 import ViewProfile from "../components/profile/ViewProfile";
 import EditProfile from "../components/profile/EditProfile";
 import MyThreadList from "../components/dashboard/MyThreadList";
-import type { MyThread } from "../lib/mythreads";
-import type { ProfileLoaderData } from "../router/loaders/profile";
 
 export default function Profile() {
-  const { handle, profile, threads } = useLoaderData() as ProfileLoaderData;
+  const { handle } = useParams();
   const { user, agent } = useAuth();
-  const revalidator = useRevalidator();
-  const isOwner = user?.handle === handle;
   const [editing, setEditing] = useState(false);
+
+  const { data: profile } = useSuspenseQuery(profileQuery(handle!));
+  const { data: threads } = useSuspenseQuery(
+    myThreadsQuery(profile?.pdsUrl ?? "", profile?.did ?? ""),
+  );
+
   usePageTitle(`${profile?.name ?? handle} — atbbs`);
 
-  async function handleSave(name?: string, pronouns?: string, bio?: string) {
-    if (!agent) return;
-    await putProfile(agent, name, pronouns, bio);
-    setEditing(false);
-    revalidator.revalidate();
-  }
+  const isOwner = user?.handle === handle;
+
+  const saveProfileMutation = useMutation({
+    mutationFn: async (input: {
+      name?: string;
+      pronouns?: string;
+      bio?: string;
+    }) => {
+      if (!agent) throw new Error("Not signed in");
+      await putProfile(agent, input.name, input.pronouns, input.bio);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(profileQuery(handle!));
+      setEditing(false);
+    },
+  });
 
   if (editing) {
     return (
@@ -31,7 +46,9 @@ export default function Profile() {
         initialName={profile?.name ?? ""}
         initialPronouns={profile?.pronouns ?? ""}
         initialBio={profile?.bio ?? ""}
-        onSave={handleSave}
+        onSave={(name, pronouns, bio) =>
+          saveProfileMutation.mutateAsync({ name, pronouns, bio })
+        }
         onCancel={() => setEditing(false)}
       />
     );
@@ -40,7 +57,7 @@ export default function Profile() {
   return (
     <>
       <ViewProfile
-        handle={handle}
+        handle={handle!}
         profile={profile}
         isOwner={isOwner}
         onEdit={() => setEditing(true)}
@@ -49,13 +66,7 @@ export default function Profile() {
         <p className="text-xs text-neutral-400 uppercase tracking-wide mb-3 inline-flex items-center gap-1.5">
           <MessageSquare size={12} /> Recent Threads
         </p>
-        <Suspense fallback={<p className="text-neutral-400">loading...</p>}>
-          <Await resolve={threads}>
-            {(resolved: MyThread[]) => (
-              <MyThreadList threads={resolved.slice(0, 5)} />
-            )}
-          </Await>
-        </Suspense>
+        <MyThreadList threads={threads.slice(0, 5)} />
       </div>
     </>
   );

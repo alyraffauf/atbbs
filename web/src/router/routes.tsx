@@ -1,13 +1,6 @@
-import {
-  createBrowserRouter,
-  Outlet,
-  redirect,
-  type RouteObject,
-} from "react-router-dom";
+import { createBrowserRouter, Outlet, redirect } from "react-router-dom";
 
 import Layout from "../components/layout/Layout";
-import ErrorPage from "../components/layout/ErrorPage";
-import HydrateFallback from "../components/layout/HydrateFallback";
 
 import Home from "../pages/Home";
 import OAuthCallback from "../pages/OAuthCallback";
@@ -21,78 +14,42 @@ import SysopModerate from "../pages/SysopModerate";
 import News from "../pages/News";
 import NotFound from "../pages/NotFound";
 
-import {
-  homeLoader,
-  bbsLoader,
-  boardLoader,
-  profileLoader,
-  threadLoader,
-  requireAuthLoader,
-  sysopEditLoader,
-  sysopModerateLoader,
-} from "./loaders";
+import { requireAuthLoader, requireSysopBBSLoader } from "./loaders";
 
-const routes: RouteObject[] = [
+export const router = createBrowserRouter([
   {
     element: <Layout />,
-    errorElement: <ErrorPage />,
-    HydrateFallback,
     children: [
-      { path: "/", loader: homeLoader, element: <Home /> },
+      { path: "/", element: <Home /> },
       { path: "/oauth/callback", element: <OAuthCallback /> },
       { path: "/account", loader: () => redirect("/") },
       {
         path: "/account/create",
         loader: requireAuthLoader,
         element: <SysopCreate />,
-        errorElement: <ErrorPage />,
       },
       {
         path: "/account/edit",
-        loader: sysopEditLoader,
+        loader: requireSysopBBSLoader,
         element: <SysopEdit />,
-        errorElement: <ErrorPage />,
       },
       {
         path: "/account/moderate",
-        loader: sysopModerateLoader,
+        loader: requireSysopBBSLoader,
         element: <SysopModerate />,
       },
       {
         path: "/bbs/:handle",
-        id: "bbs",
-        loader: bbsLoader,
         element: <Outlet />,
-        errorElement: <ErrorPage />,
         children: [
           { index: true, element: <BBS /> },
-          {
-            path: "board/:slug",
-            loader: boardLoader,
-            element: <Board />,
-            errorElement: <ErrorPage />,
-          },
-          {
-            path: "thread/:did/:tid",
-            loader: threadLoader,
-            element: <Thread />,
-            errorElement: <ErrorPage />,
-          },
-          {
-            path: "news/:tid",
-            element: <News />,
-          },
+          { path: "board/:slug", element: <Board /> },
+          { path: "thread/:did/:tid", element: <Thread /> },
+          { path: "news/:tid", element: <News /> },
         ],
       },
-      {
-        path: "/profile/:handle",
-        loader: profileLoader,
-        element: <Profile />,
-        errorElement: <ErrorPage />,
-      },
+      { path: "/profile/:handle", element: <Profile /> },
       { path: "*", element: <NotFound /> },
     ],
   },
-];
-
-export const router = createBrowserRouter(routes);
+]);

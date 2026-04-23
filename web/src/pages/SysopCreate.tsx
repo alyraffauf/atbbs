@@ -1,5 +1,5 @@
 import { useState, type SyntheticEvent } from "react";
-import { useNavigate, useLoaderData } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { putBoard, putSite } from "../lib/writes";
 import { BOARD } from "../lib/lexicon";
@@ -11,11 +11,9 @@ import { Input, Textarea, Button } from "../components/form/Form";
 import BoardRowEditor, {
   type BoardRow,
 } from "../components/form/BoardRowEditor";
-import type { AuthUser } from "../lib/auth";
 
 export default function SysopCreate() {
-  const { user } = useLoaderData() as { user: AuthUser };
-  const { agent } = useAuth();
+  const { user, agent } = useAuth();
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
@@ -34,7 +32,7 @@ export default function SysopCreate() {
 
   async function onSubmit(e: SyntheticEvent) {
     e.preventDefault();
-    if (!agent) return;
+    if (!agent || !user) return;
     const cleanBoards = boards
       .map((board) => ({
         slug: board.slug.trim(),

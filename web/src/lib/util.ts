@@ -29,6 +29,11 @@ export function parseAtUri(uri: string): {
   return { did: parts[2], collection: parts[3], rkey: parts[4] };
 }
 
+export function truncate(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + "...";
+}
+
 import type { Did } from "@atcute/lexicons/syntax";
 
 export function makeAtUri(

@@ -6,7 +6,7 @@ import IdentityRow from "../IdentityRow";
 import { Button } from "../form/Form";
 import { useDropdown } from "../../hooks/useDropdown";
 import { useResolvedBBS } from "../../hooks/useResolvedBBS";
-import type { DiscoveredBBS } from "../../hooks/useDiscovery";
+import type { DiscoveredBBS } from "../../lib/discovery";
 
 export interface Suggestion {
   to: string;

@@ -1,23 +1,25 @@
-import { redirect } from "react-router-dom";
-import { resolveBBS, type BBS } from "../../lib/bbs";
-import {
-  getRecordByUri,
-  listRecords,
-  resolveIdentitiesBatch,
-} from "../../lib/atproto";
-import { BAN, HIDE } from "../../lib/lexicon";
-import { parseAtUri } from "../../lib/util";
+/** Load a sysop's bans + hides, hydrated with identities and post previews. */
+
+import { getRecordByUri, listRecords, resolveIdentitiesBatch } from "./atproto";
+import { BAN, HIDE } from "./lexicon";
+import { parseAtUri } from "./util";
 import { is } from "@atcute/lexicons/validations";
-import { mainSchema as banSchema } from "../../lexicons/types/xyz/atbbs/ban";
-import { mainSchema as hideSchema } from "../../lexicons/types/xyz/atbbs/hide";
-import type { XyzAtbbsBan, XyzAtbbsHide } from "../../lexicons";
-import { requireAuth } from "./auth";
+import { mainSchema as banSchema } from "../lexicons/types/xyz/atbbs/ban";
+import { mainSchema as hideSchema } from "../lexicons/types/xyz/atbbs/hide";
+import type { XyzAtbbsBan, XyzAtbbsHide } from "../lexicons";
 
 export interface HiddenInfo {
   uri: string;
   handle: string;
   title: string;
   body: string;
+}
+
+export interface SysopModeration {
+  banRkeys: Record<string, string>;
+  bannedHandles: Record<string, string>;
+  hideRkeys: Record<string, string>;
+  hidden: HiddenInfo[];
 }
 
 function buildRkeyMap<T>(
@@ -47,7 +49,6 @@ async function hydrateHiddenPosts(uris: string[]): Promise<HiddenInfo[]> {
     const did = parseAtUri(uri).did;
     const handle = identities[did]?.handle ?? did;
     const result = records[index];
-
     if (result.status === "fulfilled") {
       const value = result.value.value as unknown as {
         title?: string;
@@ -60,34 +61,17 @@ async function hydrateHiddenPosts(uris: string[]): Promise<HiddenInfo[]> {
         body: (value.body ?? "").substring(0, 100),
       };
     }
-
     return { uri, handle, title: "", body: uri };
   });
 }
 
-export async function sysopEditLoader() {
-  const user = await requireAuth();
-  try {
-    const bbs = await resolveBBS(user.handle);
-    return { user, bbs };
-  } catch {
-    throw redirect("/account/create");
-  }
-}
-
-export async function sysopModerateLoader() {
-  const user = await requireAuth();
-
-  let bbs: BBS;
-  try {
-    bbs = await resolveBBS(user.handle);
-  } catch {
-    throw redirect("/account/create");
-  }
-
+export async function fetchSysopModeration(
+  pdsUrl: string,
+  did: string,
+): Promise<SysopModeration> {
   const [banRecs, hideRecs] = await Promise.all([
-    listRecords(user.pdsUrl, user.did, BAN),
-    listRecords(user.pdsUrl, user.did, HIDE),
+    listRecords(pdsUrl, did, BAN),
+    listRecords(pdsUrl, did, HIDE),
   ]);
 
   const banRkeys = buildRkeyMap<XyzAtbbsBan.Main>(
@@ -113,8 +97,7 @@ export async function sysopModerateLoader() {
     }
   }
 
-  const hiddenUris = Object.keys(hideRkeys);
-  const hidden = await hydrateHiddenPosts(hiddenUris);
+  const hidden = await hydrateHiddenPosts(Object.keys(hideRkeys));
 
-  return { user, bbs, banRkeys, bannedHandles, hideRkeys, hidden };
+  return { banRkeys, bannedHandles, hideRkeys, hidden };
 }
