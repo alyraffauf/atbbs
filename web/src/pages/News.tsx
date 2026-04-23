@@ -1,10 +1,15 @@
-import { useNavigate, useParams, useRouteLoaderData } from "react-router-dom";
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useRouteLoaderData,
+} from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { POST } from "../lib/lexicon";
 import { deleteRecord } from "../lib/writes";
-import { invalidateBBSCache } from "../lib/bbs";
+import { invalidateBBSCache, type NewsPost } from "../lib/bbs";
 import type { BBSLoaderData } from "../router/loaders";
 import NewsCard from "../components/post/NewsCard";
 
@@ -14,7 +19,13 @@ export default function NewsPage() {
   const { user, agent } = useAuth();
   const navigate = useNavigate();
 
-  const item = bbs.news.find((news) => news.rkey === tid);
+  // Fallback for posts that were just created but haven't made it into the
+  // cached BBS loader data yet.
+  const stateItem = (useLocation().state as { pendingNewsItem?: NewsPost })
+    ?.pendingNewsItem;
+  const item =
+    bbs.news.find((news) => news.rkey === tid) ??
+    (stateItem?.rkey === tid ? stateItem : undefined);
 
   useBreadcrumb(
     [

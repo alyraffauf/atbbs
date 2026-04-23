@@ -168,6 +168,7 @@ export default function BBSPage() {
               <Link
                 key={item.rkey}
                 to={`/bbs/${handle}/news/${item.rkey}`}
+                state={{ pendingNewsItem: item }}
                 className={`reply-card block bg-neutral-900 border border-neutral-800 rounded p-4 hover:border-neutral-700 ${i < visibleNews.length - 1 ? "mb-2" : ""}`}
               >
                 <div className="flex items-baseline gap-2 mb-2">
