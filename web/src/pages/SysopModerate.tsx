@@ -7,6 +7,47 @@ import { Button } from "../components/form/Form";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { useModerationMutations } from "../hooks/useModerationMutations";
 
+interface ModerationListItemProps {
+  label: string;
+  href: string;
+  title: string;
+  actionLabel: string;
+  onAction?: () => void;
+}
+
+function ModerationListItem({
+  label,
+  href,
+  title,
+  actionLabel,
+  onAction,
+}: ModerationListItemProps) {
+  return (
+    <div
+      title={title}
+      className="flex items-center justify-between gap-3 px-3 py-2 -mx-3 rounded hover:bg-neutral-800"
+    >
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={`${label} (opens in new tab)`}
+        className="truncate text-neutral-300 hover:text-neutral-200"
+      >
+        {label}
+      </a>
+      {onAction && (
+        <button
+          onClick={onAction}
+          className="text-xs text-neutral-400 hover:text-red-400 shrink-0"
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function SysopModerate() {
   const { user } = useAuth();
   const [identifier, setIdentifier] = useState("");
@@ -59,29 +100,16 @@ export default function SysopModerate() {
           <label className="block text-neutral-400 mb-3">Banned Users</label>
           <div className="space-y-1 mb-3">
             {Object.keys(banRkeys).map((did) => (
-              <div
+              <ModerationListItem
                 key={did}
                 title={did}
-                className="flex items-center justify-between gap-3 px-3 py-2 -mx-3 rounded hover:bg-neutral-800"
-              >
-                <a
-                  href={`https://pdsls.dev/at/${did}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={`${bannedHandles[did] ?? did} (opens in new tab)`}
-                  className="truncate text-neutral-300 hover:text-neutral-200"
-                >
-                  {bannedHandles[did] ?? did}
-                </a>
-                {banRkeys[did] && (
-                  <button
-                    onClick={() => onUnban(banRkeys[did])}
-                    className="text-xs text-neutral-400 hover:text-red-400 shrink-0"
-                  >
-                    unban
-                  </button>
-                )}
-              </div>
+                label={bannedHandles[did] ?? did}
+                href={`https://pdsls.dev/at/${did}`}
+                actionLabel="unban"
+                onAction={
+                  banRkeys[did] ? () => onUnban(banRkeys[did]) : undefined
+                }
+              />
             ))}
           </div>
           <div className="flex gap-2">
@@ -99,29 +127,18 @@ export default function SysopModerate() {
           <label className="block text-neutral-400 mb-3">Hidden Posts</label>
           <div className="space-y-1 mb-3">
             {hidden.map((post) => (
-              <div
+              <ModerationListItem
                 key={post.uri}
                 title={post.uri}
-                className="flex items-center justify-between gap-3 px-3 py-2 -mx-3 rounded hover:bg-neutral-800"
-              >
-                <a
-                  href={`https://pdsls.dev/${post.uri}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={`${post.handle} — ${post.title || post.body} (opens in new tab)`}
-                  className="truncate text-neutral-300 hover:text-neutral-200"
-                >
-                  {post.handle} — {post.title || post.body}
-                </a>
-                {hideRkeys[post.uri] && (
-                  <button
-                    onClick={() => onUnhide(hideRkeys[post.uri])}
-                    className="text-xs text-neutral-400 hover:text-red-400 shrink-0"
-                  >
-                    unhide
-                  </button>
-                )}
-              </div>
+                label={`${post.handle} — ${post.title || post.body}`}
+                href={`https://pdsls.dev/${post.uri}`}
+                actionLabel="unhide"
+                onAction={
+                  hideRkeys[post.uri]
+                    ? () => onUnhide(hideRkeys[post.uri])
+                    : undefined
+                }
+              />
             ))}
           </div>
           <div className="flex gap-2">
