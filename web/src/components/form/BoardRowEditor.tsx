@@ -57,7 +57,9 @@ export default function BoardRowEditor({
       </div>
       <button
         type="button"
-        onClick={() => onChange([...boards, { slug: "", name: "", description: "" }])}
+        onClick={() =>
+          onChange([...boards, { slug: "", name: "", description: "" }])
+        }
         className="mt-2 text-neutral-400 hover:text-neutral-300 text-xs"
       >
         + add board
