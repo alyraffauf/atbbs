@@ -6,9 +6,7 @@ import { usePageTitle } from "../hooks/usePageTitle";
 import { POST } from "../lib/lexicon";
 import { deleteRecord } from "../lib/writes";
 import { bbsQuery, newsQuery } from "../lib/queries";
-import { queryClient } from "../lib/queryClient";
 import { alertOnError } from "../lib/alerts";
-import type { NewsPost } from "../lib/bbs";
 import NewsCard from "../components/post/NewsCard";
 
 export default function NewsPage() {
@@ -38,13 +36,7 @@ export default function NewsPage() {
       if (!agent || !tid) throw new Error("Not signed in");
       await deleteRecord(agent, POST, tid);
     },
-    onSuccess: () => {
-      queryClient.setQueryData<NewsPost[]>(
-        newsQuery(bbs.identity.did).queryKey,
-        (prev) => (prev ?? []).filter((n) => n.rkey !== tid),
-      );
-      navigate(`/bbs/${handle}`);
-    },
+    onSuccess: () => navigate(`/bbs/${handle}`),
     onError: alertOnError("delete"),
   });
 
