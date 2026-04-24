@@ -19,6 +19,7 @@ import { SITE } from "../lib/lexicon";
 import { makeAtUri, nowIso, parseAtUri, truncate } from "../lib/util";
 import * as limits from "../lib/limits";
 import { bbsQuery, newsQuery, pinsQuery } from "../lib/queries";
+import { bbsUrl, boardUrl, newsUrl, profileUrl } from "../lib/routes";
 import { queryClient } from "../lib/queryClient";
 import { alertOnError } from "../lib/alerts";
 import type { NewsPost } from "../lib/bbs";
@@ -48,7 +49,7 @@ export default function BBSPage() {
   const pinRkey = user && pins ? findPinRkey(pins, bbs.identity.did) : null;
 
   useBreadcrumb(
-    [{ label: bbs.site.name, to: `/bbs/${handle}` }],
+    [{ label: bbs.site.name, to: bbsUrl(handle!) }],
     [bbs, handle],
   );
   usePageTitle(`${bbs.site.name} — atbbs`);
@@ -116,10 +117,7 @@ export default function BBSPage() {
             bbsDid={bbs.identity.did}
             initialRkey={pinRkey}
           />
-          <ActionLink
-            to={`/profile/${encodeURIComponent(handle!)}`}
-            icon={UserCog}
-          >
+          <ActionLink to={profileUrl(handle!)} icon={UserCog}>
             admin
           </ActionLink>
           {isSysop && (
@@ -149,7 +147,7 @@ export default function BBSPage() {
           {bbs.site.boards.map((board) => (
             <ListLink
               key={board.slug}
-              to={`/bbs/${handle}/board/${board.slug}`}
+              to={boardUrl(handle!, board.slug)}
               name={board.name}
               description={board.description}
             />
@@ -192,7 +190,7 @@ export default function BBSPage() {
             {visibleNews.map((item, i) => (
               <Link
                 key={item.rkey}
-                to={`/bbs/${handle}/news/${item.rkey}`}
+                to={newsUrl(handle!, item.rkey)}
                 className={`reply-card block bg-neutral-900 border border-neutral-800 rounded p-4 hover:border-neutral-700 ${i < visibleNews.length - 1 ? "mb-2" : ""}`}
               >
                 <div className="flex items-baseline gap-2 mb-2">

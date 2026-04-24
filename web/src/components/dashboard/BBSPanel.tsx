@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import { ArrowRight, Pencil, Plus, Shield, Trash2 } from "lucide-react";
 import { ActionLink } from "../nav/ActionButton";
 import { getAvatar } from "../../lib/atproto";
+import { bbsUrl } from "../../lib/routes";
 
 interface BBSPanelProps {
   hasBBS: boolean;
@@ -41,7 +42,7 @@ export default function BBSPanel({
   return (
     <>
       <Link
-        to={`/bbs/${encodeURIComponent(userHandle)}`}
+        to={bbsUrl(userHandle)}
         className="flex items-center justify-between py-3 -mx-3 px-3 rounded hover:bg-neutral-800 mb-3"
       >
         <div className="flex items-center gap-3 min-w-0 text-neutral-200">

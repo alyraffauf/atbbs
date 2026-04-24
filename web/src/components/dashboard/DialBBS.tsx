@@ -6,6 +6,7 @@ import IdentityRow from "../IdentityRow";
 import { Button } from "../form/Form";
 import { useDropdown } from "../../hooks/useDropdown";
 import { useResolvedBBS } from "../../hooks/useResolvedBBS";
+import { bbsUrl } from "../../lib/routes";
 import type { DiscoveredBBS } from "../../lib/discovery";
 
 export interface Suggestion {
@@ -21,7 +22,7 @@ export function bbsToSuggestion(bbs: {
   avatar?: string;
 }): Suggestion {
   return {
-    to: `/bbs/${encodeURIComponent(bbs.handle)}`,
+    to: bbsUrl(bbs.handle),
     name: bbs.name,
     handle: bbs.handle,
     avatar: bbs.avatar,
@@ -73,13 +74,13 @@ export default function DialBBS({ discovered, suggestions }: DialBBSProps) {
   function onSubmit(event: SyntheticEvent) {
     event.preventDefault();
     const trimmed = inputValue.trim();
-    if (trimmed) navigate(`/bbs/${encodeURIComponent(trimmed)}`);
+    if (trimmed) navigate(bbsUrl(trimmed));
   }
 
   function onRandom() {
     if (discovered?.length) {
       const pick = discovered[Math.floor(Math.random() * discovered.length)];
-      navigate(`/bbs/${encodeURIComponent(pick.handle)}`);
+      navigate(bbsUrl(pick.handle));
     } else if (suggestions?.length) {
       const pick = suggestions[Math.floor(Math.random() * suggestions.length)];
       navigate(pick.to);

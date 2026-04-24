@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { formatFullDate, relativeDate } from "../../lib/util";
+import { profileUrl } from "../../lib/routes";
 
 interface PostMetaProps {
   handle: string;
@@ -12,7 +13,7 @@ export default function PostMeta({ handle, createdAt }: PostMetaProps) {
   function handleClick(event: React.MouseEvent) {
     event.preventDefault();
     event.stopPropagation();
-    navigate(`/profile/${encodeURIComponent(handle)}`);
+    navigate(profileUrl(handle));
   }
 
   return (

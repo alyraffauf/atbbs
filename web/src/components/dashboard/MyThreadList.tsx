@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { parseAtUri, formatFullDate, relativeDate } from "../../lib/util";
+import { threadUrl } from "../../lib/routes";
 import type { MyThread } from "../../lib/mythreads";
 
 const PAGE_SIZE = 10;
@@ -20,7 +21,7 @@ export default function MyThreadList({ threads }: MyThreadListProps) {
     <div>
       {threads.slice(0, shown).map((thread) => {
         const { did, rkey } = parseAtUri(thread.uri);
-        const url = `/bbs/${thread.bbsHandle}/thread/${did}/${rkey}`;
+        const url = threadUrl(thread.bbsHandle, did, rkey);
         return (
           <Link
             key={thread.uri}

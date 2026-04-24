@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
 import { bbsQuery, sysopModerationQuery } from "../lib/queries";
+import { bbsUrl } from "../lib/routes";
 import HandleInput from "../components/form/HandleInput";
 import { Button } from "../components/form/Form";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
@@ -64,7 +65,7 @@ export default function SysopModerate() {
 
   useBreadcrumb(
     [
-      { label: bbs.site.name, to: `/bbs/${user!.handle}` },
+      { label: bbs.site.name, to: bbsUrl(user!.handle) },
       { label: "Moderate" },
     ],
     [bbs, user!.handle],

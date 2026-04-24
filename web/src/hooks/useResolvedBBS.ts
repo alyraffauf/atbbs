@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { resolveIdentity, getRecord, getAvatar } from "../lib/atproto";
 import { SITE } from "../lib/lexicon";
+import { bbsUrl } from "../lib/routes";
 import type { Suggestion } from "../components/dashboard/DialBBS";
 
 const DEBOUNCE_MS = 300;
@@ -28,7 +29,7 @@ export function useResolvedBBS(query: string): Suggestion | null {
         const siteValue = siteRecord.value as { name?: string };
         if (!cancelled) {
           setResult({
-            to: `/bbs/${encodeURIComponent(identity.handle)}`,
+            to: bbsUrl(identity.handle),
             name: siteValue.name ?? identity.handle,
             handle: identity.handle,
             avatar,

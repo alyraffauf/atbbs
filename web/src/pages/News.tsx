@@ -6,6 +6,7 @@ import { usePageTitle } from "../hooks/usePageTitle";
 import { POST } from "../lib/lexicon";
 import { deleteRecord } from "../lib/writes";
 import { bbsQuery, newsQuery } from "../lib/queries";
+import { bbsUrl } from "../lib/routes";
 import { alertOnError } from "../lib/alerts";
 import NewsCard from "../components/post/NewsCard";
 
@@ -20,7 +21,7 @@ export default function NewsPage() {
 
   useBreadcrumb(
     [
-      { label: bbs.site.name, to: `/bbs/${handle}` },
+      { label: bbs.site.name, to: bbsUrl(handle!) },
       { label: item?.title ?? "News" },
     ],
     [bbs, handle, tid],
@@ -36,7 +37,7 @@ export default function NewsPage() {
       if (!agent || !tid) throw new Error("Not signed in");
       await deleteRecord(agent, POST, tid);
     },
-    onSuccess: () => navigate(`/bbs/${handle}`),
+    onSuccess: () => navigate(bbsUrl(handle!)),
     onError: alertOnError("delete"),
   });
 

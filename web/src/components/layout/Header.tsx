@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
 import { useLoginModal } from "../../lib/loginModal";
+import { profileUrl } from "../../lib/routes";
 import Logo from "./Logo";
 import HeaderBreadcrumbs from "./HeaderBreadcrumbs";
 import MobileMenu from "./MobileMenu";
@@ -31,7 +32,7 @@ export default function Header() {
           {user ? (
             <>
               <Link
-                to={`/profile/${encodeURIComponent(user.handle)}`}
+                to={profileUrl(user.handle)}
                 className={linkStyle}
               >
                 {user.handle}

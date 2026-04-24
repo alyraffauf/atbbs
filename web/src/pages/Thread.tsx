@@ -21,6 +21,7 @@ import {
   threadRootQuery,
 } from "../lib/queries";
 import { queryClient } from "../lib/queryClient";
+import { bbsUrl, boardUrl } from "../lib/routes";
 import { threadUriFor } from "../lib/thread";
 import { REPLIES_PER_PAGE } from "../lib/replies";
 import {
@@ -166,7 +167,7 @@ export default function ThreadPage() {
       if (user) {
         queryClient.invalidateQueries(myThreadsQuery(user.pdsUrl, user.did));
       }
-      navigate(`/bbs/${handle}`);
+      navigate(bbsUrl(handle!));
     },
     onError: alertOnError("delete"),
   });
@@ -318,10 +319,8 @@ function buildBreadcrumb(
 ) {
   const board = bbs.site.boards.find((b) => b.slug === boardSlug);
   return [
-    { label: bbs.site.name, to: `/bbs/${handle}` },
-    ...(board
-      ? [{ label: board.name, to: `/bbs/${handle}/board/${board.slug}` }]
-      : []),
+    { label: bbs.site.name, to: bbsUrl(handle) },
+    ...(board ? [{ label: board.name, to: boardUrl(handle, board.slug) }] : []),
     { label: threadTitle },
   ];
 }

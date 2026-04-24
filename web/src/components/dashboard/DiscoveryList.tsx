@@ -1,4 +1,5 @@
 import ListLink from "../nav/ListLink";
+import { bbsUrl } from "../../lib/routes";
 import type { DiscoveredBBS } from "../../lib/discovery";
 
 interface DiscoveryListProps {
@@ -21,7 +22,7 @@ export default function DiscoveryList({
         {discovered.slice(0, limit).map((bbs) => (
           <ListLink
             key={bbs.handle}
-            to={`/bbs/${encodeURIComponent(bbs.handle)}`}
+            to={bbsUrl(bbs.handle)}
             name={bbs.name}
             description={bbs.handle}
           />

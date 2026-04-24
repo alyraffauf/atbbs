@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import type { useAuth } from "../../lib/auth";
 import { useLoginModal } from "../../lib/loginModal";
+import { profileUrl } from "../../lib/routes";
 
 interface MobileMenuProps {
   user: ReturnType<typeof useAuth>["user"];
@@ -40,7 +41,7 @@ export default function MobileMenu({ user, onLogout }: MobileMenuProps) {
           {user ? (
             <>
               <Link
-                to={`/profile/${encodeURIComponent(user.handle)}`}
+                to={profileUrl(user.handle)}
                 onClick={close}
                 className="text-neutral-300 hover:text-neutral-200"
               >

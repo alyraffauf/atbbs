@@ -7,6 +7,7 @@ import { DEFAULT_BOARD } from "../lib/shared";
 import { makeAtUri, nowIso } from "../lib/util";
 import * as limits from "../lib/limits";
 import { usePageTitle } from "../hooks/usePageTitle";
+import { bbsUrl } from "../lib/routes";
 import { Input, Textarea, Button } from "../components/form/Form";
 import BoardRowEditor, {
   type BoardRow,
@@ -64,7 +65,7 @@ export default function SysopCreate() {
         ),
         createdAt: now,
       });
-      navigate(`/bbs/${user.handle}`);
+      navigate(bbsUrl(user.handle));
     } catch {
       setError("Could not create community.");
     }

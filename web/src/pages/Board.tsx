@@ -22,6 +22,7 @@ import {
   myThreadsQuery,
 } from "../lib/queries";
 import { queryClient } from "../lib/queryClient";
+import { bbsUrl, boardUrl, threadUrl } from "../lib/routes";
 import { alertOnError } from "../lib/alerts";
 import type { ThreadItem, ThreadPageResult } from "../lib/boardThreads";
 import ThreadLink, { ThreadListHeader } from "../components/nav/ThreadLink";
@@ -86,8 +87,8 @@ export default function BoardPage() {
   usePageTitle(`${board.name} — ${bbs.site.name}`);
   useBreadcrumb(
     [
-      { label: bbs.site.name, to: `/bbs/${handle}` },
-      { label: board.name, to: `/bbs/${handle}/board/${board.slug}` },
+      { label: bbs.site.name, to: bbsUrl(handle!) },
+      { label: board.name, to: boardUrl(handle!, board.slug) },
     ],
     [bbs, board, handle],
   );
@@ -149,7 +150,7 @@ export default function BoardPage() {
       setTitle("");
       setBody("");
       setFiles([]);
-      navigate(`/bbs/${handle}/thread/${did}/${rkey}`);
+      navigate(threadUrl(handle!, did, rkey));
     },
     onError: alertOnError("post"),
   });
@@ -200,7 +201,7 @@ export default function BoardPage() {
             {threads.map((t) => (
               <ThreadLink
                 key={t.uri}
-                to={`/bbs/${handle}/thread/${t.did}/${t.rkey}`}
+                to={threadUrl(handle!, t.did, t.rkey)}
                 title={t.title}
                 preview={t.body.substring(0, 120)}
                 authorHandle={t.handle}

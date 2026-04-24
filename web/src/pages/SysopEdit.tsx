@@ -9,6 +9,7 @@ import * as limits from "../lib/limits";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { bbsQuery } from "../lib/queries";
+import { bbsUrl } from "../lib/routes";
 import { Input, Textarea, Button } from "../components/form/Form";
 import BoardRowEditor, {
   type BoardRow,
@@ -37,7 +38,7 @@ export default function SysopEdit() {
   usePageTitle("Edit community — atbbs");
   useBreadcrumb(
     [
-      { label: bbs.site.name, to: `/bbs/${user!.handle}` },
+      { label: bbs.site.name, to: bbsUrl(user!.handle) },
       { label: "Edit" },
     ],
     [bbs, user!.handle],
@@ -74,7 +75,7 @@ export default function SysopEdit() {
         createdAt: bbs.site.createdAt || now,
         updatedAt: now,
       });
-      navigate(`/bbs/${user.handle}`);
+      navigate(bbsUrl(user.handle));
     } catch {
       setError("Could not update community.");
     }

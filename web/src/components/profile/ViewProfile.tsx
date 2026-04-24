@@ -3,6 +3,7 @@ import { Pencil, ChevronRight, Monitor } from "lucide-react";
 import Avatar from "../Avatar";
 import PostBody from "../post/PostBody";
 import { ActionButton } from "../nav/ActionButton";
+import { bbsUrl } from "../../lib/routes";
 import type { Profile } from "../../lib/profile";
 
 interface ViewProfileProps {
@@ -59,7 +60,7 @@ export default function ViewProfile({
             <Monitor size={12} /> Community
           </p>
           <Link
-            to={`/bbs/${handle}`}
+            to={bbsUrl(handle)}
             className="flex items-center justify-between bg-neutral-900 border border-neutral-800 rounded px-4 py-3 hover:border-neutral-700 group"
           >
             <div>

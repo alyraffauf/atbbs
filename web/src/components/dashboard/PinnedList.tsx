@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import ListLink from "../nav/ListLink";
+import { bbsUrl } from "../../lib/routes";
 import type { PinnedBBS } from "../../lib/pins";
 
 const PAGE_SIZE = 5;
@@ -20,7 +21,7 @@ export default function PinnedList({ pins }: PinnedListProps) {
       {pins.slice(0, shown).map((entry) => (
         <ListLink
           key={entry.did}
-          to={`/bbs/${entry.handle}`}
+          to={bbsUrl(entry.handle)}
           name={entry.name}
           description={entry.handle}
           avatar={entry.avatar}

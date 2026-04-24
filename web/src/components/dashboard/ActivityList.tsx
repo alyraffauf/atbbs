@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { parseAtUri } from "../../lib/util";
+import { threadUrl } from "../../lib/routes";
 import PostBody from "../post/PostBody";
 import PostMeta from "../post/PostMeta";
 import type { ActivityItem } from "../../lib/activity";
@@ -24,7 +25,7 @@ export default function ActivityList({ items, userHandle }: ActivityListProps) {
       {items.slice(0, shown).map((item) => {
         const { did: threadDid, rkey: threadRkey } = parseAtUri(item.threadUri);
         const { rkey: replyRkey } = parseAtUri(item.replyUri);
-        const url = `/bbs/${userHandle}/thread/${threadDid}/${threadRkey}#reply-${replyRkey}`;
+        const url = `${threadUrl(userHandle, threadDid, threadRkey)}#reply-${replyRkey}`;
         return (
           <Link
             key={item.replyUri}
