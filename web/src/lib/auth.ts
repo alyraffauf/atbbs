@@ -71,6 +71,7 @@ type Status = "loading" | "signedIn" | "signedOut";
 type Did = `did:${string}:${string}`;
 
 const CURRENT_DID_KEY = "atbbs:current-did";
+const CURRENT_HANDLE_KEY = "atbbs:current-handle";
 const POST_LOGIN_KEY = "atbbs:post-login-redirect";
 
 // --- Module-level auth state ---
@@ -104,14 +105,18 @@ async function setSignedIn(oauthAgent: OAuthUserAgent) {
   const rpc = new Client({ handler: oauthAgent });
   const did = oauthAgent.sub;
 
-  let handle: string = did;
+  // Fall back to the last-known handle (if any) so offline restores don't
+  // show a raw DID in the header. Gets overwritten once Slingshot responds.
+  let handle = localStorage.getItem(CURRENT_HANDLE_KEY) ?? did;
   let pdsUrl = "";
   try {
     const doc = await resolveIdentity(did);
     handle = doc.handle;
     pdsUrl = doc.pds ?? "";
+    localStorage.setItem(CURRENT_HANDLE_KEY, handle);
   } catch {
-    // best-effort — falls back to showing the raw DID
+    // Network may be unavailable (e.g., just resumed from suspend). We'll
+    // retry on the next tab focus via the visibilitychange listener below.
   }
 
   currentAgent = rpc;
@@ -123,6 +128,29 @@ async function setSignedIn(oauthAgent: OAuthUserAgent) {
   } catch {
     // storage full or blocked — non-fatal
   }
+}
+
+async function retryIdentityIfUnresolved() {
+  if (!currentUser) return;
+  if (currentUser.handle !== currentUser.did) return;
+  try {
+    const doc = await resolveIdentity(currentUser.did);
+    currentUser = {
+      did: currentUser.did,
+      handle: doc.handle,
+      pdsUrl: doc.pds ?? currentUser.pdsUrl,
+    };
+    localStorage.setItem(CURRENT_HANDLE_KEY, doc.handle);
+    notifyListeners();
+  } catch {
+    // still offline; next focus will try again
+  }
+}
+
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") retryIdentityIfUnresolved();
+  });
 }
 
 function setSignedOut() {
@@ -246,6 +274,7 @@ async function logout(): Promise<void> {
     }
     try {
       localStorage.removeItem(CURRENT_DID_KEY);
+      localStorage.removeItem(CURRENT_HANDLE_KEY);
     } catch {
       // non-fatal
     }
