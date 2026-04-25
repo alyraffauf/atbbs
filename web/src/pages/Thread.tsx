@@ -63,14 +63,14 @@ export default function ThreadPage() {
   const isSysop = !!(user && user.did === bbs.identity.did);
   const threadHidden =
     !isSysop &&
-    (moderation.bannedDids.has(thread.did) ||
-      moderation.hiddenUris.has(thread.uri));
+    (!!moderation.banRkeys[thread.did] ||
+      !!moderation.hideRkeys[thread.uri]);
   const visibleReplies = isSysop
     ? replies
     : replies.filter(
         (reply) =>
-          !moderation.bannedDids.has(reply.did) &&
-          !moderation.hiddenUris.has(reply.uri),
+          !moderation.banRkeys[reply.did] &&
+          !moderation.hideRkeys[reply.uri],
       );
 
   const [body, setBody] = useState("");
@@ -254,8 +254,8 @@ export default function ThreadPage() {
             const parentHidden =
               !!parentReply &&
               !isSysop &&
-              (moderation.bannedDids.has(parentReply.did) ||
-                moderation.hiddenUris.has(parentReply.uri));
+              (!!moderation.banRkeys[parentReply.did] ||
+                !!moderation.hideRkeys[parentReply.uri]);
             return (
               <ReplyCard
                 key={reply.uri}

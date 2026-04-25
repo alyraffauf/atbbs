@@ -6,9 +6,8 @@ import { BAN, HIDE } from "./lexicon";
 import { parseAtUri } from "./util";
 import { isBanRecord, isHideRecord } from "./recordGuards";
 
+// Fields must be JSON-safe — this shape is persisted via localStorage.
 export interface BBSModeration {
-  bannedDids: Set<string>;
-  hiddenUris: Set<string>;
   /** DID → rkey of that user's ban record on the sysop's PDS. */
   banRkeys: Record<string, string>;
   /** Post URI → rkey of its hide record on the sysop's PDS. */
@@ -24,21 +23,17 @@ export async function fetchBBSModeration(
     listRecords(pdsUrl, did, HIDE).catch(() => []),
   ]);
 
-  const bannedDids = new Set<string>();
   const banRkeys: Record<string, string> = {};
   for (const record of banRecs) {
     if (!isBanRecord(record)) continue;
-    bannedDids.add(record.value.did);
     banRkeys[record.value.did] = parseAtUri(record.uri).rkey;
   }
 
-  const hiddenUris = new Set<string>();
   const hideRkeys: Record<string, string> = {};
   for (const record of hideRecs) {
     if (!isHideRecord(record)) continue;
-    hiddenUris.add(record.value.uri);
     hideRkeys[record.value.uri] = parseAtUri(record.uri).rkey;
   }
 
-  return { bannedDids, hiddenUris, banRkeys, hideRkeys };
+  return { banRkeys, hideRkeys };
 }

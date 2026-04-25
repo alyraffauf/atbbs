@@ -25,9 +25,8 @@ function pageSlice(refs: BacklinkRef[], page: number): BacklinkRef[] {
   return refs.slice(start, start + REPLIES_PER_PAGE);
 }
 
-// threadPageQuery's key is fingerprinted by reply rkeys, so adding or removing
-// a reply changes the cache key. We read the pre-change page data from the old
-// key and seed the new key explicitly.
+// threadPageQuery's key is fingerprinted by rkeys, so the key changes on
+// add/delete — seed the new key from the old one rather than using `prev`.
 export function appendRefAndReply(
   threadUri: string,
   newRef: BacklinkRef,

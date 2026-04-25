@@ -63,9 +63,7 @@ function assertOk(
   }
 }
 
-// Seed the per-record cache used by getRecord so immediate re-reads (e.g. a
-// refetch of profileQuery after putProfile) see the new value instead of the
-// pre-write cached entry.
+// Sync the per-record cache so re-reads via getRecord return the new value.
 function syncRecordCache<V extends object>(
   did: string,
   collection: string,
@@ -143,7 +141,6 @@ export async function deleteRecord(
     },
   });
   assertOk(resp, "deleteRecord");
-  // Drop the per-record cache entry from the cache
   queryClient.removeQueries({
     queryKey: ["record", did, collection, rkey],
     exact: true,

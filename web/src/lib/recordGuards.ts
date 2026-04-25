@@ -1,7 +1,5 @@
-// Type guards for narrowing raw ATRecord.value into typed lexicon records.
-// Each guard runs the schema's runtime check and, if it passes, narrows the
-// record so downstream code can access typed fields without `as unknown as ...`
-// casts.
+// Type guards that run the lexicon schema's runtime check and narrow the
+// record so callers can access typed fields directly.
 
 import { is } from "@atcute/lexicons/validations";
 import { mainSchema as postSchema } from "../lexicons/types/xyz/atbbs/post";

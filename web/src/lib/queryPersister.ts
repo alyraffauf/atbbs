@@ -1,9 +1,7 @@
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 
-// Bump when cache shapes change (lexicon edits, query-key restructures) so
-// older clients discard incompatible cached data on next load instead of
-// deserializing into crashes.
-const BUSTER = "atbbs-v1";
+// Bump on breaking cache-shape changes to invalidate older clients.
+const BUSTER = "atbbs-v2";
 const MAX_AGE = 24 * 60 * 60 * 1000;
 
 const persister = createSyncStoragePersister({
@@ -16,10 +14,8 @@ export const persistOptions = {
   buster: BUSTER,
   maxAge: MAX_AGE,
   dehydrateOptions: {
-    // Skip fingerprinted thread-page entries. Their keys churn whenever a
-    // reply is added or deleted, so persisting them just bloats localStorage
-    // with old-fingerprint garbage. thread-refs is persisted and drives the
-    // page rebuild on load.
+    // thread-page keys are fingerprinted by reply rkeys, so persisting them
+    // would accumulate stale entries. thread-refs drives page rebuild on load.
     shouldDehydrateQuery: (query: { queryKey: readonly unknown[] }) =>
       query.queryKey[0] !== "thread-page",
   },

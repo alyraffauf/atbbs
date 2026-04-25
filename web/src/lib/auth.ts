@@ -105,8 +105,7 @@ async function setSignedIn(oauthAgent: OAuthUserAgent) {
   const rpc = new Client({ handler: oauthAgent });
   const did = oauthAgent.sub;
 
-  // Fall back to the last-known handle (if any) so offline restores don't
-  // show a raw DID in the header. Gets overwritten once Slingshot responds.
+  // Cached handle covers offline restores; overwritten when Slingshot responds.
   let handle = localStorage.getItem(CURRENT_HANDLE_KEY) ?? did;
   let pdsUrl = "";
   try {
@@ -115,8 +114,7 @@ async function setSignedIn(oauthAgent: OAuthUserAgent) {
     pdsUrl = doc.pds ?? "";
     localStorage.setItem(CURRENT_HANDLE_KEY, handle);
   } catch {
-    // Network may be unavailable (e.g., just resumed from suspend). We'll
-    // retry on the next tab focus via the visibilitychange listener below.
+    // Offline; the visibilitychange listener below will retry on next focus.
   }
 
   currentAgent = rpc;

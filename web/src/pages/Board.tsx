@@ -76,8 +76,8 @@ export default function BoardPage() {
     ? allThreads
     : allThreads.filter(
         (t) =>
-          !moderation.bannedDids.has(t.did) &&
-          !moderation.hiddenUris.has(t.uri),
+          !moderation.banRkeys[t.did] &&
+          !moderation.hideRkeys[t.uri],
       );
 
   const [title, setTitle] = useState("");
