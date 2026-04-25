@@ -1,7 +1,7 @@
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { version } from "../../package.json";
 
-// Bump on breaking cache-shape changes to invalidate older clients.
-const BUSTER = "atbbs-v2";
+const BUSTER = version;
 const MAX_AGE = 24 * 60 * 60 * 1000;
 
 const persister = createSyncStoragePersister({
