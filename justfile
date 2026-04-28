@@ -6,6 +6,9 @@ dev:
 tui:
     uv run python -m tui
 
+test *args:
+    uv run pytest {{ args }}
+
 fmt:
     uv format
     cd web && npx --yes prettier --write src/
