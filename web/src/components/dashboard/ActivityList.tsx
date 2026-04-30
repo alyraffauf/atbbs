@@ -11,10 +11,9 @@ const PAGE_SIZE = 10;
 
 interface ActivityListProps {
   items: ActivityItem[];
-  userHandle: string;
 }
 
-export default function ActivityList({ items, userHandle }: ActivityListProps) {
+export default function ActivityList({ items }: ActivityListProps) {
   const [shown, setShown] = useState(PAGE_SIZE);
 
   if (items.length === 0)
@@ -25,7 +24,7 @@ export default function ActivityList({ items, userHandle }: ActivityListProps) {
       {items.slice(0, shown).map((item) => {
         const { did: threadDid, rkey: threadRkey } = parseAtUri(item.threadUri);
         const { rkey: replyRkey } = parseAtUri(item.replyUri);
-        const url = `${threadUrl(userHandle, threadDid, threadRkey)}#reply-${replyRkey}`;
+        const url = `${threadUrl(item.bbsHandle, threadDid, threadRkey)}#reply-${replyRkey}`;
         return (
           <Link
             key={item.replyUri}

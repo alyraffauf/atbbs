@@ -120,7 +120,7 @@ export default function Dashboard({ user }: DashboardProps) {
           <p className="text-neutral-400 text-xs mb-4">
             Recent replies from other users.
           </p>
-          <ActivityList items={activity} userHandle={user.handle} />
+          <ActivityList items={activity} />
         </>
       )}
 

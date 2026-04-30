@@ -1,13 +1,15 @@
 /** Activity data — replies to your posts from other users. */
 
-import { fetchAndHydrate, listRecords } from "./atproto";
+import { fetchAndHydrate, listRecords, resolveIdentitiesBatch } from "./atproto";
 import { POST } from "./lexicon";
 import { isPostRecord } from "./recordGuards";
+import { parseAtUri } from "./util";
 
 export interface ActivityItem {
   type: "reply" | "parent_reply";
   threadTitle: string;
   threadUri: string;
+  bbsHandle: string;
   replyUri: string;
   handle: string;
   body: string;
@@ -21,6 +23,7 @@ async function fetchBacklinkItems(
   type: ActivityItem["type"],
   threadTitle: string,
   threadUri: string,
+  bbsHandle: string,
 ): Promise<ActivityItem[]> {
   try {
     const { records } = await fetchAndHydrate(sourceUri, backlinkSource, {
@@ -31,6 +34,7 @@ async function fetchBacklinkItems(
       type,
       threadTitle,
       threadUri,
+      bbsHandle,
       replyUri: record.uri,
       handle: record.handle,
       body: ((record.value.body as string) ?? "").substring(0, 200),
@@ -52,27 +56,40 @@ export async function fetchActivity(
   const rootPosts = validPosts.filter((record) => !record.value.root);
   const replyPosts = validPosts.filter((record) => !!record.value.root);
 
+  const bbsDids = new Set(
+    validPosts.map((record) => parseAtUri(record.value.scope).did),
+  );
+  const bbsIdentities = await resolveIdentitiesBatch([...bbsDids]);
+
   const results = await Promise.all([
-    ...rootPosts.map((post) =>
-      fetchBacklinkItems(
+    ...rootPosts.map((post) => {
+      const bbsDid = parseAtUri(post.value.scope).did;
+      const bbsHandle = bbsIdentities[bbsDid]?.handle;
+      if (!bbsHandle) return Promise.resolve([] as ActivityItem[]);
+      return fetchBacklinkItems(
         post.uri,
         `${POST}:root`,
         did,
         "reply",
         post.value.title ?? "",
         post.uri,
-      ),
-    ),
-    ...replyPosts.map((reply) =>
-      fetchBacklinkItems(
+        bbsHandle,
+      );
+    }),
+    ...replyPosts.map((reply) => {
+      const bbsDid = parseAtUri(reply.value.scope).did;
+      const bbsHandle = bbsIdentities[bbsDid]?.handle;
+      if (!bbsHandle) return Promise.resolve([] as ActivityItem[]);
+      return fetchBacklinkItems(
         reply.uri,
         `${POST}:parent`,
         did,
         "parent_reply",
         "",
         reply.value.root ?? "",
-      ),
-    ),
+        bbsHandle,
+      );
+    }),
   ]);
 
   // Deduplicate — prefer "parent-reply" type when the same reply appears as both.
