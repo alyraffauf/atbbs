@@ -3,7 +3,7 @@ import asyncio
 import httpx
 
 from core.cache import TTLCache
-from core.models import AtUri, BacklinkRef, MiniDoc, Record
+from core.models import BacklinkRef, MiniDoc, Record
 from core.shared import SERVICES
 
 BASE_URL = SERVICES["slingshot"]
@@ -71,11 +71,7 @@ async def get_records_by_uri(
     client: httpx.AsyncClient, uris: list[str]
 ) -> list[Record]:
     """Fetch multiple records by AT-URI, skipping failures."""
-    parsed = [AtUri.parse(uri) for uri in uris]
-    tasks = [
-        get_record(client, at_uri.did, at_uri.collection, at_uri.rkey)
-        for at_uri in parsed
-    ]
+    tasks = [get_record_by_uri(client, uri) for uri in uris]
     results = await asyncio.gather(*tasks, return_exceptions=True)
     return [result for result in results if isinstance(result, Record)]
 
