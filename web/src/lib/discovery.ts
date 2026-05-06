@@ -30,13 +30,12 @@ export async function fetchDiscovery(): Promise<DiscoveredBBS[]> {
   }
   if (!repos.length) return [];
 
-  const shuffled = repos.sort(() => Math.random() - 0.5);
   const identities = await resolveIdentitiesBatch(
-    shuffled.map((repo) => repo.did),
+    repos.map((repo) => repo.did),
   );
 
   const items: DiscoveredBBS[] = [];
-  for (const repo of shuffled) {
+  for (const repo of repos) {
     if (!(repo.did in identities)) continue;
     try {
       const siteRecord = await getRecord(repo.did, SITE, "self");

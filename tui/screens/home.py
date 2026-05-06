@@ -1,5 +1,4 @@
 import asyncio
-import random
 
 import httpx
 from textual import work
@@ -11,6 +10,7 @@ from textual.widgets import Footer, Input, ListItem, ListView, Static
 from tui.widgets.handle_input import HandleInput
 
 from core import lexicon
+from core.constellation import get_backlinks_count
 from core.models import BBSNotFoundError, NetworkError, NoBBSError
 from core.resolver import resolve_bbs
 from core.shared import SERVICES
@@ -144,13 +144,28 @@ class HomeScreen(Screen):
             if resp.status_code != 200:
                 return
             repos = resp.json().get("repos", [])
-            if len(repos) > 5:
-                repos = random.sample(repos, 5)
-
             dids = [repo["did"] for repo in repos]
             authors = await resolve_identities_batch(client, dids)
 
             resolved_dids = [did for did in dids if did in authors]
+
+            async def fetch_pin_count(did: str) -> int:
+                try:
+                    return await get_backlinks_count(
+                        client, did, f"{lexicon.PIN}:did"
+                    )
+                except Exception:
+                    return 0
+
+            counts = await asyncio.gather(
+                *[fetch_pin_count(did) for did in resolved_dids]
+            )
+            ranked_dids = [
+                did
+                for did, _ in sorted(
+                    zip(resolved_dids, counts), key=lambda pair: pair[1], reverse=True
+                )
+            ][:3]
 
             async def fetch_site(did: str):
                 try:
@@ -158,7 +173,7 @@ class HomeScreen(Screen):
                 except Exception:
                     return None
 
-            results = await asyncio.gather(*[fetch_site(did) for did in resolved_dids])
+            results = await asyncio.gather(*[fetch_site(did) for did in ranked_dids])
 
             items = []
             for result in results:

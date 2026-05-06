@@ -40,6 +40,20 @@ async def get_backlinks(
     )
 
 
+async def get_backlinks_count(
+    client: httpx.AsyncClient,
+    subject: str,
+    source: str,
+) -> int:
+    """Query Constellation for the count of records that link to a subject."""
+    resp = await client.get(
+        f"{BASE_URL}/blue.microcosm.links.getBacklinksCount",
+        params={"subject": subject, "source": source},
+    )
+    resp.raise_for_status()
+    return int(resp.json()["total"])
+
+
 async def get_board_activity(
     client: httpx.AsyncClient,
     board_uri: str,

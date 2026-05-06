@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Phone, Copy, Check } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { usePageTitle } from "../hooks/usePageTitle";
-import { discoveryQuery } from "../lib/queries";
+import { discoveryQuery, pinCountsQuery } from "../lib/queries";
 import DialBBS, {
   bbsToSuggestion,
   type Suggestion,
@@ -11,10 +11,22 @@ import DiscoveryList from "../components/dashboard/DiscoveryList";
 
 export default function LoggedOutHome() {
   const { data: discovered } = useQuery(discoveryQuery());
+  const dids = useMemo(
+    () => discovered?.map((bbs) => bbs.did) ?? [],
+    [discovered],
+  );
+  const { data: pinCounts } = useQuery(pinCountsQuery(dids));
   const suggestions = useMemo<Suggestion[] | undefined>(
     () => discovered?.map(bbsToSuggestion),
     [discovered],
   );
+  const rankedByPins = useMemo(() => {
+    if (!discovered) return undefined;
+    if (!pinCounts) return discovered;
+    return [...discovered].sort(
+      (a, b) => (pinCounts[b.did] ?? 0) - (pinCounts[a.did] ?? 0),
+    );
+  }, [discovered, pinCounts]);
   const [tab, setTab] = useState<"brew" | "uv" | "telnet">("brew");
   const [copied, setCopied] = useState(false);
   usePageTitle("atbbs");
@@ -73,7 +85,7 @@ export default function LoggedOutHome() {
         <div className="mb-6">
           <DialBBS discovered={discovered} suggestions={suggestions} />
         </div>
-        {discovered && <DiscoveryList discovered={discovered} />}
+        {rankedByPins && <DiscoveryList discovered={rankedByPins} limit={3} />}
       </div>
 
       <div className="border-t border-neutral-800 py-4">

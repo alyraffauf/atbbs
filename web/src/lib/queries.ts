@@ -6,7 +6,9 @@ import {
   fetchIdentityDoc,
   fetchAvatarUrl,
   fetchBacklinkCount,
+  getBacklinkCountsBatch,
 } from "./atproto";
+import { PIN } from "./lexicon";
 import { STALE_SLOW } from "./queryClient";
 import { resolveBBS } from "./bbs";
 import { fetchNews } from "./news";
@@ -88,6 +90,13 @@ export const discoveryQuery = () =>
   queryOptions({
     queryKey: ["discovery"] as const,
     queryFn: fetchDiscovery,
+  });
+
+export const pinCountsQuery = (dids: string[]) =>
+  queryOptions({
+    queryKey: ["pin-counts", [...dids].sort()] as const,
+    queryFn: () => getBacklinkCountsBatch(dids, `${PIN}:did`),
+    enabled: dids.length > 0,
   });
 
 export const homeSysopQuery = (did: string) =>

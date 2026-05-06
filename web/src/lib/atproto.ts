@@ -224,7 +224,9 @@ export async function fetchBacklinkCount(
   source: string,
 ): Promise<number> {
   try {
-    const { total } = await getBacklinks(subject, source, 1);
+    const { total } = await fetchJson<{ total: number }>(
+      `${CONSTELLATION}/blue.microcosm.links.getBacklinksCount?subject=${encodeURIComponent(subject)}&source=${encodeURIComponent(source)}`,
+    );
     return total;
   } catch {
     return 0;
