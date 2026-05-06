@@ -213,9 +213,11 @@ export async function getBacklinks(
   source: string,
   limit = 50,
   cursor?: string,
+  did?: string,
 ): Promise<BacklinksResponse> {
   let url = `${CONSTELLATION}/blue.microcosm.links.getBacklinks?subject=${encodeURIComponent(subject)}&source=${encodeURIComponent(source)}&limit=${limit}`;
   if (cursor) url += `&cursor=${encodeURIComponent(cursor)}`;
+  if (did) url += `&did=${encodeURIComponent(did)}`;
   return fetchJson<BacklinksResponse>(url);
 }
 

@@ -62,7 +62,7 @@ async def _resolve_bbs(client: httpx.AsyncClient, handle: str) -> BBS:
         board_tasks.append(
             get_record(client, parsed.did, parsed.collection, parsed.rkey)
         )
-    news_task = get_root_posts(client, site_uri)
+    news_task = get_root_posts(client, site_uri, did=identity.did)
 
     results = await asyncio.gather(*board_tasks, news_task, return_exceptions=True)
     board_records = results[: len(board_uris)]
@@ -83,12 +83,11 @@ async def _resolve_bbs(client: httpx.AsyncClient, handle: str) -> BBS:
             )
         )
 
-    # Hydrate news posts (only from the sysop's repo)
+    # Hydrate news posts (only from the sysop's repo — server-side filtered)
     if isinstance(news_result, BaseException):
         news_records = []
     else:
-        sysop_news = [ref for ref in news_result.records if ref.did == identity.did]
-        news_records = await get_records_batch(client, sysop_news)
+        news_records = await get_records_batch(client, news_result.records)
     news = [post_from_record(record, identity) for record in news_records]
     news.sort(key=lambda post: post.created_at, reverse=True)
 

@@ -13,6 +13,7 @@ async def get_backlinks(
     source: str,
     limit: int = 50,
     cursor: str | None = None,
+    did: str | None = None,
 ) -> BacklinksResponse:
     """Query Constellation for records that link to a subject."""
     params: dict[str, str | int] = {
@@ -22,6 +23,8 @@ async def get_backlinks(
     }
     if cursor is not None:
         params["cursor"] = cursor
+    if did is not None:
+        params["did"] = did
     resp = await client.get(
         f"{BASE_URL}/blue.microcosm.links.getBacklinks",
         params=params,
@@ -75,6 +78,7 @@ async def get_root_posts(
     scope_uri: str,
     limit: int = 50,
     cursor: str | None = None,
+    did: str | None = None,
 ) -> BacklinksResponse:
     """Get root posts (threads or news) pointing at a scope (board or site)."""
     return await get_backlinks(
@@ -83,6 +87,7 @@ async def get_root_posts(
         source=f"{lexicon.POST}:scope",
         limit=limit,
         cursor=cursor,
+        did=did,
     )
 
 

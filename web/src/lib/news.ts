@@ -8,13 +8,16 @@ import type { NewsPost } from "./bbs";
 
 export async function fetchNews(bbsDid: string): Promise<NewsPost[]> {
   const siteUri = makeAtUri(bbsDid, SITE, "self");
-  const backlinks = await getBacklinks(siteUri, `${POST}:scope`, 50).catch(
-    () => null,
-  );
+  const backlinks = await getBacklinks(
+    siteUri,
+    `${POST}:scope`,
+    50,
+    undefined,
+    bbsDid,
+  ).catch(() => null);
   if (!backlinks) return [];
 
-  const sysopRefs = backlinks.records.filter((ref) => ref.did === bbsDid);
-  const records = await getRecordsBatch(sysopRefs);
+  const records = await getRecordsBatch(backlinks.records);
 
   const news: NewsPost[] = records
     .filter(isPostRecord)

@@ -57,15 +57,21 @@ class SysopDeleteScreen(Screen):
         # Delete sysop's news posts (posts scoped to site)
         site_uri = make_at_uri(session["did"], lexicon.SITE, "self")
         try:
-            backlinks = await get_root_posts(client, site_uri)
-            for ref in backlinks.records:
-                if ref.did == session["did"]:
+            cursor: str | None = None
+            while True:
+                backlinks = await get_root_posts(
+                    client, site_uri, limit=100, cursor=cursor, did=session["did"]
+                )
+                for ref in backlinks.records:
                     try:
                         await delete_record(
                             client, session, lexicon.POST, ref.rkey, updater
                         )
                     except Exception:
                         failed.append(f"post/{ref.rkey}")
+                cursor = backlinks.cursor
+                if not cursor:
+                    break
         except Exception:
             failed.append("news lookup")
 

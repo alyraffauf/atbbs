@@ -28,16 +28,24 @@ export async function deleteBBS(agent: Client, did: string, pdsUrl: string) {
   // Delete sysop's news posts (posts scoped to the site)
   const siteUri = makeAtUri(did, SITE, "self");
   try {
-    const backlinks = await getBacklinks(siteUri, `${POST}:scope`, 100);
-    for (const ref of backlinks.records) {
-      if (ref.did === did) {
+    let cursor: string | undefined;
+    do {
+      const backlinks = await getBacklinks(
+        siteUri,
+        `${POST}:scope`,
+        100,
+        cursor,
+        did,
+      );
+      for (const ref of backlinks.records) {
         try {
           await deleteRecord(agent, POST, ref.rkey);
         } catch {
           failed.push(`post/${ref.rkey}`);
         }
       }
-    }
+      cursor = backlinks.cursor;
+    } while (cursor);
   } catch {
     failed.push("news lookup");
   }
