@@ -82,22 +82,6 @@ async def fetch_authserver_meta(client: httpx.AsyncClient, url: str) -> dict:
     return meta
 
 
-def client_assertion_jwt(client_id: str, authserver_url: str, client_secret_jwk) -> str:
-    """Create a signed JWT asserting our client identity."""
-    return jwt.encode(
-        {"alg": "ES256", "kid": client_secret_jwk["kid"]},
-        {
-            "iss": client_id,
-            "sub": client_id,
-            "aud": authserver_url,
-            "jti": generate_token(),
-            "iat": int(time.time()),
-            "exp": int(time.time()) + 60,
-        },
-        client_secret_jwk,
-    ).decode("utf-8")
-
-
 def authserver_dpop_jwt(method: str, url: str, nonce: str, dpop_private_jwk) -> str:
     """Create a DPoP proof JWT for auth server requests."""
     dpop_pub_jwk = json.loads(dpop_private_jwk.as_json(is_private=False))
@@ -178,12 +162,9 @@ async def auth_server_post(
     post_data: dict,
 ) -> tuple[str, httpx.Response]:
     """POST to auth server with client assertion and DPoP, handling nonce rotation."""
-    assertion = client_assertion_jwt(client_id, authserver_url, client_secret_jwk)
     post_data = {
         **post_data,
         "client_id": client_id,
-        "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-        "client_assertion": assertion,
     }
 
     assert is_safe_url(post_url)
