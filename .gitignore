@@ -30,3 +30,6 @@ seeds/
 !.dev.vars.example
 .env*
 !.env.example
+
+# nix
+result
