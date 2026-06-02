@@ -3,7 +3,7 @@ import asyncio
 import httpx
 
 from core.cache import TTLCache
-from core.models import BacklinkRef, MiniDoc, Record
+from core.models import AtUri, BacklinkRef, MiniDoc, Record
 from core.shared import SERVICES
 
 BASE_URL = SERVICES["slingshot"]
@@ -26,13 +26,8 @@ async def get_record(
 
 async def get_record_by_uri(client: httpx.AsyncClient, at_uri: str) -> Record:
     """Fetch a single record by AT-URI."""
-    resp = await client.get(
-        f"{BASE_URL}/blue.microcosm.repo.getRecordByUri",
-        params={"uri": at_uri},
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    return Record(uri=data["uri"], cid=data["cid"], value=data["value"])
+    parsed = AtUri.parse(at_uri)
+    return await get_record(client, parsed.did, parsed.collection, parsed.rkey)
 
 
 async def resolve_identity(client: httpx.AsyncClient, identifier: str) -> MiniDoc:
