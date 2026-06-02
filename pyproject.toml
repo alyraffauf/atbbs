@@ -20,6 +20,7 @@ build-backend = "hatchling.build"
 
 [project.scripts]
 atbbs = "cli.__main__:main"
+atbbs-telnet = "telnet.server:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["cli", "core", "telnet", "tui"]

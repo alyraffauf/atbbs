@@ -81,7 +81,7 @@ async def write(writer: asyncio.StreamWriter, text: str):
 
 
 async def prompt(
-    reader: asyncio.streamReader, writer: asyncio.StreamWriter, label: str = "> "
+    reader: asyncio.StreamReader, writer: asyncio.StreamWriter, label: str = "> "
 ) -> str:
     """Handle prompt + inactivity timeouts safely."""
     await write(writer, label)
@@ -292,12 +292,16 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
         writer.close()
 
 
-async def main(host: str = "0.0.0.0", port: int = 2323):
+async def _main(host: str = "0.0.0.0", port: int = 2323):
     server = await asyncio.start_server(handle_client, host, port, limit=256)
     print(f"Telnet BBS gateway listening on {host}:{port}")
     async with server:
         await server.serve_forever()
 
 
+def main():
+    asyncio.run(_main())
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

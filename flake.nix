@@ -28,14 +28,14 @@
 
     packages = forEachSupportedSystem (
       {pkgs, ...}: {
-        default = pkgs.python3Packages.buildPythonPackage {
+        default = pkgs.python314Packages.buildPythonPackage {
           pname = "atbbs";
           version = "dev";
           src = ./.;
           pyproject = true;
-          build-system = [pkgs.python3Packages.hatchling];
+          build-system = [pkgs.python314Packages.hatchling];
 
-          dependencies = with pkgs.python3Packages; [
+          dependencies = with pkgs.python314Packages; [
             aiohttp
             authlib
             httpx
