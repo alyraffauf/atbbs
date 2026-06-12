@@ -3,6 +3,9 @@ from textual.screen import Screen
 from textual.widgets import Footer, ListItem, ListView, Static
 
 from core.models import BBS
+from tui.screens.sysop.delete import SysopDeleteScreen
+from tui.screens.sysop.edit import SysopEditScreen
+from tui.screens.sysop.moderate import SysopModerateScreen
 
 
 class SysopScreen(Screen):
@@ -28,14 +31,8 @@ class SysopScreen(Screen):
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         name = event.item.name
         if name == "edit":
-            from tui.screens.sysop.edit import SysopEditScreen
-
             self.app.push_screen(SysopEditScreen(self.bbs, self.handle))
         elif name == "moderate":
-            from tui.screens.sysop.moderate import SysopModerateScreen
-
             self.app.push_screen(SysopModerateScreen(self.bbs, self.handle))
         elif name == "delete":
-            from tui.screens.sysop.delete import SysopDeleteScreen
-
             self.app.push_screen(SysopDeleteScreen(self.bbs, self.handle))
