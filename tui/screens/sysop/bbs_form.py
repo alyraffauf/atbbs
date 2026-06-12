@@ -5,6 +5,8 @@ description, intro, boards) and the same board add/remove behavior.
 This mixin provides all of that so neither screen has to duplicate it.
 """
 
+import re
+
 from textual.containers import VerticalScroll
 from textual.widgets import Input, Static, TextArea
 
@@ -49,7 +51,9 @@ class BBSFormMixin:
         )
         for board in self._boards:
             slug = board["slug"]
-            yield Static(f"  {slug}", classes="subtitle", id=f"board-label-{slug}")
+            yield Input(
+                value=slug, id=f"board-slug-{slug}", max_length=limits.BOARD_SLUG
+            )
             yield Input(
                 value=board["name"],
                 id=f"board-name-{slug}",
@@ -60,6 +64,7 @@ class BBSFormMixin:
                 id=f"board-desc-{slug}",
                 max_length=limits.BOARD_DESCRIPTION,
             )
+            yield Static("", id=f"board-spacer-{slug}", classes="board-spacer")
 
     # -- Board add / remove actions ------------------------------------------
 
@@ -74,16 +79,30 @@ class BBSFormMixin:
         )
 
         scroll = self.query_one("#edit-scroll", VerticalScroll)
-        label = Static(f"  {slug}", classes="subtitle", id=f"board-label-{slug}")
+        slug_input = Input(
+            value=slug,
+            id=f"board-slug-{slug}",
+            placeholder="board-slug",
+            max_length=limits.BOARD_SLUG,
+        )
         name_input = Input(
-            value=slug, id=f"board-name-{slug}", max_length=limits.BOARD_NAME
+            value="",
+            id=f"board-name-{slug}",
+            placeholder="board name",
+            max_length=limits.BOARD_NAME,
         )
         desc_input = Input(
-            value="", id=f"board-desc-{slug}", max_length=limits.BOARD_DESCRIPTION
+            value="",
+            id=f"board-desc-{slug}",
+            placeholder="board description",
+            max_length=limits.BOARD_DESCRIPTION,
         )
-        scroll.mount(label)
+        scroll.mount(slug_input)
         scroll.mount(name_input)
         scroll.mount(desc_input)
+        scroll.mount(
+            Static("", id=f"board-spacer-{slug}", classes="board-spacer")
+        )
         name_input.focus()
 
     def action_remove_board(self) -> None:
@@ -94,9 +113,10 @@ class BBSFormMixin:
         removed_board = self._boards.pop()
         slug = removed_board["slug"]
         for widget_id in (
-            f"board-label-{slug}",
+            f"board-slug-{slug}",
             f"board-name-{slug}",
             f"board-desc-{slug}",
+            f"board-spacer-{slug}",
         ):
             try:
                 self.query_one(f"#{widget_id}").remove()
@@ -124,9 +144,11 @@ class BBSFormMixin:
         """
         boards = []
         for board in self._boards:
-            slug = board["slug"]
-            name = self.query_one(f"#board-name-{slug}", Input).value.strip()
-            description = self.query_one(f"#board-desc-{slug}", Input).value.strip()
+            slug = self.query_one(f"#board-slug-{board['slug']}", Input).value.strip()
+            name = self.query_one(f"#board-name-{board['slug']}", Input).value.strip()
+            description = self.query_one(
+                f"#board-desc-{board['slug']}", Input
+            ).value.strip()
             boards.append(
                 {
                     "slug": slug,
@@ -145,6 +167,16 @@ class BBSFormMixin:
         if not name:
             self.notify("Name cannot be empty.", severity="error")
             return False
+        for board in self._boards:
+            slug = self.query_one(f"#board-slug-{board['slug']}", Input).value.strip()
+            if not slug:
+                self.notify("Board slug cannot be empty.", severity="error")
+                return False
+            if not re.fullmatch(r"[a-zA-Z0-9_-]+", slug):
+                self.notify(
+                    "Slug may only contain a-z, A-Z, 0-9, _, -", severity="error"
+                )
+                return False
         if len(intro) > limits.SITE_INTRO:
             self.notify(
                 f"Intro too long ({len(intro)}/{limits.SITE_INTRO}).",

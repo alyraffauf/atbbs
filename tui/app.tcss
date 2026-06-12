@@ -34,6 +34,10 @@ Screen {
 }
 
 /* board list */
+.board-spacer {
+    height: 1;
+}
+
 ListView {
     height: auto;
     background: transparent;
