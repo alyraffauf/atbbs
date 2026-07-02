@@ -20,7 +20,7 @@
   },
   "oauth_base_scopes": ["atproto", "blob:*/*"],
   "services": {
-    "slingshot": "https://slingshot.microcosm.blue/xrpc",
+    "slingshot": "https://slingshot.cute.haus/xrpc",
     "constellation": "https://constellation.microcosm.blue/xrpc",
     "lightrail": "https://lightrail.microcosm.blue/xrpc"
   },
