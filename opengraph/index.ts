@@ -28,6 +28,14 @@ interface Metadata {
   title: string;
   subtitle: string;
   description: string;
+  atTags: AtTags;
+}
+
+interface AtTags {
+  canonical: string;
+  author: string;
+  alternate?: string;
+  me: string;
 }
 
 interface SlingshotIdentity {
@@ -134,6 +142,11 @@ async function fetchMetadata(route: Route): Promise<Metadata | null> {
         title: siteRecord.value.name,
         subtitle: "",
         description: siteRecord.value.description || "",
+        atTags: {
+          canonical: siteRecord.uri,
+          author: identity.did,
+          me: identity.did,
+        },
       };
     }
   } else if (route.type === "board") {
@@ -148,6 +161,11 @@ async function fetchMetadata(route: Route): Promise<Metadata | null> {
         title: boardRecord.value.name,
         subtitle: siteName,
         description: boardRecord.value.description || "",
+        atTags: {
+          canonical: boardRecord.uri,
+          author: identity.did,
+          me: identity.did,
+        },
       };
     }
   } else if (route.type === "thread") {
@@ -162,6 +180,12 @@ async function fetchMetadata(route: Route): Promise<Metadata | null> {
         title: postRecord.value.title || "Thread",
         subtitle: siteName,
         description: postRecord.value.body || "",
+        atTags: {
+          canonical: postRecord.uri,
+          author: route.did!,
+          alternate: postRecord.value.root,
+          me: identity.did,
+        },
       };
     }
   } else if (route.type === "news") {
@@ -176,6 +200,11 @@ async function fetchMetadata(route: Route): Promise<Metadata | null> {
         title: postRecord.value.title || "News",
         subtitle: siteName,
         description: postRecord.value.body || "",
+        atTags: {
+          canonical: postRecord.uri,
+          author: identity.did,
+          me: identity.did,
+        },
       };
     }
   }
@@ -239,6 +268,7 @@ function injectMetadata(
   description: string,
   pageUrl: string,
   imageUrl: string,
+  atTags: AtTags,
 ): string {
   const safeTitle = escapeHtml(title);
   const safeDescription = escapeHtml(description.substring(0, 200));
@@ -269,7 +299,27 @@ function injectMetadata(
     );
   }
 
+  const atTagMarkup = renderAtTags(atTags);
+  html = html.replace("</head>", `${atTagMarkup}\n  </head>`);
+
   return html;
+}
+
+function renderAtTags(atTags: AtTags): string {
+  const tags = [
+    ["at:canonical", atTags.canonical],
+    ["at:author", atTags.author],
+    ["at:alternate", atTags.alternate],
+    ["at:me", atTags.me],
+  ];
+
+  return tags
+    .filter(([, value]) => value)
+    .map(
+      ([name, value]) =>
+        `    <meta name="${name}" content="${escapeHtml(value!)}" />`,
+    )
+    .join("\n");
 }
 
 // Entry point
@@ -327,6 +377,7 @@ export default {
           metadata.description,
           url.toString(),
           imageUrl,
+          metadata.atTags,
         );
       }
     } catch {
