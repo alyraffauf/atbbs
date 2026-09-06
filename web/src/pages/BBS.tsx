@@ -35,7 +35,7 @@ const INITIAL_NEWS_COUNT = 3;
 
 export default function BBSPage() {
   const { handle } = useParams();
-  const { user, agent } = useAuth();
+  const { user, repo } = useAuth();
   const [newsTitle, setNewsTitle] = useState("");
   const [newsBody, setNewsBody] = useState("");
   const [newsFiles, setNewsFiles] = useState<File[]>([]);
@@ -63,10 +63,10 @@ export default function BBSPage() {
       body: string;
       files: File[];
     }) => {
-      if (!agent) throw new Error("Not signed in");
+      if (!repo) throw new Error("Not signed in");
       const siteUri = makeAtUri(bbs.identity.did, SITE, "self");
-      const attachments = await uploadAttachments(agent, input.files);
-      const resp = await createPost(agent, siteUri, input.body, {
+      const attachments = await uploadAttachments(repo, input.files);
+      const resp = await createPost(repo, siteUri, input.body, {
         title: input.title,
         attachments,
       });

@@ -3,7 +3,7 @@ import { threadPageQuery, threadRefsQuery } from "./queries";
 import { REPLIES_PER_PAGE, refToUri } from "./replies";
 import type { BacklinkRef } from "./atproto";
 import type { ReplyPage } from "./thread";
-import type { Reply } from "../components/post/ReplyCard";
+import type { Reply } from "./replies";
 import type { BoundedResult } from "./atproto";
 
 export async function cancelRefsRefetch(threadUri: string) {
@@ -66,21 +66,12 @@ export function appendRefAndReply(
 export function removeRefAndReply(
   threadUri: string,
   replyUri: string,
-  currentPage: number,
 ) {
   const previousRefs = getRefs(threadUri);
-  const oldPageRefs = pageSlice(previousRefs, currentPage);
-  const oldKey = threadPageQuery(threadUri, currentPage, oldPageRefs).queryKey;
-  const oldData = queryClient.getQueryData<ReplyPage>(oldKey);
-
   const updatedRefs = previousRefs.filter((ref) => refToUri(ref) !== replyUri);
   setRefs(threadUri, updatedRefs);
-
-  if (!oldData) return;
-  const pageRefs = pageSlice(updatedRefs, currentPage);
-  const newKey = threadPageQuery(threadUri, currentPage, pageRefs).queryKey;
-  queryClient.setQueryData<ReplyPage>(newKey, {
-    ...oldData,
-    replies: oldData.replies.filter((r) => r.uri !== replyUri),
+  queryClient.removeQueries({
+    queryKey: ["thread-page", threadUri],
   });
+  void queryClient.invalidateQueries({ queryKey: ["thread-page", threadUri] });
 }

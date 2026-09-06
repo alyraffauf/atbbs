@@ -14,7 +14,7 @@ import ListSkeleton from "../components/layout/ListSkeleton";
 
 export default function Profile() {
   const { handle } = useParams();
-  const { user, agent } = useAuth();
+  const { user, repo } = useAuth();
   const [editing, setEditing] = useState(false);
 
   const { data: profile } = useQuery(profileQuery(handle!));
@@ -33,8 +33,8 @@ export default function Profile() {
       pronouns?: string;
       bio?: string;
     }) => {
-      if (!agent) throw new Error("Not signed in");
-      await putProfile(agent, input.name, input.pronouns, input.bio);
+      if (!repo) throw new Error("Not signed in");
+      await putProfile(repo, input.name, input.pronouns, input.bio);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(profileQuery(handle!));

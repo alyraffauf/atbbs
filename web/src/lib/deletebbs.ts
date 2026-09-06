@@ -1,12 +1,21 @@
 /** Delete a user's entire BBS: boards, news posts, bans, hides, then the site record. */
 
-import type { Client } from "@atcute/client";
-import { getRecord, getBacklinks, listRecords } from "./atproto";
+import type { AuthenticatedRepo } from "./repository";
+import {
+  getRecord,
+  getBacklinks,
+  listRecords,
+  requireComplete,
+} from "./atproto";
 import { BAN, BOARD, HIDE, POST, SITE } from "./lexicon";
 import { makeAtUri, parseAtUri } from "./util";
 import { deleteRecord } from "./writes";
 
-export async function deleteBBS(agent: Client, did: string, pdsUrl: string) {
+export async function deleteBBS(
+  repo: AuthenticatedRepo,
+  did: string,
+  pdsUrl: string,
+) {
   const failed: string[] = [];
 
   const existing = await getRecord(did, SITE, "self");
@@ -19,7 +28,7 @@ export async function deleteBBS(agent: Client, did: string, pdsUrl: string) {
   for (const uri of boardUris) {
     try {
       const { rkey } = parseAtUri(uri);
-      await deleteRecord(agent, BOARD, rkey);
+      await deleteRecord(repo, BOARD, rkey);
     } catch {
       failed.push(`board/${uri}`);
     }
@@ -29,7 +38,9 @@ export async function deleteBBS(agent: Client, did: string, pdsUrl: string) {
   const siteUri = makeAtUri(did, SITE, "self");
   try {
     let cursor: string | undefined;
-    do {
+    const seenCursors = new Set<string>();
+    const newsRefs = [];
+    for (let page = 0; page < 100; page++) {
       const backlinks = await getBacklinks(
         siteUri,
         `${POST}:scope`,
@@ -37,24 +48,29 @@ export async function deleteBBS(agent: Client, did: string, pdsUrl: string) {
         cursor,
         did,
       );
-      for (const ref of backlinks.records) {
-        try {
-          await deleteRecord(agent, POST, ref.rkey);
-        } catch {
-          failed.push(`post/${ref.rkey}`);
-        }
-      }
+      newsRefs.push(...backlinks.records);
       cursor = backlinks.cursor ?? undefined;
-    } while (cursor);
+      if (!cursor) break;
+      if (seenCursors.has(cursor)) throw new Error("Repeated news cursor");
+      seenCursors.add(cursor);
+      if (page === 99) throw new Error("News listing exceeded 100 pages");
+    }
+    for (const ref of newsRefs) {
+      try {
+        await deleteRecord(repo, POST, ref.rkey);
+      } catch {
+        failed.push(`post/${ref.rkey}`);
+      }
+    }
   } catch {
     failed.push("news lookup");
   }
 
   for (const collection of [BAN, HIDE]) {
-    const records = (await listRecords(pdsUrl, did, collection)).items;
+    const records = requireComplete(await listRecords(pdsUrl, did, collection));
     for (const record of records) {
       try {
-        await deleteRecord(agent, collection, parseAtUri(record.uri).rkey);
+        await deleteRecord(repo, collection, parseAtUri(record.uri).rkey);
       } catch {
         failed.push(`${collection}/${parseAtUri(record.uri).rkey}`);
       }
@@ -67,5 +83,5 @@ export async function deleteBBS(agent: Client, did: string, pdsUrl: string) {
     );
   }
 
-  await deleteRecord(agent, SITE, "self");
+  await deleteRecord(repo, SITE, "self");
 }

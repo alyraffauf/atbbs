@@ -10,6 +10,17 @@ export async function requireAuthLoader() {
   return null;
 }
 
+export async function requireNoBBSLoader() {
+  const user = await requireAuth();
+  try {
+    await queryClient.ensureQueryData(bbsQuery(user.handle));
+    throw redirect(`/bbs/${encodeURIComponent(user.handle)}`);
+  } catch (error) {
+    if (error instanceof NoBBSError) return null;
+    throw error;
+  }
+}
+
 /** Loader for /account/edit and /account/moderate — requires auth AND an
  *  existing BBS. Warms the Query cache so the page's useSuspenseQuery
  *  lands on fresh data with no flash. */

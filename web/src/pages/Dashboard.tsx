@@ -12,10 +12,8 @@ import {
 } from "../lib/queries";
 import { queryClient } from "../lib/queryClient";
 import { invalidateAllBBSCaches } from "../lib/bbs";
-import DialBBS, {
-  bbsToSuggestion,
-  type Suggestion,
-} from "../components/dashboard/DialBBS";
+import DialBBS from "../components/dashboard/DialBBS";
+import { bbsToSuggestion, type Suggestion } from "../lib/suggestions";
 import PinnedList from "../components/dashboard/PinnedList";
 import MyThreadList from "../components/dashboard/MyThreadList";
 import ActivityList from "../components/dashboard/ActivityList";
@@ -34,7 +32,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ user }: DashboardProps) {
-  const { agent } = useAuth();
+  const { repo } = useAuth();
   const [tab, setTab] = useState<Tab>("inbox");
   usePageTitle("atbbs");
 
@@ -57,8 +55,8 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const deleteBBSMutation = useMutation({
     mutationFn: async () => {
-      if (!agent) throw new Error("Not signed in");
-      await deleteBBS(agent, user.did, user.pdsUrl);
+      if (!repo) throw new Error("Not signed in");
+      await deleteBBS(repo, user.did, user.pdsUrl);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(homeSysopQuery(user.did));
@@ -161,4 +159,3 @@ export default function Dashboard({ user }: DashboardProps) {
     </>
   );
 }
-

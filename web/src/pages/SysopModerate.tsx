@@ -79,9 +79,9 @@ export default function SysopModerate() {
     ban.mutate(id, { onSuccess: () => setIdentifier("") });
   }
 
-  function onUnban(rkey: string) {
+  function onUnban(rkeys: string[]) {
     if (!confirm("Unban this user?")) return;
-    unban.mutate(rkey);
+    unban.mutate(rkeys);
   }
 
   function onHide() {
@@ -93,9 +93,9 @@ export default function SysopModerate() {
     hide.mutate(uri, { onSuccess: () => setHideUri("") });
   }
 
-  function onUnhide(rkey: string) {
+  function onUnhide(rkeys: string[]) {
     if (!confirm("Unhide this post?")) return;
-    unhide.mutate(rkey);
+    unhide.mutate(rkeys);
   }
 
   return (

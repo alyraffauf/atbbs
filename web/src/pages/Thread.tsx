@@ -35,28 +35,28 @@ import { alertOnError } from "../lib/alerts";
 import type { BacklinkRef } from "../lib/atproto";
 import type { BBS } from "../lib/bbs";
 import PageNav from "../components/nav/PageNav";
-import ReplyCard, { type Reply } from "../components/post/ReplyCard";
+import ReplyCard from "../components/post/ReplyCard";
+import type { Reply } from "../lib/replies";
 import ComposeForm from "../components/form/ComposeForm";
 import ThreadCard from "../components/post/ThreadCard";
 
 export default function ThreadPage() {
   const { handle, did, tid } = useParams();
   const threadUri = threadUriFor(did!, tid!);
-  const { user, agent } = useAuth();
+  const { user, repo } = useAuth();
   const navigate = useNavigate();
 
   const { data: bbs } = useSuspenseQuery(bbsQuery(handle!));
   const { data: thread } = useSuspenseQuery(
     threadRootQuery(bbs.identity.did, did!, tid!),
   );
-  const { data: moderation } = useSuspenseQuery(
+  const { data: moderation, isError: moderationIsStale } = useSuspenseQuery(
     bbsModerationQuery(bbs.identity.pds ?? "", bbs.identity.did),
   );
   const {
     page,
     setPage,
     totalPages,
-    refs,
     replies,
     parentReplies,
     truncated,
@@ -98,10 +98,10 @@ export default function ThreadPage() {
       parent: string | null;
       files: File[];
     }) => {
-      if (!agent || !user) throw new Error("Not signed in");
+      if (!repo || !user) throw new Error("Not signed in");
       const boardUri = makeAtUri(bbs.identity.did, BOARD, thread.boardSlug);
-      const attachments = await uploadAttachments(agent, input.files);
-      const resp = await createPost(agent, boardUri, input.body, {
+      const attachments = await uploadAttachments(repo, input.files);
+      const resp = await createPost(repo, boardUri, input.body, {
         root: threadUri,
         parent: input.parent ?? undefined,
         attachments,
@@ -145,14 +145,14 @@ export default function ThreadPage() {
 
   const deleteReplyMutation = useMutation({
     mutationFn: async (reply: Reply) => {
-      if (!agent) throw new Error("Not signed in");
-      await deleteRecord(agent, POST, reply.rkey);
+      if (!repo) throw new Error("Not signed in");
+      await deleteRecord(repo, POST, reply.rkey);
       return reply;
     },
     onMutate: async (reply) => {
       await cancelRefsRefetch(threadUri);
       const previousRefs = getRefs(threadUri);
-      removeRefAndReply(threadUri, reply.uri, page);
+      removeRefAndReply(threadUri, reply.uri);
       return { previousRefs };
     },
     onError: (err, _reply, context) => {
@@ -163,8 +163,8 @@ export default function ThreadPage() {
 
   const deleteThreadMutation = useMutation({
     mutationFn: async () => {
-      if (!agent) throw new Error("Not signed in");
-      await deleteRecord(agent, POST, thread.rkey);
+      if (!repo) throw new Error("Not signed in");
+      await deleteRecord(repo, POST, thread.rkey);
     },
     onSuccess: () => {
       if (user) {
@@ -206,7 +206,10 @@ export default function ThreadPage() {
 
   function onUnban(rkey: string) {
     if (!confirm("Unban this user?")) return;
-    unban.mutate(rkey);
+    const rkeys = Object.values(moderation.banRkeys).find((items) =>
+      items.includes(rkey),
+    );
+    if (rkeys) unban.mutate(rkeys);
   }
 
   function onHide(uri: string) {
@@ -216,7 +219,10 @@ export default function ThreadPage() {
 
   function onUnhide(rkey: string) {
     if (!confirm("Unhide this post?")) return;
-    unhide.mutate(rkey);
+    const rkeys = Object.values(moderation.hideRkeys).find((items) =>
+      items.includes(rkey),
+    );
+    if (rkeys) unhide.mutate(rkeys);
   }
 
   if (threadHidden) {
@@ -229,6 +235,11 @@ export default function ThreadPage() {
 
   return (
     <>
+      {moderationIsStale && (
+        <p className="text-xs text-amber-500 mb-3">
+          Moderation data could not be refreshed. Showing verified cached data.
+        </p>
+      )}
       <ThreadCard
         thread={thread}
         userDid={user?.did}

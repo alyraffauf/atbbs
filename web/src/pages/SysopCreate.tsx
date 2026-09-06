@@ -1,7 +1,7 @@
 import { useState, type SyntheticEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
-import { putBoard, putSite } from "../lib/writes";
+import { createBoard, createSite, deleteRecord } from "../lib/writes";
 import { BOARD } from "../lib/lexicon";
 import { DEFAULT_BOARD } from "../lib/shared";
 import { makeAtUri, nowIso } from "../lib/util";
@@ -14,7 +14,7 @@ import BoardRowEditor, {
 } from "../components/form/BoardRowEditor";
 
 export default function SysopCreate() {
-  const { user, agent } = useAuth();
+  const { user, repo } = useAuth();
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
@@ -33,7 +33,7 @@ export default function SysopCreate() {
 
   async function onSubmit(e: SyntheticEvent) {
     e.preventDefault();
-    if (!agent || !user) return;
+    if (!repo || !user) return;
     const cleanBoards = boards
       .map((board) => ({
         slug: board.slug.trim(),
@@ -50,17 +50,19 @@ export default function SysopCreate() {
       return;
     }
     const now = nowIso();
+    const createdSlugs: string[] = [];
     try {
       for (const board of cleanBoards) {
-        await putBoard(
-          agent,
+        await createBoard(
+          repo,
           board.slug,
           board.name || board.slug,
           board.description,
           now,
         );
+        createdSlugs.push(board.slug);
       }
-      await putSite(agent, {
+      await createSite(repo, {
         name: name.trim(),
         description: description.trim(),
         intro,
@@ -71,6 +73,13 @@ export default function SysopCreate() {
       });
       navigate(bbsUrl(user.handle));
     } catch {
+      for (const slug of [...createdSlugs].reverse()) {
+        try {
+          await deleteRecord(repo, BOARD, slug);
+        } catch {
+          // Preserve the original create failure; incomplete cleanup is retryable.
+        }
+      }
       setError("Could not create community.");
     }
   }

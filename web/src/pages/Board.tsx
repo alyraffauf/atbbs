@@ -54,7 +54,7 @@ async function refetchUntilIndexed(boardKey: QueryKey, threadUri: string) {
 
 export default function BoardPage() {
   const { handle, slug } = useParams();
-  const { user, agent } = useAuth();
+  const { user, repo } = useAuth();
   const navigate = useNavigate();
 
   const { data: bbs } = useSuspenseQuery(bbsQuery(handle!));
@@ -67,7 +67,7 @@ export default function BoardPage() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery(boardThreadsInfiniteQuery(bbs.identity.did, slug!));
-  const { data: moderation } = useQuery(
+  const { data: moderation, isError: moderationIsStale } = useQuery(
     bbsModerationQuery(bbs.identity.pds ?? "", bbs.identity.did),
   );
   const isSysop = !!(user && user.did === bbs.identity.did);
@@ -100,10 +100,10 @@ export default function BoardPage() {
       body: string;
       files: File[];
     }) => {
-      if (!agent) throw new Error("Not signed in");
+      if (!repo) throw new Error("Not signed in");
       const boardUri = makeAtUri(bbs.identity.did, BOARD, board.slug);
-      const attachments = await uploadAttachments(agent, input.files);
-      const resp = await createPost(agent, boardUri, input.body, {
+      const attachments = await uploadAttachments(repo, input.files);
+      const resp = await createPost(repo, boardUri, input.body, {
         title: input.title,
         attachments,
       });
@@ -196,6 +196,11 @@ export default function BoardPage() {
       )}
 
       <div>
+        {moderationIsStale && moderation && (
+          <p className="text-xs text-amber-500 mb-3">
+            Moderation data could not be refreshed. Showing verified cached data.
+          </p>
+        )}
         {!ready ? (
           <ListSkeleton />
         ) : threads.length ? (

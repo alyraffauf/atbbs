@@ -4,18 +4,7 @@ import ModerationBadge from "./ModerationBadge";
 import PostActions from "./PostActions";
 import PostBody, { unembeddedAttachments } from "./PostBody";
 import PostMeta from "./PostMeta";
-
-export interface Reply {
-  uri: string;
-  did: string;
-  rkey: string;
-  handle: string;
-  pds: string;
-  body: string;
-  createdAt: string;
-  parent: string | null;
-  attachments: { file: { ref: { $link: string } }; name: string }[];
-}
+import type { Reply } from "../../lib/replies";
 
 interface ReplyCardProps {
   reply: Reply;

@@ -14,6 +14,7 @@ import {
 import type { ActorResolver, ResolvedActor } from "@atcute/identity-resolver";
 import type { ActorIdentifier } from "@atcute/lexicons/syntax";
 import { resolveIdentity } from "./atproto";
+import type { AuthenticatedRepo } from "./repository";
 
 // --- OAuth setup (deferred until config is available) ---
 
@@ -81,7 +82,7 @@ const POST_LOGIN_KEY = "atbbs:post-login-redirect";
 
 let status: Status = "loading";
 let currentUser: AuthUser | null = null;
-let currentAgent: Client | null = null;
+let currentRepo: AuthenticatedRepo | null = null;
 
 let initPromise: Promise<void> | null = null;
 let callbackPromise: Promise<void> | null = null;
@@ -126,7 +127,7 @@ async function setSignedIn(oauthAgent: OAuthUserAgent) {
     // Offline; the visibilitychange listener below will retry on next focus.
   }
 
-  currentAgent = rpc;
+  currentRepo = { client: rpc, did: did as AuthenticatedRepo["did"] };
   currentUser = { did, handle, pdsUrl };
   status = "signedIn";
 
@@ -165,7 +166,7 @@ if (typeof document !== "undefined") {
 
 function setSignedOut() {
   currentUser = null;
-  currentAgent = null;
+  currentRepo = null;
   status = "signedOut";
 }
 
@@ -298,7 +299,7 @@ async function logout(): Promise<void> {
 interface AuthSnapshot {
   status: Status;
   user: AuthUser | null;
-  agent: Client | null;
+  repo: AuthenticatedRepo | null;
 }
 
 // useSyncExternalStore compares snapshots with Object.is, so we must
@@ -307,16 +308,20 @@ interface AuthSnapshot {
 let cachedSnapshot: AuthSnapshot = {
   status,
   user: currentUser,
-  agent: currentAgent,
+  repo: currentRepo,
 };
 
 function getSnapshot(): AuthSnapshot {
   if (
     cachedSnapshot.status !== status ||
     cachedSnapshot.user !== currentUser ||
-    cachedSnapshot.agent !== currentAgent
+    cachedSnapshot.repo !== currentRepo
   ) {
-    cachedSnapshot = { status, user: currentUser, agent: currentAgent };
+    cachedSnapshot = {
+      status,
+      user: currentUser,
+      repo: currentRepo,
+    };
   }
   return cachedSnapshot;
 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { resolveIdentity, getRecord, getAvatar } from "../lib/atproto";
 import { SITE } from "../lib/lexicon";
 import { bbsUrl } from "../lib/routes";
-import type { Suggestion } from "../components/dashboard/DialBBS";
+import type { Suggestion } from "../lib/suggestions";
 
 const DEBOUNCE_MS = 300;
 

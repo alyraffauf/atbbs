@@ -14,7 +14,7 @@ import SysopModerate from "../pages/SysopModerate";
 import News from "../pages/News";
 import NotFound from "../pages/NotFound";
 
-import { requireAuthLoader, requireSysopBBSLoader } from "./loaders";
+import { requireNoBBSLoader, requireSysopBBSLoader } from "./loaders";
 
 export const router = createBrowserRouter([
   {
@@ -25,7 +25,7 @@ export const router = createBrowserRouter([
       { path: "/account", loader: () => redirect("/") },
       {
         path: "/account/create",
-        loader: requireAuthLoader,
+        loader: requireNoBBSLoader,
         element: <SysopCreate />,
       },
       {

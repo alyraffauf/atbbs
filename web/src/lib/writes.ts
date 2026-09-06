@@ -1,4 +1,4 @@
-/** Authenticated PDS write helpers using an atcute Client from useAuth().agent. */
+/** Authenticated PDS writes with an explicit repository owner. */
 
 import type { Client } from "@atcute/client";
 import { SITE, BOARD, POST, BAN, HIDE, PIN, PROFILE } from "./lexicon";
@@ -6,7 +6,8 @@ import { invalidateAllBBSCaches } from "./bbs";
 import { queryClient } from "./queryClient";
 import type { ATRecord } from "./atproto";
 import { nowIso, parseAtUri } from "./util";
-import { getCurrentUser } from "./auth";
+import type { AuthenticatedRepo } from "./repository";
+import { MAX_ATTACHMENT_BYTES, MAX_IMAGE_PIXELS } from "./limits";
 import type {
   XyzAtbbsPost,
   XyzAtbbsSite,
@@ -37,21 +38,11 @@ interface BlobRef {
   size: number;
 }
 
-// --- Type assertions for atcute's strict template-string types ---
-
 type Did = `did:${string}:${string}`;
 type Nsid = `${string}.${string}.${string}`;
 
 const asDid = (value: string) => value as Did;
 const asNsid = (value: string) => value as Nsid;
-
-function currentDid(): Did {
-  const user = getCurrentUser();
-  if (!user) throw new Error("Not signed in");
-  return asDid(user.did);
-}
-
-// --- Generic record CRUD ---
 
 function assertOk(
   resp: { ok: boolean; data: unknown },
@@ -80,12 +71,13 @@ function syncRecordCache<V extends object>(
 }
 
 async function createRecord<V extends object>(
-  rpc: Client,
+  repo: AuthenticatedRepo,
   collection: string,
   value: V,
   rkey?: string,
 ) {
-  const did = currentDid();
+  const did = asDid(repo.did);
+  const rpc = repo.client;
   const resp = await rpc.post("com.atproto.repo.createRecord", {
     input: {
       repo: did,
@@ -108,12 +100,13 @@ async function createRecord<V extends object>(
 }
 
 async function putRecord<V extends object>(
-  rpc: Client,
+  repo: AuthenticatedRepo,
   collection: string,
   rkey: string,
   value: V,
 ) {
-  const did = currentDid();
+  const did = asDid(repo.did);
+  const rpc = repo.client;
   const resp = await rpc.post("com.atproto.repo.putRecord", {
     input: {
       repo: did,
@@ -128,11 +121,12 @@ async function putRecord<V extends object>(
 }
 
 export async function deleteRecord(
-  rpc: Client,
+  repo: AuthenticatedRepo,
   collection: string,
   rkey: string,
 ) {
-  const did = currentDid();
+  const did = asDid(repo.did);
+  const rpc = repo.client;
   const resp = await rpc.post("com.atproto.repo.deleteRecord", {
     input: {
       repo: did,
@@ -153,8 +147,13 @@ export async function deleteRecord(
 async function stripImageMetadata(file: File): Promise<File> {
   if (!file.type.startsWith("image/")) return file;
   const bitmap = await createImageBitmap(file);
+  if (bitmap.width * bitmap.height > MAX_IMAGE_PIXELS) {
+    bitmap.close();
+    throw new Error("Image exceeds the 40 million-pixel limit");
+  }
   const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
   canvas.getContext("2d")!.drawImage(bitmap, 0, 0);
+  bitmap.close();
   const blob = await canvas.convertToBlob({ type: file.type });
   return new File([blob], file.name, { type: file.type });
 }
@@ -178,14 +177,17 @@ async function uploadBlob(rpc: Client, file: File): Promise<BlobRef> {
 }
 
 export async function uploadAttachments(
-  rpc: Client,
+  repo: AuthenticatedRepo,
   files: File[],
 ): Promise<Attachment[]> {
   if (files.length === 0) return [];
   const out: Attachment[] = [];
   for (const file of files) {
     if (file.size === 0) continue;
-    const blob = await uploadBlob(rpc, file);
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      throw new Error("Attachment exceeds the 1,000,000-byte limit");
+    }
+    const blob = await uploadBlob(repo.client, file);
     out.push({
       file: blob as unknown as Attachment["file"],
       name: file.name,
@@ -197,7 +199,7 @@ export async function uploadAttachments(
 // --- Posts (threads, replies, news) ---
 
 export async function createPost(
-  rpc: Client,
+  repo: AuthenticatedRepo,
   scope: string,
   body: string,
   opts?: {
@@ -216,19 +218,25 @@ export async function createPost(
     ...(opts?.parent ? { parent: opts.parent as PostValue["parent"] } : {}),
     ...(opts?.attachments?.length ? { attachments: opts.attachments } : {}),
   };
-  return createRecord(rpc, POST, value);
+  return createRecord(repo, POST, value);
 }
 
 // --- Sysop: site, board ---
 
-export async function putSite(rpc: Client, site: SiteValue) {
-  const resp = await putRecord(rpc, SITE, "self", site);
+export async function createSite(repo: AuthenticatedRepo, site: SiteValue) {
+  const resp = await createRecord(repo, SITE, site, "self");
+  invalidateAllBBSCaches();
+  return resp;
+}
+
+export async function putSite(repo: AuthenticatedRepo, site: SiteValue) {
+  const resp = await putRecord(repo, SITE, "self", site);
   invalidateAllBBSCaches();
   return resp;
 }
 
 export async function putBoard(
-  rpc: Client,
+  repo: AuthenticatedRepo,
   slug: string,
   name: string,
   description: string,
@@ -239,60 +247,88 @@ export async function putBoard(
     description,
     createdAt: createdAt as BoardValue["createdAt"],
   };
-  const resp = await putRecord(rpc, BOARD, slug, value);
+  const resp = await putRecord(repo, BOARD, slug, value);
+  invalidateAllBBSCaches();
+  return resp;
+}
+
+export async function createBoard(
+  repo: AuthenticatedRepo,
+  slug: string,
+  name: string,
+  description: string,
+  createdAt: string,
+) {
+  const value: BoardValue = {
+    name,
+    description,
+    createdAt: createdAt as BoardValue["createdAt"],
+  };
+  const resp = await createRecord(repo, BOARD, value, slug);
   invalidateAllBBSCaches();
   return resp;
 }
 
 // --- Sysop: bans & hides ---
 
-export async function createBan(rpc: Client, did: string) {
+async function deterministicRkey(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(value),
+  );
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 24);
+}
+
+export async function createBan(repo: AuthenticatedRepo, did: string) {
   const value: BanValue = {
     did: did as BanValue["did"],
     createdAt: nowIso(),
   };
-  const resp = await createRecord(rpc, BAN, value);
+  const resp = await createRecord(repo, BAN, value, await deterministicRkey(did));
   invalidateAllBBSCaches();
   return resp;
 }
 
-export async function createHide(rpc: Client, uri: string) {
+export async function createHide(repo: AuthenticatedRepo, uri: string) {
   const value: HideValue = {
     uri: uri as HideValue["uri"],
     createdAt: nowIso(),
   };
-  const resp = await createRecord(rpc, HIDE, value);
+  const resp = await createRecord(repo, HIDE, value, await deterministicRkey(uri));
   invalidateAllBBSCaches();
   return resp;
 }
 
-export async function deleteBan(rpc: Client, rkey: string) {
-  const resp = await deleteRecord(rpc, BAN, rkey);
+export async function deleteBan(repo: AuthenticatedRepo, rkey: string) {
+  const resp = await deleteRecord(repo, BAN, rkey);
   invalidateAllBBSCaches();
   return resp;
 }
 
-export async function deleteHide(rpc: Client, rkey: string) {
-  const resp = await deleteRecord(rpc, HIDE, rkey);
+export async function deleteHide(repo: AuthenticatedRepo, rkey: string) {
+  const resp = await deleteRecord(repo, HIDE, rkey);
   invalidateAllBBSCaches();
   return resp;
 }
 
 // --- Pins ---
 
-export async function createPin(rpc: Client, did: string) {
+export async function createPin(repo: AuthenticatedRepo, did: string) {
   const value: PinValue = {
     did: did as PinValue["did"],
     createdAt: nowIso(),
   };
   // Use DID as rkey for idempotent pins
-  return createRecord(rpc, PIN, value, did);
+  return createRecord(repo, PIN, value, did);
 }
 
 // --- Profiles ---
 
 export async function putProfile(
-  rpc: Client,
+  repo: AuthenticatedRepo,
   name?: string,
   pronouns?: string,
   bio?: string,
@@ -303,5 +339,5 @@ export async function putProfile(
     ...(bio ? { bio } : {}),
     createdAt: nowIso() as ProfileValue["createdAt"],
   };
-  return putRecord(rpc, PROFILE, "self", value);
+  return putRecord(repo, PROFILE, "self", value);
 }

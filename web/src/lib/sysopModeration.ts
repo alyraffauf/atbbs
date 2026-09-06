@@ -1,6 +1,11 @@
 /** Load a sysop's bans + hides, hydrated with identities and post previews. */
 
-import { getRecordByUri, listRecords, resolveIdentitiesBatch } from "./atproto";
+import {
+  getRecordsByUri,
+  listRecords,
+  requireComplete,
+  resolveIdentitiesBatch,
+} from "./atproto";
 import { BAN, HIDE } from "./lexicon";
 import { parseAtUri } from "./util";
 import { is } from "@atcute/lexicons/validations";
@@ -16,9 +21,9 @@ export interface HiddenInfo {
 }
 
 export interface SysopModeration {
-  banRkeys: Record<string, string>;
+  banRkeys: Record<string, string[]>;
   bannedHandles: Record<string, string>;
-  hideRkeys: Record<string, string>;
+  hideRkeys: Record<string, string[]>;
   hidden: HiddenInfo[];
 }
 
@@ -26,11 +31,12 @@ function buildRkeyMap<T>(
   records: { uri: string; value: Record<string, unknown> }[],
   schema: Parameters<typeof is>[0],
   getKey: (value: T) => string,
-): Record<string, string> {
-  const map: Record<string, string> = {};
+): Record<string, string[]> {
+  const map: Record<string, string[]> = {};
   for (const record of records) {
     if (!is(schema, record.value)) continue;
-    map[getKey(record.value as unknown as T)] = parseAtUri(record.uri).rkey;
+    const key = getKey(record.value as unknown as T);
+    (map[key] ??= []).push(parseAtUri(record.uri).rkey);
   }
   return map;
 }
@@ -42,15 +48,16 @@ async function hydrateHiddenPosts(uris: string[]): Promise<HiddenInfo[]> {
 
   const [identities, records] = await Promise.all([
     resolveIdentitiesBatch(dids),
-    Promise.allSettled(uris.map(getRecordByUri)),
+    getRecordsByUri(uris),
   ]);
 
-  return uris.map((uri, index) => {
+  const recordsByUri = new Map(records.map((record) => [record.uri, record]));
+  return uris.map((uri) => {
     const did = parseAtUri(uri).did;
     const handle = identities[did]?.handle ?? did;
-    const result = records[index];
-    if (result.status === "fulfilled") {
-      const value = result.value.value as unknown as {
+    const record = recordsByUri.get(uri);
+    if (record) {
+      const value = record.value as unknown as {
         title?: string;
         body?: string;
       };
@@ -73,8 +80,8 @@ export async function fetchSysopModeration(
     listRecords(pdsUrl, did, BAN),
     listRecords(pdsUrl, did, HIDE),
   ]);
-  const banRecs = banResult.items;
-  const hideRecs = hideResult.items;
+  const banRecs = requireComplete(banResult);
+  const hideRecs = requireComplete(hideResult);
 
   const banRkeys = buildRkeyMap<XyzAtbbsBan.Main>(
     banRecs,

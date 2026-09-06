@@ -6,28 +6,9 @@ import IdentityRow from "../IdentityRow";
 import { Button } from "../form/Form";
 import { useDropdown } from "../../hooks/useDropdown";
 import { useResolvedBBS } from "../../hooks/useResolvedBBS";
-import { bbsUrl } from "../../lib/routes";
 import type { DiscoveredBBS } from "../../lib/discovery";
-
-export interface Suggestion {
-  to: string;
-  name: string;
-  handle: string;
-  avatar?: string;
-}
-
-export function bbsToSuggestion(bbs: {
-  handle: string;
-  name: string;
-  avatar?: string;
-}): Suggestion {
-  return {
-    to: bbsUrl(bbs.handle),
-    name: bbs.name,
-    handle: bbs.handle,
-    avatar: bbs.avatar,
-  };
-}
+import type { Suggestion } from "../../lib/suggestions";
+import { bbsUrl } from "../../lib/routes";
 
 interface DialBBSProps {
   discovered?: DiscoveredBBS[];

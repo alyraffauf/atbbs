@@ -2,7 +2,7 @@ import { useState, type SyntheticEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
-import { putBoard, putSite } from "../lib/writes";
+import { deleteRecord, putBoard, putSite } from "../lib/writes";
 import { BOARD } from "../lib/lexicon";
 import { makeAtUri, nowIso } from "../lib/util";
 import * as limits from "../lib/limits";
@@ -16,7 +16,7 @@ import BoardRowEditor, {
 } from "../components/form/BoardRowEditor";
 
 export default function SysopEdit() {
-  const { user, agent } = useAuth();
+  const { user, repo } = useAuth();
   const navigate = useNavigate();
 
   // requireAuthLoader has already redirected unauthenticated users, so
@@ -46,7 +46,7 @@ export default function SysopEdit() {
 
   async function onSubmit(e: SyntheticEvent) {
     e.preventDefault();
-    if (!agent || !user || !name.trim()) return;
+    if (!repo || !user || !name.trim()) return;
     const cleanBoards = boards
       .map((board) => ({
         slug: board.slug.trim(),
@@ -62,14 +62,14 @@ export default function SysopEdit() {
     try {
       for (const board of cleanBoards) {
         await putBoard(
-          agent,
+          repo,
           board.slug,
           board.name || board.slug,
           board.description,
           now,
         );
       }
-      await putSite(agent, {
+      await putSite(repo, {
         name: name.trim(),
         description: description.trim(),
         intro,
@@ -79,6 +79,12 @@ export default function SysopEdit() {
         createdAt: bbs.site.createdAt || now,
         updatedAt: now,
       });
+      const currentSlugs = new Set(cleanBoards.map((board) => board.slug));
+      for (const board of bbs.site.boards) {
+        if (!currentSlugs.has(board.slug)) {
+          await deleteRecord(repo, BOARD, board.slug);
+        }
+      }
       navigate(bbsUrl(user.handle));
     } catch {
       setError("Could not update community.");

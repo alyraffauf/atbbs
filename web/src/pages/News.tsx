@@ -12,7 +12,7 @@ import NewsCard from "../components/post/NewsCard";
 
 export default function NewsPage() {
   const { handle, tid } = useParams();
-  const { user, agent } = useAuth();
+  const { user, repo } = useAuth();
   const navigate = useNavigate();
 
   const { data: bbs } = useSuspenseQuery(bbsQuery(handle!));
@@ -34,8 +34,8 @@ export default function NewsPage() {
 
   const deleteNewsMutation = useMutation({
     mutationFn: async () => {
-      if (!agent || !tid) throw new Error("Not signed in");
-      await deleteRecord(agent, POST, tid);
+      if (!repo || !tid) throw new Error("Not signed in");
+      await deleteRecord(repo, POST, tid);
     },
     onSuccess: () => navigate(bbsUrl(handle!)),
     onError: alertOnError("delete"),

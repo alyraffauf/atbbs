@@ -12,20 +12,20 @@ interface PinButtonProps {
 }
 
 export default function PinButton({ bbsDid, initialRkey }: PinButtonProps) {
-  const { user, agent } = useAuth();
+  const { user, repo } = useAuth();
   const [pinRkey, setPinRkey] = useState(initialRkey);
 
   const handleTogglePin = useCallback(async () => {
-    if (!agent) return;
+    if (!repo) return;
     if (pinRkey) {
-      await deleteRecord(agent, PIN, pinRkey);
+      await deleteRecord(repo, PIN, pinRkey);
       setPinRkey(null);
     } else {
-      const resp = await createPin(agent, bbsDid);
+      const resp = await createPin(repo, bbsDid);
       const uri = (resp.data as { uri: string }).uri;
       setPinRkey(parseAtUri(uri).rkey);
     }
-  }, [agent, bbsDid, pinRkey]);
+  }, [repo, bbsDid, pinRkey]);
 
   if (!user) return null;
 
