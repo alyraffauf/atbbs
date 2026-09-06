@@ -80,9 +80,20 @@ export default defineConfig(({ command }) => {
   const staticFiles: Array<{ fileName: string; source: string }> = [];
   if (isBuild) {
     if (publicUrl) {
-      if (!publicUrl.startsWith("https://")) {
+      let parsedPublicUrl: URL;
+      try {
+        parsedPublicUrl = new URL(publicUrl);
+      } catch {
+        throw new Error(`VITE_PUBLIC_URL must be a bare HTTPS origin.`);
+      }
+      if (
+        parsedPublicUrl.protocol !== "https:" ||
+        parsedPublicUrl.origin !== publicUrl ||
+        parsedPublicUrl.username ||
+        parsedPublicUrl.password
+      ) {
         throw new Error(
-          `VITE_PUBLIC_URL must use https:// (got ${publicUrl}).`,
+          `VITE_PUBLIC_URL must be a bare HTTPS origin (got ${publicUrl}).`,
         );
       }
       staticFiles.push(

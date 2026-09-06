@@ -3,16 +3,18 @@ set -e
 
 : "${PUBLIC_URL:?PUBLIC_URL environment variable is required (e.g. https://atbbs.app)}"
 
-# Strip trailing slash.
-PUBLIC_URL="${PUBLIC_URL%/}"
+if ! printf '%s' "$PUBLIC_URL" | grep -Eq '^https://[A-Za-z0-9.-]+(:[0-9]+)?$'; then
+  echo "PUBLIC_URL must be a bare HTTPS origin" >&2
+  exit 1
+fi
 
 HTML=/usr/share/nginx/html
 
-# Substitute __PUBLIC_URL__ in the vite-emitted templates. Use | as sed
-# delimiter since PUBLIC_URL contains /.
-sed "s|__PUBLIC_URL__|${PUBLIC_URL}|g" \
+jq --arg origin "$PUBLIC_URL" \
+  'walk(if type == "string" then gsub("__PUBLIC_URL__"; $origin) else . end)' \
   "${HTML}/config.template.json" > "${HTML}/config.json"
-sed "s|__PUBLIC_URL__|${PUBLIC_URL}|g" \
+jq --arg origin "$PUBLIC_URL" \
+  'walk(if type == "string" then gsub("__PUBLIC_URL__"; $origin) else . end)' \
   "${HTML}/client-metadata.template.json" > "${HTML}/client-metadata.json"
 
-exec nginx -g 'daemon off;'
+exec "$@"

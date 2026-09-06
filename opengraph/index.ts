@@ -96,7 +96,7 @@ async function fetchSiteName(did: string, fallback: string): Promise<string> {
 
 // --- Route parsing ---
 
-function parseRoute(path: string): Route | null {
+export function parseRoute(path: string): Route | null {
   // Strip /og prefix and .png suffix so this works for both HTML and image routes.
   const normalizedPath = path.replace(/^\/og/, "").replace(/\.png$/, "");
 
@@ -127,7 +127,7 @@ function parseRoute(path: string): Route | null {
 
 // Metadata
 
-async function fetchMetadata(route: Route): Promise<Metadata | null> {
+export async function fetchMetadata(route: Route): Promise<Metadata | null> {
   const identity = await resolveIdentity(route.handle);
   if (!identity) return null;
 
@@ -175,7 +175,13 @@ async function fetchMetadata(route: Route): Promise<Metadata | null> {
       "xyz.atbbs.post",
       route.rkey!,
     );
-    if (postRecord) {
+    if (postRecord && !postRecord.value.root) {
+      const scope = postRecord.value.scope;
+      if (!scope?.startsWith(`at://${identity.did}/xyz.atbbs.board/`)) return null;
+      const boardKey = scope.split("/").at(-1);
+      if (!boardKey) return null;
+      const board = await fetchRecord(identity.did, "xyz.atbbs.board", boardKey);
+      if (!board) return null;
       return {
         title: postRecord.value.title || "Thread",
         subtitle: siteName,
@@ -195,7 +201,11 @@ async function fetchMetadata(route: Route): Promise<Metadata | null> {
       "xyz.atbbs.post",
       route.rkey!,
     );
-    if (postRecord) {
+    if (
+      postRecord &&
+      !postRecord.value.root &&
+      postRecord.value.scope === `at://${identity.did}/xyz.atbbs.site/self`
+    ) {
       return {
         title: postRecord.value.title || "News",
         subtitle: siteName,
@@ -262,7 +272,7 @@ async function renderOgImage(
 
 // Inject HTML
 
-function injectMetadata(
+export function injectMetadata(
   html: string,
   title: string,
   description: string,
@@ -325,15 +335,30 @@ function renderAtTags(atTags: AtTags): string {
 // Entry point
 
 export default {
-  async fetch(request: Request): Promise<Response> {
+  async fetch(
+    request: Request,
+    _environment: unknown,
+    context: ExecutionContext,
+  ): Promise<Response> {
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      return new Response("Method not allowed", {
+        status: 405,
+        headers: { Allow: "GET, HEAD" },
+      });
+    }
     const url = new URL(request.url);
     const path = url.pathname;
 
     // Dynamic og:image at /og/bbs/... — cached at the edge for 1 hour.
     if (path.startsWith("/og/bbs/")) {
       const cache = caches.default;
-      const cachedResponse = await cache.match(request);
-      if (cachedResponse) return cachedResponse;
+      const cacheKey = new Request(`${url.origin}${url.pathname}`, { method: "GET" });
+      const cachedResponse = await cache.match(cacheKey);
+      if (cachedResponse) {
+        return request.method === "HEAD"
+          ? new Response(null, cachedResponse)
+          : cachedResponse;
+      }
 
       const route = parseRoute(path);
       let imageResponse: Response;
@@ -349,8 +374,8 @@ export default {
 
       const cachedCopy = new Response(imageResponse.body, imageResponse);
       cachedCopy.headers.set("Cache-Control", "public, max-age=3600");
-      await cache.put(request, cachedCopy.clone());
-      return cachedCopy;
+      context.waitUntil(cache.put(cacheKey, cachedCopy.clone()));
+      return request.method === "HEAD" ? new Response(null, cachedCopy) : cachedCopy;
     }
 
     // Inject metadata into HTML for /bbs/... routes.
@@ -384,9 +409,13 @@ export default {
       // On any error, serve the original HTML unmodified.
     }
 
-    return new Response(html, {
+    const headers = new Headers(originResponse.headers);
+    for (const name of ["content-length", "content-encoding", "etag", "last-modified"]) {
+      headers.delete(name);
+    }
+    return new Response(request.method === "HEAD" ? null : html, {
       status: originResponse.status,
-      headers: originResponse.headers,
+      headers,
     });
   },
 };

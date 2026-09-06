@@ -8,6 +8,7 @@ COPY data/shared.json /repo/data/shared.json
 RUN npm run build
 
 FROM nginx:alpine
+RUN apk add --no-cache jq
 COPY --from=build /repo/web/dist /usr/share/nginx/html
 COPY web/nginx.conf /etc/nginx/conf.d/default.conf
 COPY web/docker-entrypoint.sh /docker-entrypoint.sh
