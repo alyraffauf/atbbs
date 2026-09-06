@@ -46,7 +46,9 @@ export default function ThreadPage() {
   const navigate = useNavigate();
 
   const { data: bbs } = useSuspenseQuery(bbsQuery(handle!));
-  const { data: thread } = useSuspenseQuery(threadRootQuery(did!, tid!));
+  const { data: thread } = useSuspenseQuery(
+    threadRootQuery(bbs.identity.did, did!, tid!),
+  );
   const { data: moderation } = useSuspenseQuery(
     bbsModerationQuery(bbs.identity.pds ?? "", bbs.identity.did),
   );
@@ -57,6 +59,7 @@ export default function ThreadPage() {
     refs,
     replies,
     parentReplies,
+    truncated,
     scrollToReply,
   } = useThreadReplies(threadUri);
 
@@ -230,8 +233,8 @@ export default function ThreadPage() {
         thread={thread}
         userDid={user?.did}
         sysopDid={bbs.identity.did}
-        banRkey={moderation.banRkeys[thread.did] ?? null}
-        hideRkey={moderation.hideRkeys[thread.uri] ?? null}
+        banRkey={moderation.banRkeys[thread.did]?.[0] ?? null}
+        hideRkey={moderation.hideRkeys[thread.uri]?.[0] ?? null}
         onDelete={onDeleteThread}
         onBan={() => onBan(thread.did)}
         onUnban={onUnban}
@@ -241,6 +244,12 @@ export default function ThreadPage() {
 
       {totalPages > 1 && (
         <PageNav current={page} total={totalPages} onGo={setPage} />
+      )}
+
+      {truncated && (
+        <p className="text-xs text-neutral-500 mt-2">
+          Showing the latest 2,000 replies.
+        </p>
       )}
 
       <div className="space-y-2 mt-4">
@@ -265,8 +274,8 @@ export default function ThreadPage() {
                 parentPost={
                   parentHidden ? undefined : (parentReply ?? undefined)
                 }
-                banRkey={moderation.banRkeys[reply.did] ?? null}
-                hideRkey={moderation.hideRkeys[reply.uri] ?? null}
+                banRkey={moderation.banRkeys[reply.did]?.[0] ?? null}
+                hideRkey={moderation.hideRkeys[reply.uri]?.[0] ?? null}
                 onReplyTo={() =>
                   setReplyingTo({ uri: reply.uri, handle: reply.handle })
                 }

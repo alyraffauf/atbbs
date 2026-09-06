@@ -44,14 +44,14 @@ export async function deleteBBS(agent: Client, did: string, pdsUrl: string) {
           failed.push(`post/${ref.rkey}`);
         }
       }
-      cursor = backlinks.cursor;
+      cursor = backlinks.cursor ?? undefined;
     } while (cursor);
   } catch {
     failed.push("news lookup");
   }
 
   for (const collection of [BAN, HIDE]) {
-    const records = await listRecords(pdsUrl, did, collection);
+    const records = (await listRecords(pdsUrl, did, collection)).items;
     for (const record of records) {
       try {
         await deleteRecord(agent, collection, parseAtUri(record.uri).rkey);

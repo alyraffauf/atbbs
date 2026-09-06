@@ -3,7 +3,17 @@
 import { type ATRecord, type BacklinkRef } from "./atproto";
 import { parseAtUri } from "./util";
 import { isPostRecord } from "./recordGuards";
-import type { Reply } from "../components/post/ReplyCard";
+export interface Reply {
+  uri: string;
+  did: string;
+  rkey: string;
+  handle: string;
+  pds: string;
+  body: string;
+  createdAt: string;
+  parent: string | null;
+  attachments: { file: { ref: { $link: string } }; name: string }[];
+}
 
 export type { BacklinkRef };
 

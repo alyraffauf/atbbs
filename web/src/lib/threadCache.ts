@@ -4,6 +4,7 @@ import { REPLIES_PER_PAGE, refToUri } from "./replies";
 import type { BacklinkRef } from "./atproto";
 import type { ReplyPage } from "./thread";
 import type { Reply } from "../components/post/ReplyCard";
+import type { BoundedResult } from "./atproto";
 
 export async function cancelRefsRefetch(threadUri: string) {
   await queryClient.cancelQueries({
@@ -13,11 +14,18 @@ export async function cancelRefsRefetch(threadUri: string) {
 
 export function getRefs(threadUri: string): BacklinkRef[] {
   const key = threadRefsQuery(threadUri).queryKey;
-  return queryClient.getQueryData<BacklinkRef[]>(key) ?? [];
+  return queryClient.getQueryData<BoundedResult<BacklinkRef>>(key)?.items ?? [];
 }
 
 export function setRefs(threadUri: string, refs: BacklinkRef[]) {
-  queryClient.setQueryData(threadRefsQuery(threadUri).queryKey, refs);
+  queryClient.setQueryData<BoundedResult<BacklinkRef>>(
+    threadRefsQuery(threadUri).queryKey,
+    (current) => ({
+      items: refs,
+      truncated: current?.truncated ?? false,
+      nextCursor: current?.nextCursor ?? null,
+    }),
+  );
 }
 
 function pageSlice(refs: BacklinkRef[], page: number): BacklinkRef[] {
@@ -33,7 +41,7 @@ export function appendRefAndReply(
   newReply: Reply,
 ): BacklinkRef[] {
   const previousRefs = getRefs(threadUri);
-  const updatedRefs = [...previousRefs, newRef];
+  const updatedRefs = [...previousRefs, newRef].slice(-2_000);
 
   const newLastPage = Math.max(
     1,

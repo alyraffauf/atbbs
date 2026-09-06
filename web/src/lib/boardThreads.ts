@@ -54,6 +54,7 @@ export async function hydrateThreadPage(
   const lastActivity = new Map<string, string>();
   const postersByThread = new Map<string, Set<string>>();
   let scanCursor = cursor;
+  const seenCursors = new Set<string>();
 
   for (let scan = 0; scan < MAX_SCANS; scan++) {
     if (lastActivity.size >= PAGE_SIZE) break;
@@ -61,13 +62,15 @@ export async function hydrateThreadPage(
     const backlinks = await getBacklinks(
       boardUri,
       `${POST}:scope`,
-      100,
+      PAGE_SIZE - lastActivity.size,
       scanCursor,
     );
     if (!backlinks.records.length) break;
 
-    const records = await getRecordsBatch(backlinks.records);
+    const remaining = PAGE_SIZE - lastActivity.size;
+    const records = await getRecordsBatch(backlinks.records.slice(0, remaining));
     for (const record of records) {
+      if (lastActivity.size >= PAGE_SIZE) break;
       if (!isPostRecord(record)) continue;
       const threadUri = record.value.root ?? record.uri;
       if (!lastActivity.has(threadUri)) {
@@ -81,8 +84,9 @@ export async function hydrateThreadPage(
       posters.add(parseAtUri(record.uri).did);
     }
 
-    scanCursor = backlinks.cursor;
-    if (!scanCursor) break;
+    scanCursor = backlinks.cursor ?? undefined;
+    if (!scanCursor || seenCursors.has(scanCursor)) break;
+    seenCursors.add(scanCursor);
   }
 
   const threadUris = [...lastActivity.keys()].slice(0, PAGE_SIZE);
@@ -90,7 +94,11 @@ export async function hydrateThreadPage(
 
   const validRoots = rootRecords
     .filter(isPostRecord)
-    .filter((record) => record.value.title && !record.value.root);
+    .filter((record) => {
+      if (!record.value.title || record.value.root) return false;
+      const scope = parseAtUri(record.value.scope);
+      return scope.did === bbsDid && scope.collection === BOARD && scope.rkey === slug;
+    });
 
   const allDids = new Set<string>();
   for (const record of validRoots) {

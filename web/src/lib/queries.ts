@@ -133,10 +133,10 @@ export const threadRefsQuery = (threadUri: string) =>
     queryFn: () => fetchThreadRefs(threadUri),
   });
 
-export const threadRootQuery = (did: string, tid: string) =>
+export const threadRootQuery = (bbsDid: string, did: string, tid: string) =>
   queryOptions({
-    queryKey: ["thread-root", did, tid] as const,
-    queryFn: () => fetchThreadRoot(did, tid),
+    queryKey: ["thread-root", bbsDid, did, tid] as const,
+    queryFn: () => fetchThreadRoot(bbsDid, did, tid),
   });
 
 export const threadPageQuery = (
@@ -154,5 +154,5 @@ export const threadPageQuery = (
       page,
       pageRefs.map((ref) => ref.rkey).join("/"),
     ] as const,
-    queryFn: () => hydrateReplyPage(pageRefs),
+    queryFn: () => hydrateReplyPage(threadUri, pageRefs),
   });

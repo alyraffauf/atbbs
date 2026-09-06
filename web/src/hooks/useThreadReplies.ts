@@ -18,7 +18,8 @@ import {
 export function useThreadReplies(threadUri: string) {
   const [params, setParams] = useSearchParams();
 
-  const { data: refs } = useSuspenseQuery(threadRefsQuery(threadUri));
+  const { data: refsResult } = useSuspenseQuery(threadRefsQuery(threadUri));
+  const refs = refsResult.items;
   const totalPages = Math.max(1, Math.ceil(refs.length / REPLIES_PER_PAGE));
 
   // --- Page derived from URL, clamped to the available range ---
@@ -79,6 +80,7 @@ export function useThreadReplies(threadUri: string) {
     refs,
     replies,
     parentReplies,
+    truncated: refsResult.truncated,
     scrollToReply,
   };
 }

@@ -13,7 +13,7 @@ import { POST } from "./lexicon";
 import { makeAtUri, parseAtUri } from "./util";
 import { recordToReply } from "./replies";
 import { isPostRecord } from "./recordGuards";
-import type { Reply } from "../components/post/ReplyCard";
+import type { Reply } from "./replies";
 
 export interface ThreadRoot {
   uri: string;
@@ -34,9 +34,11 @@ const REF_PAGE_SIZE = 100;
 /** Every reply ref for the thread, oldest-first. */
 export async function fetchThreadRefs(
   threadUri: string,
-): Promise<BacklinkRef[]> {
+): Promise<{ items: BacklinkRef[]; truncated: boolean; nextCursor: string | null }> {
   const collected: BacklinkRef[] = [];
   let cursor: string | undefined;
+  const seenCursors = new Set<string>();
+  let truncated = false;
   for (let i = 0; i < MAX_REF_PAGES; i++) {
     const page = await getBacklinks(
       threadUri,
@@ -44,14 +46,21 @@ export async function fetchThreadRefs(
       REF_PAGE_SIZE,
       cursor,
     );
-    collected.push(...page.records);
+    collected.push(...page.records.slice(0, 2_000 - collected.length));
     if (!page.cursor) break;
+    if (seenCursors.has(page.cursor) || collected.length >= 2_000) {
+      cursor = page.cursor;
+      truncated = true;
+      break;
+    }
+    seenCursors.add(page.cursor);
     cursor = page.cursor;
   }
-  return collected.reverse();
+  return { items: collected.reverse(), truncated, nextCursor: cursor ?? null };
 }
 
 export async function fetchThreadRoot(
+  bbsDid: string,
   did: string,
   tid: string,
 ): Promise<ThreadRoot> {
@@ -61,7 +70,16 @@ export async function fetchThreadRoot(
   }
   const author = await resolveIdentity(did);
   const postValue = threadRecord.value;
-  const boardSlug = parseAtUri(postValue.scope).rkey;
+  const scope = parseAtUri(postValue.scope);
+  if (
+    threadRecord.value.root ||
+    scope.did !== bbsDid ||
+    scope.collection !== "xyz.atbbs.board"
+  ) {
+    throw new Error("Thread does not belong to this BBS");
+  }
+  await getRecord(bbsDid, "xyz.atbbs.board", scope.rkey);
+  const boardSlug = scope.rkey;
   return {
     uri: threadRecord.uri,
     did,
@@ -88,11 +106,14 @@ export interface ReplyPage {
 }
 
 export async function hydrateReplyPage(
+  threadUri: string,
   pageRefs: BacklinkRef[],
 ): Promise<ReplyPage> {
   if (!pageRefs.length) return { replies: [], parentReplies: {} };
 
-  const records = await getRecordsBatch(pageRefs);
+  const records = (await getRecordsBatch(pageRefs)).filter(
+    (record) => isPostRecord(record) && record.value.root === threadUri,
+  );
   const authors = await resolveIdentitiesBatch(
     records.map((r) => parseAtUri(r.uri).did),
   );

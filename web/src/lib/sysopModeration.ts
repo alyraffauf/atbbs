@@ -69,10 +69,12 @@ export async function fetchSysopModeration(
   pdsUrl: string,
   did: string,
 ): Promise<SysopModeration> {
-  const [banRecs, hideRecs] = await Promise.all([
+  const [banResult, hideResult] = await Promise.all([
     listRecords(pdsUrl, did, BAN),
     listRecords(pdsUrl, did, HIDE),
   ]);
+  const banRecs = banResult.items;
+  const hideRecs = hideResult.items;
 
   const banRkeys = buildRkeyMap<XyzAtbbsBan.Main>(
     banRecs,

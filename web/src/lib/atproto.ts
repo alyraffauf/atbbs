@@ -25,7 +25,7 @@ export interface BacklinkRef {
 interface BacklinksResponse {
   total: number;
   records: BacklinkRef[];
-  cursor?: string;
+  cursor?: string | null;
 }
 
 export interface ATRecord {
@@ -36,7 +36,22 @@ export interface ATRecord {
 
 interface ListRecordsResponse {
   records: { uri: string; cid: string; value: Record<string, unknown> }[];
-  cursor?: string;
+  cursor?: string | null;
+}
+
+export interface BoundedResult<T> {
+  items: T[];
+  truncated: boolean;
+  nextCursor: string | null;
+}
+
+export class FetchError extends Error {
+  constructor(
+    public readonly kind: "not-found" | "rate-limit" | "server" | "transport" | "malformed",
+    message: string,
+  ) {
+    super(message);
+  }
 }
 
 // --- URLs ---
@@ -52,9 +67,54 @@ export function cdnImageUrl(did: string, cid: string): string {
 // --- Low-level JSON fetcher ---
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const resp = await fetch(url);
+  let resp: Response;
+  try {
+    resp = await fetch(url);
+  } catch (error) {
+    throw new FetchError("transport", String(error));
+  }
+  if (resp.status === 404) throw new FetchError("not-found", `404 ${url}`);
+  if (resp.status === 400) {
+    const body = (await resp
+      .clone()
+      .json()
+      .catch(() => null)) as { error?: unknown; message?: unknown } | null;
+    const error = typeof body?.error === "string" ? body.error : "";
+    const message = typeof body?.message === "string" ? body.message : "";
+    if (
+      error === "RecordNotFound" ||
+      /could not find (?:repo|record)/i.test(message)
+    ) {
+      throw new FetchError("not-found", message || `400 ${url}`);
+    }
+  }
+  if (resp.status === 429) throw new FetchError("rate-limit", `429 ${url}`);
+  if (resp.status >= 500) throw new FetchError("server", `${resp.status} ${url}`);
   if (!resp.ok) throw new Error(`${resp.status} ${url}`);
-  return resp.json() as Promise<T>;
+  try {
+    return (await resp.json()) as T;
+  } catch (error) {
+    throw new FetchError("malformed", String(error));
+  }
+}
+
+function malformed(label: string): never {
+  throw new FetchError("malformed", `${label} returned malformed data`);
+}
+
+function reportPartialFailures(
+  operation: string,
+  results: PromiseSettledResult<unknown>[],
+): void {
+  const failures = results
+    .filter((result): result is PromiseRejectedResult => result.status === "rejected")
+    .map((result) => result.reason)
+    .filter(
+      (reason) => !(reason instanceof FetchError && reason.kind === "not-found"),
+    );
+  if (failures.length) {
+    console.warn(`${operation} completed with ${failures.length} partial failure(s)`, failures);
+  }
 }
 
 // --- Records ---
@@ -64,9 +124,17 @@ export async function fetchRecord(
   collection: string,
   rkey: string,
 ): Promise<ATRecord> {
-  return fetchJson<ATRecord>(
+  const record = await fetchJson<ATRecord>(
     `${SLINGSHOT}/com.atproto.repo.getRecord?repo=${encodeURIComponent(did)}&collection=${encodeURIComponent(collection)}&rkey=${encodeURIComponent(rkey)}`,
   );
+  if (
+    !record ||
+    typeof record.uri !== "string" ||
+    typeof record.cid !== "string" ||
+    !record.value ||
+    typeof record.value !== "object"
+  ) malformed("Record service");
+  return record;
 }
 
 export async function getRecord(
@@ -77,13 +145,37 @@ export async function getRecord(
   return fetchRecord(did, collection, rkey);
 }
 
+async function allSettledBounded<T, R>(
+  values: T[],
+  worker: (value: T) => Promise<R>,
+  concurrency = 10,
+): Promise<PromiseSettledResult<R>[]> {
+  const results: PromiseSettledResult<R>[] = new Array(values.length);
+  let nextIndex = 0;
+  async function run() {
+    while (nextIndex < values.length) {
+      const index = nextIndex++;
+      try {
+        results[index] = { status: "fulfilled", value: await worker(values[index]) };
+      } catch (reason) {
+        results[index] = { status: "rejected", reason };
+      }
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, values.length) }, run),
+  );
+  return results;
+}
+
 export async function getRecordByUri(uri: string): Promise<ATRecord> {
   const { did, collection, rkey } = parseAtUri(uri);
   return getRecord(did, collection, rkey);
 }
 
 export async function getRecordsByUri(uris: string[]): Promise<ATRecord[]> {
-  const results = await Promise.allSettled(uris.map(getRecordByUri));
+  const results = await allSettledBounded([...new Set(uris)], getRecordByUri);
+  reportPartialFailures("Record hydration", results);
   return results
     .filter(
       (result): result is PromiseFulfilledResult<ATRecord> =>
@@ -95,9 +187,12 @@ export async function getRecordsByUri(uris: string[]): Promise<ATRecord[]> {
 export async function getRecordsBatch(
   refs: BacklinkRef[],
 ): Promise<ATRecord[]> {
-  const results = await Promise.allSettled(
-    refs.map((ref) => getRecord(ref.did, ref.collection, ref.rkey)),
+  const unique = [...new Map(refs.map((ref) => [`${ref.did}/${ref.collection}/${ref.rkey}`, ref])).values()];
+  const results = await allSettledBounded(
+    unique,
+    (ref) => getRecord(ref.did, ref.collection, ref.rkey),
   );
+  reportPartialFailures("Record hydration", results);
   return results
     .filter(
       (result): result is PromiseFulfilledResult<ATRecord> =>
@@ -110,31 +205,56 @@ export async function listRecords(
   pdsUrl: string,
   did: string,
   collection: string,
-  limit = 100,
-): Promise<{ uri: string; cid: string; value: Record<string, unknown> }[]> {
+  pageSize = 100,
+  maxRecords = 10_000,
+  maxPages = 100,
+  reverse = false,
+): Promise<BoundedResult<ATRecord>> {
   const all: ListRecordsResponse["records"] = [];
   let cursor: string | undefined;
-  while (true) {
+  const seenCursors = new Set<string>();
+  for (let page = 0; page < maxPages; page++) {
+    const remaining = maxRecords - all.length;
+    if (remaining <= 0) return { items: all, truncated: true, nextCursor: cursor ?? null };
+    const limit = Math.min(pageSize, remaining);
     let url = `${pdsUrl}/xrpc/com.atproto.repo.listRecords?repo=${encodeURIComponent(did)}&collection=${encodeURIComponent(collection)}&limit=${limit}`;
+    if (reverse) url += "&reverse=true";
     if (cursor) url += `&cursor=${encodeURIComponent(cursor)}`;
-    try {
-      const data = await fetchJson<ListRecordsResponse>(url);
-      all.push(...data.records);
-      if (!data.cursor) break;
-      cursor = data.cursor;
-    } catch {
-      break;
+    const data = await fetchJson<ListRecordsResponse>(url);
+    if (
+      !data ||
+      !Array.isArray(data.records) ||
+      (data.cursor != null && typeof data.cursor !== "string")
+    ) malformed("PDS record listing");
+    all.push(...data.records.slice(0, remaining));
+    if (!data.cursor) return { items: all, truncated: false, nextCursor: null };
+    if (seenCursors.has(data.cursor)) {
+      return { items: all, truncated: true, nextCursor: data.cursor };
     }
+    seenCursors.add(data.cursor);
+    cursor = data.cursor;
   }
-  return all;
+  return { items: all, truncated: true, nextCursor: cursor ?? null };
+}
+
+export function requireComplete<T>(result: BoundedResult<T>): T[] {
+  if (result.truncated) throw new Error("PDS listing exceeded its safety limit");
+  return result.items;
 }
 
 // --- Identity (DID doc) ---
 
 export async function fetchIdentityDoc(identifier: string): Promise<MiniDoc> {
-  return fetchJson<MiniDoc>(
+  const identity = await fetchJson<MiniDoc>(
     `${SLINGSHOT}/blue.microcosm.identity.resolveMiniDoc?identifier=${encodeURIComponent(identifier)}`,
   );
+  if (
+    !identity ||
+    typeof identity.did !== "string" ||
+    typeof identity.handle !== "string" ||
+    (identity.pds !== undefined && typeof identity.pds !== "string")
+  ) malformed("Identity service");
+  return identity;
 }
 
 export async function resolveIdentity(identifier: string): Promise<MiniDoc> {
@@ -145,7 +265,8 @@ export async function resolveIdentitiesBatch(
   ids: string[],
 ): Promise<Record<string, MiniDoc>> {
   const unique = [...new Set(ids)];
-  const results = await Promise.allSettled(unique.map(resolveIdentity));
+  const results = await allSettledBounded(unique, resolveIdentity);
+  reportPartialFailures("Identity hydration", results);
   const map: Record<string, MiniDoc> = {};
   for (const result of results) {
     if (result.status === "fulfilled") map[result.value.did] = result.value;
@@ -165,8 +286,9 @@ export async function fetchAvatarUrl(did: string): Promise<string | null> {
     const record = await getRecord(did, BSKY_PROFILE, "self");
     const cid = extractAvatarCid(record.value);
     return cid ? `${CDN.url}/img/avatar/plain/${did}/${cid}` : null;
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof FetchError && error.kind === "not-found") return null;
+    throw error;
   }
 }
 
@@ -179,10 +301,12 @@ export async function getAvatars(
   dids: string[],
 ): Promise<Record<string, string>> {
   const unique = [...new Set(dids)];
-  const urls = await Promise.all(unique.map(getAvatar));
+  const settled = await allSettledBounded(unique, getAvatar);
+  reportPartialFailures("Avatar hydration", settled);
   const map: Record<string, string> = {};
   unique.forEach((did, index) => {
-    const url = urls[index];
+    const result = settled[index];
+    const url = result.status === "fulfilled" ? result.value : undefined;
     if (url) map[did] = url;
   });
   return map;
@@ -200,21 +324,32 @@ export async function getBacklinks(
   let url = `${CONSTELLATION}/blue.microcosm.links.getBacklinks?subject=${encodeURIComponent(subject)}&source=${encodeURIComponent(source)}&limit=${limit}`;
   if (cursor) url += `&cursor=${encodeURIComponent(cursor)}`;
   if (did) url += `&did=${encodeURIComponent(did)}`;
-  return fetchJson<BacklinksResponse>(url);
+  const response = await fetchJson<BacklinksResponse>(url);
+  if (
+    !response ||
+    typeof response.total !== "number" ||
+    !Array.isArray(response.records) ||
+    (response.cursor != null && typeof response.cursor !== "string") ||
+    response.records.some(
+      (record) =>
+        !record ||
+        typeof record.did !== "string" ||
+        typeof record.collection !== "string" ||
+        typeof record.rkey !== "string",
+    )
+  ) malformed("Backlink service");
+  return response;
 }
 
 export async function fetchBacklinkCount(
   subject: string,
   source: string,
 ): Promise<number> {
-  try {
-    const { total } = await fetchJson<{ total: number }>(
-      `${CONSTELLATION}/blue.microcosm.links.getBacklinksCount?subject=${encodeURIComponent(subject)}&source=${encodeURIComponent(source)}`,
-    );
-    return total;
-  } catch {
-    return 0;
-  }
+  const { total } = await fetchJson<{ total: number }>(
+    `${CONSTELLATION}/blue.microcosm.links.getBacklinksCount?subject=${encodeURIComponent(subject)}&source=${encodeURIComponent(source)}`,
+  );
+  if (typeof total !== "number") malformed("Backlink count service");
+  return total;
 }
 
 export async function getBacklinkCount(

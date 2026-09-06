@@ -1,6 +1,6 @@
 /** Fetch the user's own root posts (threads) across all BBSes. */
 
-import { listRecords, resolveIdentitiesBatch } from "./atproto";
+import { listRecords, requireComplete, resolveIdentitiesBatch } from "./atproto";
 import { POST } from "./lexicon";
 import { parseAtUri } from "./util";
 import { isPostRecord } from "./recordGuards";
@@ -19,7 +19,7 @@ export async function fetchMyThreads(
   pdsUrl: string,
   did: string,
 ): Promise<MyThread[]> {
-  const records = await listRecords(pdsUrl, did, POST);
+  const records = requireComplete(await listRecords(pdsUrl, did, POST));
   const rootPosts = records
     .filter(isPostRecord)
     .filter((record) => !record.value.root && record.value.title);

@@ -48,9 +48,12 @@ async function fetchBacklinkItems(
 export async function fetchActivity(
   did: string,
   pdsUrl: string,
+  maxItems = 50,
 ): Promise<ActivityItem[]> {
   const SCAN_LIMIT = 50;
-  const allPosts = await listRecords(pdsUrl, did, POST, SCAN_LIMIT);
+  const allPosts = (
+    await listRecords(pdsUrl, did, POST, SCAN_LIMIT, SCAN_LIMIT, 100, true)
+  ).items;
   const validPosts = allPosts.filter(isPostRecord);
 
   const rootPosts = validPosts.filter((record) => !record.value.root);
@@ -95,10 +98,10 @@ export async function fetchActivity(
   // Deduplicate — prefer "parent-reply" type when the same reply appears as both.
   const seen = new Map<string, ActivityItem>();
   for (const item of results.flat()) {
-    const key = item.handle + item.body + item.createdAt;
+    const key = item.replyUri;
     if (!seen.has(key) || item.type === "parent_reply") seen.set(key, item);
   }
-  return [...seen.values()].sort((a, b) =>
-    b.createdAt.localeCompare(a.createdAt),
-  );
+  return [...seen.values()]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, maxItems);
 }

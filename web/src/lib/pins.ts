@@ -2,8 +2,9 @@
 
 import {
   getAvatars,
-  getRecord,
+  getRecordsByUri,
   listRecords,
+  requireComplete,
   resolveIdentitiesBatch,
 } from "./atproto";
 import { PIN, SITE } from "./lexicon";
@@ -23,7 +24,7 @@ export async function fetchPins(
   pdsUrl: string,
   did: string,
 ): Promise<PinnedBBS[]> {
-  const records = await listRecords(pdsUrl, did, PIN);
+  const records = requireComplete(await listRecords(pdsUrl, did, PIN));
   const pinRecords = records.filter(isPinRecord);
 
   const pinnedDids = pinRecords.map((record) => record.value.did);
@@ -31,17 +32,16 @@ export async function fetchPins(
 
   const [identities, siteResults, avatars] = await Promise.all([
     resolveIdentitiesBatch(pinnedDids),
-    Promise.allSettled(
-      pinnedDids.map((pinnedDid) => getRecord(pinnedDid, SITE, "self")),
+    getRecordsByUri(
+      pinnedDids.map((pinnedDid) => `at://${pinnedDid}/${SITE}/self`),
     ),
     getAvatars(pinnedDids),
   ]);
 
   const siteNames: Record<string, string> = {};
-  siteResults.forEach((result, index) => {
-    if (result.status !== "fulfilled") return;
-    if (!isSiteRecord(result.value)) return;
-    siteNames[pinnedDids[index]] = result.value.value.name;
+  siteResults.forEach((record) => {
+    if (!isSiteRecord(record)) return;
+    siteNames[parseAtUri(record.uri).did] = record.value.name;
   });
 
   const results: PinnedBBS[] = [];

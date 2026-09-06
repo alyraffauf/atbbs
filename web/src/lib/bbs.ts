@@ -2,9 +2,11 @@
 
 import {
   getRecord,
+  getRecordsByUri,
   resolveIdentity,
   type MiniDoc,
   type ATRecord,
+  FetchError,
 } from "./atproto";
 import { queryClient } from "./queryClient";
 import { SITE } from "./lexicon";
@@ -62,7 +64,8 @@ export async function resolveBBS(handle: string): Promise<BBS> {
   let identity: MiniDoc;
   try {
     identity = await resolveIdentity(handle);
-  } catch {
+  } catch (error) {
+    if (!(error instanceof FetchError) || error.kind !== "not-found") throw error;
     throw new BBSNotFoundError(`Could not resolve handle: ${handle}`);
   }
   if (!identity.pds) {
@@ -72,7 +75,8 @@ export async function resolveBBS(handle: string): Promise<BBS> {
   let siteRecord: ATRecord;
   try {
     siteRecord = await getRecord(identity.did, SITE, "self");
-  } catch {
+  } catch (error) {
+    if (!(error instanceof FetchError) || error.kind !== "not-found") throw error;
     throw new NoBBSError(`${handle} isn't running a BBS.`);
   }
 
@@ -86,20 +90,20 @@ export async function resolveBBS(handle: string): Promise<BBS> {
       `This BBS has more than the supported ${MAX_BOARDS} boards.`,
     );
   }
+  for (const uri of boardUris) {
+    const parsed = parseAtUri(uri);
+    if (parsed.did !== identity.did || parsed.collection !== "xyz.atbbs.board") {
+      throw new UnsupportedRecordError("Site record references a foreign board.");
+    }
+  }
 
-  const boardResults = await Promise.allSettled(
-    boardUris.map((uri) => {
-      const parsed = parseAtUri(uri);
-      return getRecord(parsed.did, parsed.collection, parsed.rkey);
-    }),
-  );
+  const boardRecords = await getRecordsByUri(boardUris);
 
   const boards: Board[] = [];
-  boardResults.forEach((result, index) => {
-    if (result.status !== "fulfilled") return;
-    if (!isBoardRecord(result.value)) return;
-    const board = result.value.value;
-    const parsed = parseAtUri(boardUris[index]);
+  boardRecords.forEach((record) => {
+    if (!isBoardRecord(record)) return;
+    const board = record.value;
+    const parsed = parseAtUri(record.uri);
     boards.push({
       slug: parsed.rkey,
       name: board.name,
