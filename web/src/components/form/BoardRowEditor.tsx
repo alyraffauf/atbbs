@@ -60,6 +60,7 @@ export default function BoardRowEditor({
         onClick={() =>
           onChange([...boards, { slug: "", name: "", description: "" }])
         }
+        disabled={boards.length >= limits.MAX_BOARDS}
         className="mt-2 text-neutral-400 hover:text-neutral-300 text-xs"
       >
         + add board

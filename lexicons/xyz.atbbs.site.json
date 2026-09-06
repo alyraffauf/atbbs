@@ -29,6 +29,7 @@
           },
           "boards": {
             "type": "array",
+            "maxLength": 50,
             "items": {
               "type": "string",
               "format": "at-uri"

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "lex": "lex-cli generate",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },

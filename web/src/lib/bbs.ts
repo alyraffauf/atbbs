@@ -10,9 +10,11 @@ import { queryClient } from "./queryClient";
 import { SITE } from "./lexicon";
 import { parseAtUri } from "./util";
 import { isBoardRecord, isSiteRecord } from "./recordGuards";
+import { MAX_BOARDS } from "./limits";
 
 export class BBSNotFoundError extends Error {}
 export class NoBBSError extends Error {}
+export class UnsupportedRecordError extends Error {}
 
 export interface Board {
   slug: string;
@@ -79,6 +81,11 @@ export async function resolveBBS(handle: string): Promise<BBS> {
   }
   const siteValue = siteRecord.value;
   const boardUris: string[] = siteValue.boards ?? [];
+  if (boardUris.length > MAX_BOARDS) {
+    throw new UnsupportedRecordError(
+      `This BBS has more than the supported ${MAX_BOARDS} boards.`,
+    );
+  }
 
   const boardResults = await Promise.allSettled(
     boardUris.map((uri) => {

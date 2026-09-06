@@ -70,6 +70,12 @@ class BBSFormMixin:
 
     def action_add_board(self) -> None:
         """Add a new empty board to the form."""
+        if len(self._boards) >= limits.MAX_BOARDS:
+            self.notify(
+                f"A BBS can have at most {limits.MAX_BOARDS} boards.",
+                severity="warning",
+            )
+            return
         index = len(self._boards) + 1
         while any(board["slug"] == f"board-{index}" for board in self._boards):
             index += 1

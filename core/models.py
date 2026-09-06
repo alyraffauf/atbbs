@@ -58,6 +58,10 @@ class AuthError(Exception):
     """Session expired and token refresh failed."""
 
 
+class UnsupportedRecordError(Exception):
+    """A valid record exceeds a client safety limit."""
+
+
 # microcosm response types
 
 

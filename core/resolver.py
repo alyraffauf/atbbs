@@ -11,6 +11,7 @@ from core.models import (
     BBSNotFoundError,
     NoBBSError,
     NetworkError,
+    UnsupportedRecordError,
     make_at_uri,
 )
 from core import lexicon
@@ -18,6 +19,7 @@ from core.cache import TTLCache
 from core.constellation import get_root_posts
 from core.records import list_pds_records, post_from_record
 from core.slingshot import get_record, get_records_batch, resolve_identity
+from core.limits import MAX_BOARDS
 
 _bbs_cache = TTLCache(ttl_seconds=300)  # 5 minutes
 
@@ -56,6 +58,10 @@ async def _resolve_bbs(client: httpx.AsyncClient, handle: str) -> BBS:
 
     # Fetch boards and news concurrently
     board_uris = site_value["boards"]
+    if len(board_uris) > MAX_BOARDS:
+        raise UnsupportedRecordError(
+            f"This BBS has more than the supported {MAX_BOARDS} boards."
+        )
     board_tasks = []
     for uri in board_uris:
         parsed = AtUri.parse(uri)

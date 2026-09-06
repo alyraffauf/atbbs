@@ -54,6 +54,10 @@ export default function SysopEdit() {
         description: board.description.trim(),
       }))
       .filter((board) => board.slug);
+    if (cleanBoards.length > limits.MAX_BOARDS) {
+      setError(`A community can have at most ${limits.MAX_BOARDS} boards.`);
+      return;
+    }
     const now = nowIso();
     try {
       for (const board of cleanBoards) {

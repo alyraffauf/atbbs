@@ -45,6 +45,10 @@ export default function SysopCreate() {
       setError("Name and at least one board are required.");
       return;
     }
+    if (cleanBoards.length > limits.MAX_BOARDS) {
+      setError(`A community can have at most ${limits.MAX_BOARDS} boards.`);
+      return;
+    }
     const now = nowIso();
     try {
       for (const board of cleanBoards) {

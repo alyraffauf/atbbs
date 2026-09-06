@@ -6,7 +6,13 @@ const _mainSchema = /*#__PURE__*/ v.record(
   /*#__PURE__*/ v.literal("self"),
   /*#__PURE__*/ v.object({
     $type: /*#__PURE__*/ v.literal("xyz.atbbs.site"),
-    boards: /*#__PURE__*/ v.array(/*#__PURE__*/ v.resourceUriString()),
+    /**
+     * @maxLength 50
+     */
+    boards: /*#__PURE__*/ v.constrain(
+      /*#__PURE__*/ v.array(/*#__PURE__*/ v.resourceUriString()),
+      [/*#__PURE__*/ v.arrayLength(0, 50)],
+    ),
     createdAt: /*#__PURE__*/ v.datetimeString(),
     /**
      * @maxLength 1000

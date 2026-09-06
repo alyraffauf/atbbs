@@ -15,6 +15,7 @@ fmt:
 
 lex:
     cd web && npm run lex
+    uv run python scripts/generate_limits.py
 
 build:
     cd web && VITE_PUBLIC_URL=${PUBLIC_URL:-} npm run build
