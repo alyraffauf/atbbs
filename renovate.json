@@ -1,0 +1,58 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:best-practices"],
+  "timezone": "America/New_York",
+  "schedule": ["before 6am on monday"],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "labels": ["dependencies"],
+  "rangeStrategy": "bump",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on monday"]
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^Dockerfile\\.telnet$/"],
+      "matchStrings": [
+        "pip install --no-cache-dir (?<depName>[A-Za-z0-9._-]+)==(?<currentValue>\\S+)"
+      ],
+      "datasourceTemplate": "pypi",
+      "versioningTemplate": "pep440"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Require approval before opening major upgrade PRs",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Group compatible Python updates",
+      "matchManagers": ["pep621"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Python minor and patch dependencies"
+    },
+    {
+      "description": "Group compatible web updates",
+      "matchManagers": ["npm"],
+      "matchFileNames": ["web/package.json"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "web minor and patch dependencies"
+    },
+    {
+      "description": "Group compatible OpenGraph updates",
+      "matchManagers": ["npm"],
+      "matchFileNames": ["opengraph/package.json"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "OpenGraph minor and patch dependencies"
+    },
+    {
+      "description": "Group compatible GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "GitHub Actions"
+    }
+  ]
+}

@@ -16,8 +16,8 @@ from urllib.parse import urlparse, urlunparse
 
 import httpx
 from authlib.common.security import generate_token
-from authlib.jose import JsonWebKey, jwt
 from authlib.oauth2.rfc7636 import create_s256_code_challenge
+from joserfc import jwk, jwt
 
 from core.auth.session import OAuthSession
 
@@ -157,7 +157,7 @@ async def fetch_authserver_meta(client: httpx.AsyncClient, url: str) -> dict:
 
 def authserver_dpop_jwt(method: str, url: str, nonce: str, dpop_private_jwk) -> str:
     """Create a DPoP proof JWT for auth server requests."""
-    dpop_pub_jwk = json.loads(dpop_private_jwk.as_json(is_private=False))
+    dpop_pub_jwk = dpop_private_jwk.as_dict()
     body = {
         "jti": generate_token(),
         "htm": method,
@@ -171,14 +171,14 @@ def authserver_dpop_jwt(method: str, url: str, nonce: str, dpop_private_jwk) -> 
         {"typ": "dpop+jwt", "alg": "ES256", "jwk": dpop_pub_jwk},
         body,
         dpop_private_jwk,
-    ).decode("utf-8")
+    )
 
 
 def pds_dpop_jwt(
     method: str, url: str, nonce: str, access_token: str, dpop_private_jwk
 ) -> str:
     """Create a DPoP proof JWT for PDS requests (includes ath claim)."""
-    dpop_pub_jwk = json.loads(dpop_private_jwk.as_json(is_private=False))
+    dpop_pub_jwk = dpop_private_jwk.as_dict()
     body = {
         "jti": generate_token(),
         "htm": method,
@@ -193,7 +193,7 @@ def pds_dpop_jwt(
         {"typ": "dpop+jwt", "alg": "ES256", "jwk": dpop_pub_jwk},
         body,
         dpop_private_jwk,
-    ).decode("utf-8")
+    )
 
 
 def _parse_www_authenticate(data: str):
@@ -307,7 +307,7 @@ async def exchange_code(
     authserver_url = auth_request["authserver_iss"]
     authserver_meta = await fetch_authserver_meta(client, authserver_url)
     token_url = authserver_meta["token_endpoint"]
-    dpop_private_jwk = JsonWebKey.import_key(
+    dpop_private_jwk = jwk.import_key(
         json.loads(auth_request["dpop_private_jwk"])
     )
 
@@ -337,7 +337,7 @@ async def refresh_tokens(
     authserver_url = session["authserver_iss"]
     authserver_meta = await fetch_authserver_meta(client, authserver_url)
     token_url = authserver_meta["token_endpoint"]
-    dpop_private_jwk = JsonWebKey.import_key(json.loads(session["dpop_private_jwk"]))
+    dpop_private_jwk = jwk.import_key(json.loads(session["dpop_private_jwk"]))
 
     dpop_nonce, resp = await auth_server_post(
         client=client,
@@ -366,7 +366,7 @@ async def revoke_tokens(
     if not revoke_url:
         return
 
-    dpop_private_jwk = JsonWebKey.import_key(json.loads(session["dpop_private_jwk"]))
+    dpop_private_jwk = jwk.import_key(json.loads(session["dpop_private_jwk"]))
     dpop_nonce = session["dpop_authserver_nonce"]
 
     for token_type in ["access_token", "refresh_token"]:
@@ -399,7 +399,7 @@ async def pds_request(
     session_updater is a callable(did, field, value) to persist nonce updates.
     Use body for JSON, or content+content_type for raw bytes (e.g. uploadBlob).
     """
-    dpop_private_jwk = JsonWebKey.import_key(json.loads(session["dpop_private_jwk"]))
+    dpop_private_jwk = jwk.import_key(json.loads(session["dpop_private_jwk"]))
     dpop_nonce = session.get("dpop_pds_nonce") or ""
     access_token = session["access_token"]
 

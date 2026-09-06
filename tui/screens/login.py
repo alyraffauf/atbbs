@@ -1,7 +1,8 @@
+import json
 import logging
 from urllib.parse import quote, urlencode
 
-from authlib.jose import JsonWebKey
+from joserfc import jwk
 from textual import work
 from textual.app import ComposeResult
 from textual.containers import Vertical
@@ -106,8 +107,8 @@ class LoginScreen(Screen):
             return
 
         # Generate DPoP keypair
-        dpop_key = JsonWebKey.generate_key("EC", "P-256", is_private=True)
-        dpop_private_jwk_json = dpop_key.as_json(is_private=True)
+        dpop_key = jwk.generate_key("EC", "P-256")
+        dpop_private_jwk_json = json.dumps(dpop_key.as_dict(private=True))
 
         # Send PAR
         try:

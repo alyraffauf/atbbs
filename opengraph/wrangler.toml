@@ -1,9 +1,9 @@
 name = "atbbs-opengraph"
 main = "index.ts"
-compatibility_date = "2024-01-01"
+compatibility_date = "2026-09-05"
 
 rules = [
-  { type = "Text", globs = ["**/*.svg"] }
+  { type = "Text", globs = ["**/*.svg"], fallthrough = true }
 ]
 
 [[routes]]

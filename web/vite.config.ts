@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import shared from "../data/shared.json";
+import shared from "../data/shared.json" with { type: "json" };
 
 const SERVER_HOST = "127.0.0.1";
 const SERVER_PORT = 5173;

@@ -1,9 +1,13 @@
 import asyncio
+import base64
+import json
 
 import httpx
 import pytest
+from joserfc import jwk
 
 from core.auth.oauth import (
+    authserver_dpop_jwt,
     is_safe_url,
     is_valid_authserver_meta,
     public_https_request,
@@ -29,6 +33,18 @@ def test_oauth_urls_reject_private_destinations():
 
 def test_auth_metadata_validation_returns_false_instead_of_asserting():
     assert not is_valid_authserver_meta({}, "https://auth.example")
+
+
+def test_dpop_proof_uses_public_jwk():
+    private_key = jwk.generate_key("EC", "P-256")
+    proof = authserver_dpop_jwt("POST", "https://auth.example/token", "", private_key)
+    encoded_header = proof.split(".", 1)[0]
+    padding = "=" * (-len(encoded_header) % 4)
+    header = json.loads(base64.urlsafe_b64decode(encoded_header + padding))
+
+    assert header["alg"] == "ES256"
+    assert header["typ"] == "dpop+jwt"
+    assert "d" not in header["jwk"]
 
 
 @pytest.mark.anyio
