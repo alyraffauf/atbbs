@@ -3,8 +3,10 @@
 from core.records import (
     BoundedRecords,
     create_ban_record,
+    create_board_record,
     create_hidden_record,
     create_post_record,
+    create_site_record,
     delete_record,
     list_pds_records,
     put_board_record,
@@ -15,8 +17,10 @@ from core.records import (
 __all__ = [
     "BoundedRecords",
     "create_ban_record",
+    "create_board_record",
     "create_hidden_record",
     "create_post_record",
+    "create_site_record",
     "delete_record",
     "list_pds_records",
     "put_board_record",

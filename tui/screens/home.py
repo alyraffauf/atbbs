@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 import httpx
 from textual import work
@@ -16,6 +17,8 @@ from core.resolver import resolve_bbs
 from core.shared import SERVICES
 from core.slingshot import get_record, resolve_identities_batch
 from tui.screens.site import SiteScreen
+
+logger = logging.getLogger(__name__)
 
 
 class HomeScreen(Screen):
@@ -88,9 +91,27 @@ class HomeScreen(Screen):
                 severity="warning",
             )
             return
-        except httpx.HTTPStatusError:
-            pass
-        except Exception:
+        except httpx.HTTPStatusError as error:
+            if error.response.status_code != 404:
+                logger.exception(
+                    "Existing BBS check failed",
+                    extra={
+                        "operation": "check_existing_bbs",
+                        "handle": session["handle"],
+                        "exception_type": type(error).__name__,
+                    },
+                )
+                self.notify("Could not check for existing BBS.", severity="error")
+                return
+        except Exception as error:
+            logger.exception(
+                "Existing BBS check failed",
+                extra={
+                    "operation": "check_existing_bbs",
+                    "handle": session["handle"],
+                    "exception_type": type(error).__name__,
+                },
+            )
             self.notify("Could not check for existing BBS.", severity="error")
             return
 

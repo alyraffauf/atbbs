@@ -121,14 +121,26 @@ class ThreadScreen(Screen):
     ) -> None:
         client = self.app.http_client
         try:
+            session = self.app.user_session
+            is_sysop = bool(session and session["did"] == self.bbs.identity.did)
             result = await fetch_replies(
                 client,
                 self.bbs,
                 self.thread.uri,
                 page=page,
                 focus_reply=focus_reply,
+                banned_dids=None if is_sysop else self.bbs.banned_dids,
+                hidden_posts=None if is_sysop else self.bbs.hidden_posts,
             )
-        except Exception:
+        except Exception as error:
+            logger.exception(
+                "Reply list failed",
+                extra={
+                    "handle": self.handle,
+                    "route": self.thread.uri,
+                    "exception_type": type(error).__name__,
+                },
+            )
             self.notify("Could not fetch replies.", severity="error")
             return
 

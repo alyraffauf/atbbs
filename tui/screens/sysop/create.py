@@ -1,3 +1,5 @@
+import logging
+
 from textual import work
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
@@ -6,12 +8,14 @@ from textual.widgets import Footer, Input
 
 from core import lexicon
 from core.models import AuthError, make_at_uri
-from core.pds import put_board_record, put_site_record
+from core.pds import create_board_record, create_site_record, delete_record
 from core.resolver import invalidate_bbs_cache, resolve_bbs
 from core.util import now_iso
 from tui.screens.sysop.bbs_form import BBSFormMixin, DEFAULT_BOARD
 from tui.util import make_session_updater, require_session
 from tui.widgets.breadcrumb import Breadcrumb
+
+logger = logging.getLogger(__name__)
 
 
 class SysopCreateScreen(BBSFormMixin, Screen):
@@ -52,12 +56,12 @@ class SysopCreateScreen(BBSFormMixin, Screen):
             return
 
         now = now_iso()
+        board_values = self.get_board_values()
+        created_slugs: list[str] = []
 
         try:
-            # Create each board record (must exist before the site record
-            # because the site record references them by AT-URI).
-            for board in self.get_board_values():
-                await put_board_record(
+            for board in board_values:
+                await create_board_record(
                     self.app.http_client,
                     session,
                     board["slug"],
@@ -66,9 +70,10 @@ class SysopCreateScreen(BBSFormMixin, Screen):
                     board["created_at"] or now,
                     updater,
                 )
+                created_slugs.append(board["slug"])
 
             # Create the site record, referencing all board AT-URIs.
-            await put_site_record(
+            await create_site_record(
                 self.app.http_client,
                 session,
                 {
@@ -78,7 +83,7 @@ class SysopCreateScreen(BBSFormMixin, Screen):
                     "intro": intro,
                     "boards": [
                         make_at_uri(session["did"], lexicon.BOARD, board["slug"])
-                        for board in self._boards
+                        for board in board_values
                     ],
                     "createdAt": now,
                 },
@@ -97,5 +102,20 @@ class SysopCreateScreen(BBSFormMixin, Screen):
             self.app.push_screen(SiteScreen(bbs, handle))
         except AuthError:
             self.notify("Session expired. Please log in again.", severity="error")
-        except Exception as e:
-            self.notify(f"Could not create BBS: {e}", severity="error")
+        except Exception as error:
+            logger.exception(
+                "BBS creation failed",
+                extra={
+                    "operation": "create_bbs",
+                    "handle": session["handle"],
+                    "exception_type": type(error).__name__,
+                },
+            )
+            for slug in reversed(created_slugs):
+                try:
+                    await delete_record(
+                        self.app.http_client, session, lexicon.BOARD, slug, updater
+                    )
+                except Exception:
+                    pass
+            self.notify("Could not create BBS.", severity="error")

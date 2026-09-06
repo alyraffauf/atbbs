@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 import httpx
 
@@ -27,6 +28,7 @@ READ_TIMEOUT = 120  # seconds per prompt
 MAX_CONNECTIONS = 20
 
 _connections = asyncio.Semaphore(MAX_CONNECTIONS)
+logger = logging.getLogger(__name__)
 
 
 def sanitize_public_text(value: object) -> str:
@@ -115,6 +117,8 @@ async def prompt(
 async def show_bbs(writer, bbs):
     await write(writer, f"\r\n  {sanitize_public_text(bbs.site.name)}\r\n")
     await write(writer, f"  {sanitize_public_text(bbs.site.description)}\r\n")
+    if bbs.moderation_stale:
+        await write(writer, "  Warning: using cached moderation data.\r\n")
     if bbs.site.intro:
         await write(writer, "\r\n")
         for line in bbs.site.intro.splitlines():
@@ -228,9 +232,12 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
 
         try:
             bbs = await resolve_bbs(client, handle)
-        except Exception as e:
+        except Exception as error:
+            logger.exception(
+                "BBS resolution failed",
+                extra={"handle": handle, "exception_type": type(error).__name__},
+            )
             await write(writer, "  Could not reach that BBS.\r\n")
-            await write(writer, f"{e}\r\n")
             writer.close()
             return
 
@@ -268,9 +275,20 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                         board = bbs.site.boards[idx]
                         try:
                             threads, thread_cursor = await hydrate_threads(
-                                client, bbs, board
+                                client,
+                                bbs,
+                                board,
+                                banned_dids=bbs.banned_dids,
+                                hidden_posts=bbs.hidden_posts,
                             )
-                        except Exception:
+                        except Exception as error:
+                            logger.exception(
+                                "Board hydration failed",
+                                extra={
+                                    "handle": handle,
+                                    "exception_type": type(error).__name__,
+                                },
+                            )
                             await write(writer, "  Could not load threads.\r\n")
                             continue
                         state = "board"
@@ -281,9 +299,21 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                 elif cmd == "n" and thread_cursor:
                     try:
                         threads, thread_cursor = await hydrate_threads(
-                            client, bbs, board, cursor=thread_cursor
+                            client,
+                            bbs,
+                            board,
+                            banned_dids=bbs.banned_dids,
+                            hidden_posts=bbs.hidden_posts,
+                            cursor=thread_cursor,
                         )
-                    except Exception:
+                    except Exception as error:
+                        logger.exception(
+                            "Board pagination failed",
+                            extra={
+                                "handle": handle,
+                                "exception_type": type(error).__name__,
+                            },
+                        )
                         await write(writer, "  Could not load threads.\r\n")
                 elif cmd.isdigit():
                     idx = int(cmd) - 1
@@ -292,9 +322,20 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                         await show_thread_header(writer, thread)
                         try:
                             reply_result = await hydrate_replies(
-                                client, bbs, thread.uri
+                                client,
+                                bbs,
+                                thread.uri,
+                                banned_dids=bbs.banned_dids,
+                                hidden_posts=bbs.hidden_posts,
                             )
-                        except Exception:
+                        except Exception as error:
+                            logger.exception(
+                                "Reply hydration failed",
+                                extra={
+                                    "handle": handle,
+                                    "exception_type": type(error).__name__,
+                                },
+                            )
                             await write(writer, "  Could not load replies.\r\n")
                             continue
                         await show_replies(writer, reply_result.replies)
@@ -306,10 +347,22 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                 elif cmd == "n" and reply_result.page < reply_result.total_pages:
                     try:
                         reply_result = await hydrate_replies(
-                            client, bbs, thread.uri, page=reply_result.page + 1
+                            client,
+                            bbs,
+                            thread.uri,
+                            banned_dids=bbs.banned_dids,
+                            hidden_posts=bbs.hidden_posts,
+                            page=reply_result.page + 1,
                         )
                         await show_replies(writer, reply_result.replies)
-                    except Exception:
+                    except Exception as error:
+                        logger.exception(
+                            "Reply pagination failed",
+                            extra={
+                                "handle": handle,
+                                "exception_type": type(error).__name__,
+                            },
+                        )
                         await write(writer, "  Could not load replies.\r\n")
 
             elif state == "news":

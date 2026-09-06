@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from textual import work
 from textual.app import ComposeResult
@@ -14,6 +15,8 @@ from core.slingshot import resolve_identities_batch, resolve_identity
 from tui.util import ban_user, hide_post, make_session_updater
 from tui.widgets.breadcrumb import Breadcrumb
 
+logger = logging.getLogger(__name__)
+
 
 class SysopModerateScreen(Screen):
     BINDINGS = [
@@ -27,8 +30,8 @@ class SysopModerateScreen(Screen):
         super().__init__()
         self.bbs = bbs
         self.handle = handle
-        self._ban_rkeys: dict[str, str] = {}
-        self._hide_rkeys: dict[str, str] = {}
+        self._ban_rkeys: dict[str, list[str]] = {}
+        self._hide_rkeys: dict[str, list[str]] = {}
 
     def compose(self) -> ComposeResult:
         yield Breadcrumb(
@@ -54,29 +57,41 @@ class SysopModerateScreen(Screen):
         client = self.app.http_client
         session = self.app.user_session
 
-        ban_result, hide_result = await asyncio.gather(
-            list_pds_records(client, session["pds_url"], session["did"], lexicon.BAN),
-            list_pds_records(client, session["pds_url"], session["did"], lexicon.HIDE),
-            return_exceptions=True,
-        )
-
-        if isinstance(ban_result, BaseException):
+        try:
+            ban_result, hide_result = await asyncio.gather(
+                list_pds_records(
+                    client, session["pds_url"], session["did"], lexicon.BAN
+                ),
+                list_pds_records(
+                    client, session["pds_url"], session["did"], lexicon.HIDE
+                ),
+            )
             self._ban_rkeys = {}
-        else:
-            self._ban_rkeys = {
-                record["value"]["did"]: AtUri.parse(record["uri"]).rkey
-                for record in ban_result
-                if record.get("value", {}).get("did")
-            }
+            for record in ban_result.require_complete():
+                did = record.get("value", {}).get("did")
+                if did:
+                    self._ban_rkeys.setdefault(did, []).append(
+                        AtUri.parse(record["uri"]).rkey
+                    )
 
-        if isinstance(hide_result, BaseException):
             self._hide_rkeys = {}
-        else:
-            self._hide_rkeys = {
-                record["value"]["uri"]: AtUri.parse(record["uri"]).rkey
-                for record in hide_result
-                if record.get("value", {}).get("uri")
-            }
+            for record in hide_result.require_complete():
+                uri = record.get("value", {}).get("uri")
+                if uri:
+                    self._hide_rkeys.setdefault(uri, []).append(
+                        AtUri.parse(record["uri"]).rkey
+                    )
+        except Exception as error:
+            logger.exception(
+                "Moderation listing failed",
+                extra={
+                    "operation": "list_moderation",
+                    "handle": self.handle,
+                    "exception_type": type(error).__name__,
+                },
+            )
+            self.notify("Could not load complete moderation data.", severity="error")
+            return
 
         banned_dids = list(self._ban_rkeys.keys())
         banned_handles: dict[str, str] = {}
@@ -120,24 +135,33 @@ class SysopModerateScreen(Screen):
         kind, _, value = key.partition(":")
         try:
             if kind == "ban" and value in self._ban_rkeys:
-                rkey = self._ban_rkeys[value]
-                await delete_record(
-                    self.app.http_client, session, lexicon.BAN, rkey, updater
-                )
+                for rkey in self._ban_rkeys[value]:
+                    await delete_record(
+                        self.app.http_client, session, lexicon.BAN, rkey, updater
+                    )
                 del self._ban_rkeys[value]
                 self.notify(f"Unbanned {value}.")
             elif kind == "hide" and value in self._hide_rkeys:
-                rkey = self._hide_rkeys[value]
-                await delete_record(
-                    self.app.http_client, session, lexicon.HIDE, rkey, updater
-                )
+                for rkey in self._hide_rkeys[value]:
+                    await delete_record(
+                        self.app.http_client, session, lexicon.HIDE, rkey, updater
+                    )
                 del self._hide_rkeys[value]
                 self.notify("Post unhidden.")
             invalidate_bbs_cache()
             await item.remove()
         except AuthError:
             self.notify("Session expired. Please log in again.", severity="error")
-        except Exception:
+        except Exception as error:
+            logger.exception(
+                "Moderation removal failed",
+                extra={
+                    "operation": "remove_moderation",
+                    "handle": self.handle,
+                    "route": value,
+                    "exception_type": type(error).__name__,
+                },
+            )
             self.notify("Could not remove record.", severity="error")
 
     def action_add_ban(self) -> None:
@@ -154,7 +178,15 @@ class SysopModerateScreen(Screen):
             try:
                 identity = await resolve_identity(self.app.http_client, identifier)
                 did = identity.did
-            except Exception:
+            except Exception as error:
+                logger.exception(
+                    "Ban identity resolution failed",
+                    extra={
+                        "operation": "resolve_ban_identity",
+                        "handle": identifier,
+                        "exception_type": type(error).__name__,
+                    },
+                )
                 self.notify(f"Could not resolve {identifier}.", severity="error")
                 return
 

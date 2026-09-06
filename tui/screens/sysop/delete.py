@@ -1,3 +1,5 @@
+import logging
+
 from textual import work
 from textual.app import ComposeResult
 from textual.containers import Vertical
@@ -9,6 +11,8 @@ from core.models import AtUri, BBS, make_at_uri
 from core.constellation import get_root_posts
 from core.pds import delete_record, list_pds_records
 from tui.util import make_session_updater
+
+logger = logging.getLogger(__name__)
 
 
 class SysopDeleteScreen(Screen):
@@ -51,28 +55,60 @@ class SysopDeleteScreen(Screen):
         for board in self.bbs.site.boards:
             try:
                 await delete_record(client, session, lexicon.BOARD, board.slug, updater)
-            except Exception:
+            except Exception as error:
+                logger.exception(
+                    "Board deletion failed",
+                    extra={
+                        "operation": "delete_board",
+                        "handle": self.handle,
+                        "route": board.slug,
+                        "exception_type": type(error).__name__,
+                    },
+                )
                 failed.append(f"board/{board.slug}")
 
         # Delete sysop's news posts (posts scoped to site)
         site_uri = make_at_uri(session["did"], lexicon.SITE, "self")
         try:
             cursor: str | None = None
-            while True:
+            seen_cursors: set[str] = set()
+            news_refs = []
+            for _ in range(100):
                 backlinks = await get_root_posts(
                     client, site_uri, limit=100, cursor=cursor, did=session["did"]
                 )
-                for ref in backlinks.records:
-                    try:
-                        await delete_record(
-                            client, session, lexicon.POST, ref.rkey, updater
-                        )
-                    except Exception:
-                        failed.append(f"post/{ref.rkey}")
+                news_refs.extend(backlinks.records)
                 cursor = backlinks.cursor
                 if not cursor:
                     break
-        except Exception:
+                if cursor in seen_cursors:
+                    raise RuntimeError("Repeated news cursor")
+                seen_cursors.add(cursor)
+            else:
+                raise RuntimeError("News listing exceeded 100 pages")
+            for ref in news_refs:
+                try:
+                    await delete_record(client, session, lexicon.POST, ref.rkey, updater)
+                except Exception as error:
+                    logger.exception(
+                        "News deletion failed",
+                        extra={
+                            "operation": "delete_news",
+                            "handle": self.handle,
+                            "route": ref.rkey,
+                            "exception_type": type(error).__name__,
+                        },
+                    )
+                    failed.append(f"post/{ref.rkey}")
+        except Exception as error:
+            logger.exception(
+                "News listing failed",
+                extra={
+                    "operation": "list_news_for_delete",
+                    "handle": self.handle,
+                    "exception_type": type(error).__name__,
+                },
+            )
             failed.append("news lookup")
 
         for collection in (lexicon.BAN, lexicon.HIDE):
@@ -80,13 +116,31 @@ class SysopDeleteScreen(Screen):
                 records = await list_pds_records(
                     client, session["pds_url"], session["did"], collection
                 )
-                for record in records:
+                for record in records.require_complete():
                     rkey = AtUri.parse(record["uri"]).rkey
                     try:
                         await delete_record(client, session, collection, rkey, updater)
-                    except Exception:
+                    except Exception as error:
+                        logger.exception(
+                            "Moderation record deletion failed",
+                            extra={
+                                "operation": "delete_moderation",
+                                "handle": self.handle,
+                                "route": record["uri"],
+                                "exception_type": type(error).__name__,
+                            },
+                        )
                         failed.append(f"{collection}/{rkey}")
-            except Exception:
+            except Exception as error:
+                logger.exception(
+                    "Moderation listing failed",
+                    extra={
+                        "operation": "list_moderation_for_delete",
+                        "handle": self.handle,
+                        "route": collection,
+                        "exception_type": type(error).__name__,
+                    },
+                )
                 failed.append(f"{collection} lookup")
 
         if failed:
@@ -98,7 +152,15 @@ class SysopDeleteScreen(Screen):
 
         try:
             await delete_record(client, session, lexicon.SITE, "self", updater)
-        except Exception:
+        except Exception as error:
+            logger.exception(
+                "Site deletion failed",
+                extra={
+                    "operation": "delete_site",
+                    "handle": self.handle,
+                    "exception_type": type(error).__name__,
+                },
+            )
             self.notify("Could not delete site record.", severity="error")
             return
 

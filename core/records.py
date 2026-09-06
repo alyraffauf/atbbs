@@ -1,6 +1,7 @@
 """Record reads and writes for the Python clients."""
 
 from dataclasses import dataclass
+import hashlib
 import logging
 
 import httpx
@@ -55,8 +56,6 @@ async def hydrate_threads(
     board_uri = make_at_uri(bbs.identity.did, lexicon.BOARD, board.slug)
     max_scans = 4
 
-    # Phase 1: Scan board activity to find unique thread URIs
-    # Keys are thread URIs, values are the timestamp of their last activity.
     last_activity: dict[str, str] = {}
     scan_cursor = cursor
 
@@ -107,7 +106,6 @@ async def hydrate_threads(
         if uri_to_did[record.uri] in authors
     ]
 
-    # Set last_activity_at and sort by it (bump order)
     for thread in threads:
         thread.last_activity_at = last_activity.get(thread.uri, thread.created_at)
     threads.sort(
@@ -472,6 +470,7 @@ async def create_ban_record(
         {
             "repo": session["did"],
             "collection": lexicon.BAN,
+            "rkey": hashlib.sha256(banned_did.encode()).hexdigest()[:24],
             "record": {
                 "$type": lexicon.BAN,
                 "did": banned_did,
@@ -496,6 +495,7 @@ async def create_hidden_record(
         {
             "repo": session["did"],
             "collection": lexicon.HIDE,
+            "rkey": hashlib.sha256(post_uri.encode()).hexdigest()[:24],
             "record": {
                 "$type": lexicon.HIDE,
                 "uri": post_uri,
@@ -530,6 +530,56 @@ async def put_board_record(
                 "description": description,
                 "createdAt": created_at,
             },
+        },
+        session_updater,
+    )
+
+
+async def create_board_record(
+    client: httpx.AsyncClient,
+    session: OAuthSession,
+    slug: str,
+    name: str,
+    description: str,
+    created_at: str,
+    session_updater=None,
+) -> httpx.Response:
+    """Create a board without overwriting an existing record."""
+    return await pds_post(
+        client,
+        session,
+        "com.atproto.repo.createRecord",
+        {
+            "repo": session["did"],
+            "collection": lexicon.BOARD,
+            "rkey": slug,
+            "record": {
+                "$type": lexicon.BOARD,
+                "name": name,
+                "description": description,
+                "createdAt": created_at,
+            },
+        },
+        session_updater,
+    )
+
+
+async def create_site_record(
+    client: httpx.AsyncClient,
+    session: OAuthSession,
+    site_value: dict,
+    session_updater=None,
+) -> httpx.Response:
+    """Create site/self without replacing an existing site."""
+    return await pds_post(
+        client,
+        session,
+        "com.atproto.repo.createRecord",
+        {
+            "repo": session["did"],
+            "collection": lexicon.SITE,
+            "rkey": "self",
+            "record": site_value,
         },
         session_updater,
     )

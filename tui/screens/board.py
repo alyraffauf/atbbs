@@ -1,3 +1,5 @@
+import logging
+
 from textual import work
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
@@ -11,6 +13,8 @@ from tui.screens.compose import ComposeThreadScreen
 from tui.screens.thread import ThreadScreen
 from tui.util import require_session
 from tui.widgets.breadcrumb import Breadcrumb
+
+logger = logging.getLogger(__name__)
 
 
 class BoardScreen(Screen):
@@ -57,13 +61,25 @@ class BoardScreen(Screen):
         client = self.app.http_client
         cursor = self.cursor_history[self.page]
         try:
+            session = self.app.user_session
+            is_sysop = bool(session and session["did"] == self.bbs.identity.did)
             self.threads, next_cursor = await fetch_threads(
                 client,
                 self.bbs,
                 self.board,
                 cursor=cursor,
+                banned_dids=None if is_sysop else self.bbs.banned_dids,
+                hidden_posts=None if is_sysop else self.bbs.hidden_posts,
             )
-        except Exception:
+        except Exception as error:
+            logger.exception(
+                "Thread list failed",
+                extra={
+                    "handle": self.handle,
+                    "route": self.board.slug,
+                    "exception_type": type(error).__name__,
+                },
+            )
             self.notify("Could not fetch threads.", severity="error")
             return
 

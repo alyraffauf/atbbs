@@ -1,3 +1,5 @@
+import logging
+
 from textual import work
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
@@ -13,6 +15,8 @@ from tui.screens.news import NewsScreen
 from tui.screens.sysop import SysopScreen
 from tui.util import require_sysop
 from tui.widgets.breadcrumb import Breadcrumb
+
+logger = logging.getLogger(__name__)
 
 
 class SiteScreen(Screen):
@@ -63,6 +67,11 @@ class SiteScreen(Screen):
 
     def on_mount(self) -> None:
         self.query_one("#board-list", ListView).focus()
+        if self.bbs.moderation_stale:
+            self.notify(
+                "Moderation data could not be refreshed; using verified cached data.",
+                severity="warning",
+            )
 
     def refresh_data(self) -> None:
         self._do_refresh()
@@ -75,7 +84,14 @@ class SiteScreen(Screen):
             self.bbs = bbs
             self.app.pop_screen()
             self.app.push_screen(SiteScreen(bbs, self.handle))
-        except Exception:
+        except Exception as error:
+            logger.exception(
+                "BBS refresh failed",
+                extra={
+                    "handle": self.handle,
+                    "exception_type": type(error).__name__,
+                },
+            )
             self.notify("Could not refresh.", severity="error")
 
     def action_sysop(self) -> None:

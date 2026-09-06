@@ -158,3 +158,6 @@ class BBS:
     identity: MiniDoc
     site: Site
     news: list[Post]
+    banned_dids: set[str] | None = None
+    hidden_posts: set[str] | None = None
+    moderation_stale: bool = False

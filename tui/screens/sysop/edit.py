@@ -1,3 +1,5 @@
+import logging
+
 from textual import work
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
@@ -12,6 +14,8 @@ from core.util import now_iso
 from tui.screens.sysop.bbs_form import BBSFormMixin
 from tui.util import make_session_updater, require_session
 from tui.widgets.breadcrumb import Breadcrumb
+
+logger = logging.getLogger(__name__)
 
 
 class SysopEditScreen(BBSFormMixin, Screen):
@@ -71,10 +75,10 @@ class SysopEditScreen(BBSFormMixin, Screen):
             return
 
         now = now_iso()
+        board_values = self.get_board_values()
 
         try:
-            # Save each board record
-            for board in self.get_board_values():
+            for board in board_values:
                 await put_board_record(
                     self.app.http_client,
                     session,
@@ -85,19 +89,6 @@ class SysopEditScreen(BBSFormMixin, Screen):
                     updater,
                 )
 
-            # Delete any boards that were removed
-            current_slugs = {board["slug"] for board in self._boards}
-            for board in self.bbs.site.boards:
-                if board.slug not in current_slugs:
-                    await delete_record(
-                        self.app.http_client,
-                        session,
-                        lexicon.BOARD,
-                        board.slug,
-                        updater,
-                    )
-
-            # Update the site record
             await put_site_record(
                 self.app.http_client,
                 session,
@@ -108,17 +99,35 @@ class SysopEditScreen(BBSFormMixin, Screen):
                     "intro": intro,
                     "boards": [
                         make_at_uri(session["did"], lexicon.BOARD, board["slug"])
-                        for board in self._boards
+                        for board in board_values
                     ],
                     "createdAt": self.bbs.site.created_at or now,
                     "updatedAt": now,
                 },
                 updater,
             )
+            current_slugs = {board["slug"] for board in board_values}
+            for board in self.bbs.site.boards:
+                if board.slug not in current_slugs:
+                    await delete_record(
+                        self.app.http_client,
+                        session,
+                        lexicon.BOARD,
+                        board.slug,
+                        updater,
+                    )
             invalidate_bbs_cache()
             self.notify("BBS updated.")
             self.app.pop_screen()
         except AuthError:
             self.notify("Session expired. Please log in again.", severity="error")
-        except Exception as e:
-            self.notify(f"Could not update BBS: {e}", severity="error")
+        except Exception as error:
+            logger.exception(
+                "BBS update failed",
+                extra={
+                    "operation": "update_bbs",
+                    "handle": self.handle,
+                    "exception_type": type(error).__name__,
+                },
+            )
+            self.notify("Could not update BBS.", severity="error")
