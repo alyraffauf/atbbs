@@ -5,7 +5,7 @@ import httpx
 import re
 import textwrap
 
-from core.records import hydrate_replies, hydrate_threads
+from core.hydration import hydrate_replies, hydrate_threads
 from core.resolver import resolve_bbs
 from core.util import format_datetime_utc
 

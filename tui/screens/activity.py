@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from textual import work
 from textual.app import ComposeResult
@@ -6,13 +7,17 @@ from textual.containers import VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Footer, Static
 
-from core.models import AtUri, Post as PostModel
-from core.records import fetch_inbox, post_from_record
+from core import lexicon
+from core.models import AtUri
+from core.hydration import post_from_record
+from core.inbox import fetch_inbox
 from core.resolver import resolve_bbs
 from core.slingshot import get_record, resolve_identity
 from tui.screens.thread import ThreadScreen
 from tui.widgets.breadcrumb import Breadcrumb
 from tui.widgets.post import Post
+
+logger = logging.getLogger(__name__)
 
 
 class ActivityScreen(Screen):
@@ -79,11 +84,28 @@ class ActivityScreen(Screen):
                 get_record(client, thread_did, "xyz.atbbs.post", thread_rkey),
                 resolve_identity(client, thread_did),
             )
+            scope = AtUri.parse(rec.value.get("scope", ""))
+            if (
+                rec.value.get("root")
+                or scope.did != bbs.identity.did
+                or scope.collection != lexicon.BOARD
+                or scope.rkey not in {board.slug for board in bbs.site.boards}
+            ):
+                raise ValueError("Inbox thread root is outside the routed BBS")
             thread = post_from_record(rec, author)
             self.app.push_screen(
                 ThreadScreen(bbs, handle, thread, focus_reply=item.get("reply_uri"))
             )
-        except Exception:
+        except Exception as error:
+            logger.exception(
+                "Inbox navigation failed",
+                extra={
+                    "operation": "open_inbox_thread",
+                    "route": item.get("thread_uri", ""),
+                    "handle": handle,
+                    "exception_type": type(error).__name__,
+                },
+            )
             self.notify("Could not open thread.", severity="error")
 
     @work(exclusive=True)
@@ -98,7 +120,15 @@ class ActivityScreen(Screen):
 
         try:
             self._items = await fetch_inbox(client, session["did"], session["pds_url"])
-        except Exception:
+        except Exception as error:
+            logger.exception(
+                "Inbox load failed",
+                extra={
+                    "operation": "load_inbox",
+                    "handle": session["handle"],
+                    "exception_type": type(error).__name__,
+                },
+            )
             self.notify("Failed to load inbox.", severity="error")
             return
 

@@ -1,6 +1,7 @@
 """Authenticated PDS command API for the Python clients."""
 
 from core.records import (
+    BoundedRecords,
     create_ban_record,
     create_hidden_record,
     create_post_record,
@@ -12,6 +13,7 @@ from core.records import (
 )
 
 __all__ = [
+    "BoundedRecords",
     "create_ban_record",
     "create_hidden_record",
     "create_post_record",

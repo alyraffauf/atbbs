@@ -1,7 +1,4 @@
-"""Shared record operations — create, delete, hydrate.
-
-Framework-agnostic. Used by both web and TUI.
-"""
+"""Record reads and writes for the Python clients."""
 
 from dataclasses import dataclass
 import logging
@@ -67,11 +64,14 @@ async def hydrate_threads(
         if len(last_activity) >= page_size:
             break
 
-        backlinks = await get_board_activity(client, board_uri, cursor=scan_cursor)
+        remaining = page_size - len(last_activity)
+        backlinks = await get_board_activity(
+            client, board_uri, limit=remaining, cursor=scan_cursor
+        )
         if not backlinks.records:
             break
 
-        records = await get_records_batch(client, backlinks.records)
+        records = await get_records_batch(client, backlinks.records[:remaining])
         if banned_dids or hidden_posts:
             records = filter_moderated(
                 records, banned_dids or set(), hidden_posts or set()
@@ -86,16 +86,18 @@ async def hydrate_threads(
         if not scan_cursor:
             break
 
-    # Phase 2: Fetch root post records for the thread URIs
     thread_uris = list(last_activity.keys())[:page_size]
     root_records = await get_records_by_uri(client, thread_uris)
-    root_records = [record for record in root_records if not record.value.get("root")]
+    root_records = [
+        record
+        for record in root_records
+        if not record.value.get("root") and record.value.get("scope") == board_uri
+    ]
     if banned_dids or hidden_posts:
         root_records = filter_moderated(
             root_records, banned_dids or set(), hidden_posts or set()
         )
 
-    # Phase 3: Resolve authors and build Post objects
     uri_to_did = {record.uri: AtUri.parse(record.uri).did for record in root_records}
     authors = await resolve_identities_batch(client, list(uri_to_did.values()))
 
@@ -123,6 +125,12 @@ class RepliesPage:
     page: int
     total_pages: int
     total_replies: int
+    truncated: bool = False
+    next_cursor: str | None = None
+
+    @property
+    def items(self) -> list[Post]:
+        return self.replies
 
 
 async def hydrate_replies(
@@ -135,19 +143,29 @@ async def hydrate_replies(
     page_size: int = 10,
     focus_reply: str | None = None,
 ) -> RepliesPage:
-    """Fetch all reply refs, then hydrate only the requested page (oldest first).
+    """Fetch at most 2,000 reply refs and hydrate the requested page.
 
     If focus_reply is provided (an AT URI), automatically jump to the page
     containing that reply.
     """
-    # Fetch all refs (cheap — just did/collection/rkey)
-    backlinks = await get_replies(client, root_uri, limit=1000)
-    all_refs = list(reversed(backlinks.records))  # oldest first
+    newest_refs = []
+    cursor = None
+    seen_cursors: set[str] = set()
+    while len(newest_refs) < 2_000:
+        backlinks = await get_replies(
+            client, root_uri, limit=min(100, 2_000 - len(newest_refs)), cursor=cursor
+        )
+        newest_refs.extend(backlinks.records)
+        if not backlinks.cursor or backlinks.cursor in seen_cursors:
+            cursor = backlinks.cursor
+            break
+        seen_cursors.add(backlinks.cursor)
+        cursor = backlinks.cursor
+    all_refs = list(reversed(newest_refs))
 
     total = len(all_refs)
     total_pages = max(1, (total + page_size - 1) // page_size)
 
-    # If a specific reply is requested, find its page
     if focus_reply:
         for i, ref in enumerate(all_refs):
             if f"at://{ref.did}/{ref.collection}/{ref.rkey}" == focus_reply:
@@ -156,17 +174,21 @@ async def hydrate_replies(
 
     page = max(1, min(page, total_pages))
 
-    # Slice the page we need
     start = (page - 1) * page_size
     page_refs = all_refs[start : start + page_size]
 
     if not page_refs:
         return RepliesPage(
-            replies=[], page=page, total_pages=total_pages, total_replies=total
+            replies=[],
+            page=page,
+            total_pages=total_pages,
+            total_replies=total,
+            truncated=bool(cursor),
+            next_cursor=cursor,
         )
 
-    # Hydrate only this page
     records = await get_records_batch(client, page_refs)
+    records = [record for record in records if record.value.get("root") == root_uri]
     if banned_dids or hidden_posts:
         records = filter_moderated(records, banned_dids or set(), hidden_posts or set())
 
@@ -181,12 +203,17 @@ async def hydrate_replies(
     ]
     replies.sort(key=lambda reply: reply.created_at)
     return RepliesPage(
-        replies=replies, page=page, total_pages=total_pages, total_replies=total
+        replies=replies,
+        page=page,
+        total_pages=total_pages,
+        total_replies=total,
+        truncated=bool(cursor),
+        next_cursor=cursor,
     )
 
 
 async def _try_refresh_token(client, session, session_updater):
-    """Attempt to refresh an expired OAuth token."""
+    """Attempt to refresh an expired OAuth token. Updates session in place."""
     if not session.get("dpop_private_jwk") or not session.get("refresh_token"):
         return False
     try:
@@ -207,10 +234,12 @@ async def _try_refresh_token(client, session, session_updater):
             pass
 
         updater = session_updater or _noop
+        access_token = token_resp["access_token"]
+        refresh_token = token_resp.get("refresh_token") or session["refresh_token"]
         await updater(
             session,
-            access_token=token_resp["access_token"],
-            refresh_token=token_resp.get("refresh_token") or session["refresh_token"],
+            access_token=access_token,
+            refresh_token=refresh_token,
             dpop_authserver_nonce=dpop_nonce,
         )
         return True
@@ -383,12 +412,22 @@ async def list_pds_records(
     did: str,
     collection: str,
     limit: int = 100,
-) -> list[dict]:
-    """Fetch all records of a collection from a PDS via listRecords."""
-    records = []
+    max_records: int = 10_000,
+    max_pages: int = 100,
+) -> "BoundedRecords":
+    """Fetch a bounded collection and expose incomplete results."""
+    records: list[dict] = []
     cursor = None
-    while True:
-        params = {"repo": did, "collection": collection, "limit": limit}
+    seen_cursors: set[str] = set()
+    for _ in range(max_pages):
+        remaining = max_records - len(records)
+        if remaining <= 0:
+            return BoundedRecords(records, True, cursor)
+        params = {
+            "repo": did,
+            "collection": collection,
+            "limit": min(limit, remaining),
+        }
         if cursor:
             params["cursor"] = cursor
         resp = await client.get(
@@ -396,11 +435,27 @@ async def list_pds_records(
         )
         resp.raise_for_status()
         data = resp.json()
-        records.extend(data.get("records", []))
-        cursor = data.get("cursor")
-        if not cursor:
-            break
-    return records
+        records.extend(data.get("records", [])[:remaining])
+        next_cursor = data.get("cursor")
+        if not next_cursor:
+            return BoundedRecords(records, False, None)
+        if next_cursor in seen_cursors:
+            return BoundedRecords(records, True, next_cursor)
+        seen_cursors.add(next_cursor)
+        cursor = next_cursor
+    return BoundedRecords(records, True, cursor)
+
+
+@dataclass
+class BoundedRecords:
+    items: list[dict]
+    truncated: bool
+    next_cursor: str | None
+
+    def require_complete(self) -> list[dict]:
+        if self.truncated:
+            raise RuntimeError("PDS record listing exceeded its safety limit")
+        return self.items
 
 
 async def create_ban_record(
@@ -522,7 +577,12 @@ async def fetch_inbox(
     try:
         resp = await client.get(
             f"{pds_url}/xrpc/com.atproto.repo.listRecords",
-            params={"repo": did, "collection": lexicon.POST, "limit": SCAN_LIMIT},
+            params={
+                "repo": did,
+                "collection": lexicon.POST,
+                "limit": SCAN_LIMIT,
+                "reverse": "true",
+            },
         )
         resp.raise_for_status()
         all_posts = resp.json().get("records", [])
@@ -532,10 +592,9 @@ async def fetch_inbox(
     root_posts = [post for post in all_posts if "root" not in post["value"]]
     reply_posts = [post for post in all_posts if "root" in post["value"]]
 
-    # Batch-resolve BBS handles for all root posts at once
     bbs_dids = set()
-    for root_post in root_posts:
-        scope = root_post["value"].get("scope", "")
+    for post in all_posts:
+        scope = post["value"].get("scope", "")
         if scope:
             bbs_dids.add(AtUri.parse(scope).did)
     try:
@@ -593,6 +652,9 @@ async def fetch_inbox(
         async with sem:
             reply_uri = reply_post["uri"]
             root_uri = reply_post["value"].get("root", "")
+            scope = reply_post["value"].get("scope", "")
+            bbs_did = AtUri.parse(scope).did if scope else did
+            bbs_handle = bbs_authors[bbs_did].handle if bbs_did in bbs_authors else ""
             try:
                 backlinks = await get_backlinks(
                     client,
@@ -628,14 +690,13 @@ async def fetch_inbox(
                             "handle": authors[author_did].handle,
                             "body": record.value.get("body", "")[:200],
                             "created_at": record.value.get("createdAt", ""),
-                            "bbs_handle": "",
+                            "bbs_handle": bbs_handle,
                         }
                     )
                 return items
             except Exception:
                 return []
 
-    # Run all lookups concurrently
     results = await asyncio.gather(
         *[fetch_post_replies(root_post) for root_post in root_posts],
         *[fetch_child_replies(reply_post) for reply_post in reply_posts],
@@ -648,7 +709,7 @@ async def fetch_inbox(
     # Deduplicate and prefer parent-reply type if same record appears in both
     seen = {}
     for item in all_items:
-        key = item["handle"] + item["body"] + item["created_at"]
+        key = item["reply_uri"]
         if key in seen:
             if item["type"] == "parent_reply":
                 seen[key] = item
@@ -657,4 +718,4 @@ async def fetch_inbox(
 
     deduped = list(seen.values())
     deduped.sort(key=lambda item: item["created_at"], reverse=True)
-    return deduped
+    return deduped[:max_items]

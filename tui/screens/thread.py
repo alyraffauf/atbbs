@@ -10,10 +10,7 @@ from textual.widgets import Footer, Static
 
 from core import lexicon
 from core.models import BBS, AtUri, AuthError, Post as PostModel
-from core.records import (
-    hydrate_replies as fetch_replies,
-    post_from_record,
-)
+from core.hydration import hydrate_replies as fetch_replies, post_from_record
 from core.pds import delete_record
 from core.slingshot import get_record, resolve_identity
 from core.util import attachment_cid, blob_url

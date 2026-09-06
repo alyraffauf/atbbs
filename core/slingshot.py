@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 import httpx
 
@@ -9,6 +10,7 @@ from core.shared import SERVICES
 BASE_URL = SERVICES["slingshot"]
 
 _identity_cache = TTLCache(ttl_seconds=300)  # 5 minutes
+logger = logging.getLogger(__name__)
 
 
 async def get_record(
@@ -57,8 +59,20 @@ async def resolve_identities_batch(
     client: httpx.AsyncClient, dids: list[str]
 ) -> dict[str, MiniDoc]:
     """Resolve multiple DIDs concurrently, skipping failures."""
-    tasks = [resolve_identity(client, did) for did in dids]
+    semaphore = asyncio.Semaphore(10)
+
+    async def resolve_bounded(did: str):
+        async with semaphore:
+            return await resolve_identity(client, did)
+
+    tasks = [resolve_bounded(did) for did in dict.fromkeys(dids)]
     results = await asyncio.gather(*tasks, return_exceptions=True)
+    for did, result in zip(dict.fromkeys(dids), results):
+        if isinstance(result, BaseException):
+            logger.warning(
+                "Identity hydration failed",
+                extra={"did": did, "exception_type": type(result).__name__},
+            )
     return {r.did: r for r in results if isinstance(r, MiniDoc)}
 
 
@@ -66,8 +80,20 @@ async def get_records_by_uri(
     client: httpx.AsyncClient, uris: list[str]
 ) -> list[Record]:
     """Fetch multiple records by AT-URI, skipping failures."""
-    tasks = [get_record_by_uri(client, uri) for uri in uris]
+    semaphore = asyncio.Semaphore(10)
+
+    async def get_bounded(uri: str):
+        async with semaphore:
+            return await get_record_by_uri(client, uri)
+
+    tasks = [get_bounded(uri) for uri in dict.fromkeys(uris)]
     results = await asyncio.gather(*tasks, return_exceptions=True)
+    for uri, result in zip(dict.fromkeys(uris), results):
+        if isinstance(result, BaseException):
+            logger.warning(
+                "Record hydration failed",
+                extra={"uri": uri, "exception_type": type(result).__name__},
+            )
     return [result for result in results if isinstance(result, Record)]
 
 
@@ -75,6 +101,19 @@ async def get_records_batch(
     client: httpx.AsyncClient, refs: list[BacklinkRef]
 ) -> list[Record]:
     """Fetch multiple records concurrently, skipping failures."""
-    tasks = [get_record(client, ref.did, ref.collection, ref.rkey) for ref in refs]
+    semaphore = asyncio.Semaphore(10)
+
+    async def get_bounded(ref: BacklinkRef):
+        async with semaphore:
+            return await get_record(client, ref.did, ref.collection, ref.rkey)
+
+    unique = {ref.uri: ref for ref in refs}
+    tasks = [get_bounded(ref) for ref in unique.values()]
     results = await asyncio.gather(*tasks, return_exceptions=True)
+    for ref, result in zip(unique.values(), results):
+        if isinstance(result, BaseException):
+            logger.warning(
+                "Record hydration failed",
+                extra={"uri": ref.uri, "exception_type": type(result).__name__},
+            )
     return [r for r in results if isinstance(r, Record)]
