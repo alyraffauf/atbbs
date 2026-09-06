@@ -71,7 +71,7 @@ type Status = "loading" | "signedIn" | "signedOut";
 type Did = `did:${string}:${string}`;
 
 const CURRENT_DID_KEY = "atbbs:current-did";
-const CURRENT_HANDLE_KEY = "atbbs:current-handle";
+const IDENTITY_KEY = "atbbs:identity-v1";
 const POST_LOGIN_KEY = "atbbs:post-login-redirect";
 
 // --- Module-level auth state ---
@@ -105,14 +105,23 @@ async function setSignedIn(oauthAgent: OAuthUserAgent) {
   const rpc = new Client({ handler: oauthAgent });
   const did = oauthAgent.sub;
 
-  // Cached handle covers offline restores; overwritten when Slingshot responds.
-  let handle = localStorage.getItem(CURRENT_HANDLE_KEY) ?? did;
-  let pdsUrl = "";
+  let cachedIdentity: Partial<AuthUser> = {};
+  try {
+    const stored = JSON.parse(localStorage.getItem(IDENTITY_KEY) ?? "null");
+    if (stored?.version === 1 && stored.did === did) cachedIdentity = stored;
+  } catch {
+    cachedIdentity = {};
+  }
+  let handle = cachedIdentity.handle ?? did;
+  let pdsUrl = cachedIdentity.pdsUrl ?? "";
   try {
     const doc = await resolveIdentity(did);
     handle = doc.handle;
     pdsUrl = doc.pds ?? "";
-    localStorage.setItem(CURRENT_HANDLE_KEY, handle);
+    localStorage.setItem(
+      IDENTITY_KEY,
+      JSON.stringify({ version: 1, did, handle, pdsUrl }),
+    );
   } catch {
     // Offline; the visibilitychange listener below will retry on next focus.
   }
@@ -130,7 +139,7 @@ async function setSignedIn(oauthAgent: OAuthUserAgent) {
 
 async function retryIdentityIfUnresolved() {
   if (!currentUser) return;
-  if (currentUser.handle !== currentUser.did) return;
+  if (currentUser.handle !== currentUser.did && currentUser.pdsUrl) return;
   try {
     const doc = await resolveIdentity(currentUser.did);
     currentUser = {
@@ -138,7 +147,10 @@ async function retryIdentityIfUnresolved() {
       handle: doc.handle,
       pdsUrl: doc.pds ?? currentUser.pdsUrl,
     };
-    localStorage.setItem(CURRENT_HANDLE_KEY, doc.handle);
+    localStorage.setItem(
+      IDENTITY_KEY,
+      JSON.stringify({ version: 1, ...currentUser }),
+    );
     notifyListeners();
   } catch {
     // still offline; next focus will try again
@@ -272,7 +284,7 @@ async function logout(): Promise<void> {
     }
     try {
       localStorage.removeItem(CURRENT_DID_KEY);
-      localStorage.removeItem(CURRENT_HANDLE_KEY);
+      localStorage.removeItem(IDENTITY_KEY);
     } catch {
       // non-fatal
     }

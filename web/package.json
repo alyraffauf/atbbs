@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "lex": "lex-cli generate",
+    "test": "vitest run",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
@@ -27,12 +28,16 @@
     "@atcute/lex-cli": "^2.7.0",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.2.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.2.0",
+    "jsdom": "^30.0.1",
     "prettier": "^3.8.2",
     "tailwindcss": "^4.2.2",
     "typescript": "^6.0.2",
-    "vite": "^8.0.8"
+    "vite": "^8.0.8",
+    "vitest": "^5.0.0"
   }
 }

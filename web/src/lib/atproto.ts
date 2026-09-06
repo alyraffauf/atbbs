@@ -1,6 +1,5 @@
 /** Read-side wrappers for Slingshot and Constellation (no auth needed). */
 
-import { queryClient, STALE_SLOW } from "./queryClient";
 import { CDN, SERVICES } from "./shared";
 import { parseAtUri } from "./util";
 
@@ -60,7 +59,7 @@ async function fetchJson<T>(url: string): Promise<T> {
 
 // --- Records ---
 
-async function fetchRecord(
+export async function fetchRecord(
   did: string,
   collection: string,
   rkey: string,
@@ -75,11 +74,7 @@ export async function getRecord(
   collection: string,
   rkey: string,
 ): Promise<ATRecord> {
-  return queryClient.ensureQueryData({
-    queryKey: ["record", did, collection, rkey],
-    queryFn: () => fetchRecord(did, collection, rkey),
-    staleTime: STALE_SLOW,
-  });
+  return fetchRecord(did, collection, rkey);
 }
 
 export async function getRecordByUri(uri: string): Promise<ATRecord> {
@@ -143,16 +138,7 @@ export async function fetchIdentityDoc(identifier: string): Promise<MiniDoc> {
 }
 
 export async function resolveIdentity(identifier: string): Promise<MiniDoc> {
-  const doc = await queryClient.ensureQueryData({
-    queryKey: ["identity", identifier],
-    queryFn: () => fetchIdentityDoc(identifier),
-    staleTime: STALE_SLOW,
-  });
-  // Seed the DID-keyed entry too, so later DID lookups hit cache.
-  if (doc.did !== identifier) {
-    queryClient.setQueryData(["identity", doc.did], doc);
-  }
-  return doc;
+  return fetchIdentityDoc(identifier);
 }
 
 export async function resolveIdentitiesBatch(
@@ -185,11 +171,7 @@ export async function fetchAvatarUrl(did: string): Promise<string | null> {
 }
 
 export async function getAvatar(did: string): Promise<string | undefined> {
-  const url = await queryClient.ensureQueryData({
-    queryKey: ["avatar", did],
-    queryFn: () => fetchAvatarUrl(did),
-    staleTime: STALE_SLOW,
-  });
+  const url = await fetchAvatarUrl(did);
   return url ?? undefined;
 }
 
@@ -239,10 +221,7 @@ export async function getBacklinkCount(
   subject: string,
   source: string,
 ): Promise<number> {
-  return queryClient.ensureQueryData({
-    queryKey: ["backlink-count", source, subject],
-    queryFn: () => fetchBacklinkCount(subject, source),
-  });
+  return fetchBacklinkCount(subject, source);
 }
 
 export async function getBacklinkCountsBatch(
