@@ -4,6 +4,7 @@ Framework-agnostic. Used by both web and TUI.
 """
 
 from dataclasses import dataclass
+import logging
 
 import httpx
 
@@ -18,6 +19,8 @@ from core.slingshot import (
     resolve_identities_batch,
 )
 from core.util import now_iso
+
+logger = logging.getLogger(__name__)
 
 
 def post_from_record(record: Record, author: MiniDoc) -> Post:
@@ -187,19 +190,7 @@ async def _try_refresh_token(client, session, session_updater):
     if not session.get("dpop_private_jwk") or not session.get("refresh_token"):
         return False
     try:
-        import json
-        import os
-
-        from core.auth.config import load_secrets
         from core.auth.oauth import refresh_tokens
-
-        data_dir = os.environ.get("ATBBS_DATA_DIR")
-        if not data_dir:
-            from platformdirs import user_data_dir
-
-            data_dir = user_data_dir("atbbs")
-        secrets = load_secrets(data_dir)
-        client_secret_jwk = json.loads(secrets["client_secret_jwk"])
 
         # Use stored client_id — required for token refresh
         client_id = session.get("client_id")
@@ -210,7 +201,6 @@ async def _try_refresh_token(client, session, session_updater):
             client=client,
             session=session,
             client_id=client_id,
-            client_secret_jwk=client_secret_jwk,
         )
 
         async def _noop(*args, **kwargs):
@@ -225,6 +215,10 @@ async def _try_refresh_token(client, session, session_updater):
         )
         return True
     except Exception:
+        logger.exception(
+            "OAuth token refresh failed",
+            extra={"did": session.get("did"), "operation": "refresh_tokens"},
+        )
         return False
 
 

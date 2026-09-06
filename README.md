@@ -95,7 +95,6 @@ The web app and TUI query existing network infrastructure:
 
 On first run, atbbs generates:
 
-- `secrets.json` — app secret key and OAuth client signing key
 - `atbbs.db` — SQLite database for OAuth sessions
 
 **Web app (Docker)**: Set `PUBLIC_URL` to your domain for OAuth callbacks (required).

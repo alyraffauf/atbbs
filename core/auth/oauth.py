@@ -7,8 +7,12 @@ Adapted from morsels (github.com/alyraffauf/morsels).
 """
 
 import json
+import asyncio
+import ipaddress
+import socket
 import time
 import urllib.request
+from urllib.parse import urlparse, urlunparse
 
 import httpx
 from authlib.common.security import generate_token
@@ -19,9 +23,7 @@ from core.auth.session import OAuthSession
 
 
 def is_safe_url(url: str) -> bool:
-    """SSRF check — only allows HTTPS URLs with public hostnames."""
-    from urllib.parse import urlparse
-
+    """Return whether a URL has the required public HTTPS shape."""
     parts = urlparse(url)
     if not (
         parts.scheme == "https"
@@ -32,7 +34,13 @@ def is_safe_url(url: str) -> bool:
         and parts.port is None
     ):
         return False
-    segments = parts.hostname.split(".")
+    try:
+        address = ipaddress.ip_address(parts.hostname)
+    except ValueError:
+        address = None
+    if address is not None:
+        return address.is_global
+    segments = parts.hostname.rstrip(".").split(".")
     if not (
         len(segments) >= 2
         and segments[-1] not in ["local", "arpa", "internal", "localhost"]
@@ -43,44 +51,107 @@ def is_safe_url(url: str) -> bool:
     return True
 
 
+async def resolve_public_https_url(url: str) -> tuple[str, str]:
+    """Resolve a public HTTPS URL once and return its hostname and one address."""
+    if not is_safe_url(url):
+        raise ValueError("OAuth endpoint must be a public HTTPS URL")
+    hostname = urlparse(url).hostname
+    if hostname is None:
+        raise ValueError("OAuth endpoint has no hostname")
+    loop = asyncio.get_running_loop()
+    answers = await loop.getaddrinfo(hostname, 443, type=socket.SOCK_STREAM)
+    addresses = {answer[4][0] for answer in answers}
+    if not addresses or any(not ipaddress.ip_address(item).is_global for item in addresses):
+        raise ValueError("OAuth endpoint resolved to a non-global address")
+    return hostname, sorted(addresses)[0]
+
+
+async def public_https_request(
+    client: httpx.AsyncClient, method: str, url: str, **kwargs
+) -> httpx.Response:
+    """Send one redirect-free request to the public address resolved for URL."""
+    hostname, address = await resolve_public_https_url(url)
+    parts = urlparse(url)
+    network_location = f"[{address}]" if ":" in address else address
+    pinned_url = urlunparse(parts._replace(netloc=network_location))
+    headers = dict(kwargs.pop("headers", {}))
+    headers["Host"] = hostname
+    extensions = dict(kwargs.pop("extensions", {}))
+    extensions["sni_hostname"] = hostname
+    return await client.request(
+        method,
+        pinned_url,
+        headers=headers,
+        extensions=extensions,
+        follow_redirects=False,
+        **kwargs,
+    )
+
+
 def is_valid_authserver_meta(obj: dict, url: str) -> bool:
     """Validate authorization server metadata against atproto requirements."""
-    from urllib.parse import urlparse
-
-    fetch_url = urlparse(url)
-    issuer_url = urlparse(obj["issuer"])
-    assert issuer_url.hostname == fetch_url.hostname
-    assert issuer_url.scheme == "https"
-    assert "code" in obj["response_types_supported"]
-    assert "authorization_code" in obj["grant_types_supported"]
-    assert "refresh_token" in obj["grant_types_supported"]
-    assert "S256" in obj["code_challenge_methods_supported"]
-    assert "private_key_jwt" in obj["token_endpoint_auth_methods_supported"]
-    assert "ES256" in obj["token_endpoint_auth_signing_alg_values_supported"]
-    assert "atproto" in obj["scopes_supported"]
-    assert obj["authorization_response_iss_parameter_supported"] is True
-    assert obj["pushed_authorization_request_endpoint"] is not None
-    assert obj["require_pushed_authorization_requests"] is True
-    assert "ES256" in obj["dpop_signing_alg_values_supported"]
-    assert obj["client_id_metadata_document_supported"] is True
-    return True
+    try:
+        fetch_url = urlparse(url)
+        issuer_url = urlparse(obj["issuer"])
+        checks = (
+            issuer_url.hostname == fetch_url.hostname,
+            issuer_url.scheme == "https",
+            "code" in obj["response_types_supported"],
+            "authorization_code" in obj["grant_types_supported"],
+            "refresh_token" in obj["grant_types_supported"],
+            "S256" in obj["code_challenge_methods_supported"],
+            "none" in obj["token_endpoint_auth_methods_supported"],
+            "atproto" in obj["scopes_supported"],
+            obj["authorization_response_iss_parameter_supported"] is True,
+            bool(obj["pushed_authorization_request_endpoint"]),
+            obj["require_pushed_authorization_requests"] is True,
+            "ES256" in obj["dpop_signing_alg_values_supported"],
+            obj["client_id_metadata_document_supported"] is True,
+        )
+        endpoints = [
+            obj["authorization_endpoint"],
+            obj["token_endpoint"],
+            obj["pushed_authorization_request_endpoint"],
+        ]
+        if obj.get("revocation_endpoint"):
+            endpoints.append(obj["revocation_endpoint"])
+        return all(checks) and all(is_safe_url(endpoint) for endpoint in endpoints)
+    except (KeyError, TypeError, ValueError):
+        return False
 
 
 async def resolve_pds_authserver(client: httpx.AsyncClient, pds_url: str) -> str:
     """Given a PDS URL, find its authorization server."""
-    assert is_safe_url(pds_url)
-    resp = await client.get(f"{pds_url}/.well-known/oauth-protected-resource")
+    if not is_safe_url(pds_url):
+        raise ValueError("PDS must be a public HTTPS URL")
+    resp = await public_https_request(
+        client, "GET", f"{pds_url}/.well-known/oauth-protected-resource"
+    )
     resp.raise_for_status()
-    return resp.json()["authorization_servers"][0]
+    authserver_url = resp.json()["authorization_servers"][0]
+    await resolve_public_https_url(authserver_url)
+    return authserver_url
 
 
 async def fetch_authserver_meta(client: httpx.AsyncClient, url: str) -> dict:
     """Fetch and validate authorization server metadata."""
-    assert is_safe_url(url)
-    resp = await client.get(f"{url}/.well-known/oauth-authorization-server")
+    if not is_safe_url(url):
+        raise ValueError("Authorization server must be a public HTTPS URL")
+    resp = await public_https_request(
+        client, "GET", f"{url}/.well-known/oauth-authorization-server"
+    )
     resp.raise_for_status()
     meta = resp.json()
-    assert is_valid_authserver_meta(meta, url)
+    if not is_valid_authserver_meta(meta, url):
+        raise ValueError("Authorization server metadata is invalid")
+    for key in (
+        "authorization_endpoint",
+        "token_endpoint",
+        "pushed_authorization_request_endpoint",
+        "revocation_endpoint",
+    ):
+        if meta.get(key):
+            await resolve_public_https_url(meta[key])
     return meta
 
 
@@ -155,41 +226,42 @@ def is_use_dpop_nonce_error(resp: httpx.Response) -> bool:
 
 async def auth_server_post(
     client: httpx.AsyncClient,
-    authserver_url: str,
     client_id: str,
-    client_secret_jwk,
     dpop_private_jwk,
     dpop_nonce: str,
     post_url: str,
     post_data: dict,
 ) -> tuple[str, httpx.Response]:
-    """POST to auth server with client assertion and DPoP, handling nonce rotation."""
+    """POST to an auth server with DPoP and handle nonce rotation."""
     post_data = {
         **post_data,
         "client_id": client_id,
     }
 
-    assert is_safe_url(post_url)
+    if not is_safe_url(post_url):
+        raise ValueError("OAuth endpoint must be a public HTTPS URL")
     dpop_proof = authserver_dpop_jwt("POST", post_url, dpop_nonce, dpop_private_jwk)
-    resp = await client.post(post_url, data=post_data, headers={"DPoP": dpop_proof})
+    resp = await public_https_request(
+        client, "POST", post_url, data=post_data, headers={"DPoP": dpop_proof}
+    )
 
     if is_use_dpop_nonce_error(resp):
         dpop_nonce = resp.headers["DPoP-Nonce"]
         dpop_proof = authserver_dpop_jwt("POST", post_url, dpop_nonce, dpop_private_jwk)
-        resp = await client.post(post_url, data=post_data, headers={"DPoP": dpop_proof})
+        resp = await public_https_request(
+            client, "POST", post_url, data=post_data, headers={"DPoP": dpop_proof}
+        )
 
     return dpop_nonce, resp
 
 
 async def send_par_request(
     client: httpx.AsyncClient,
-    authserver_url: str,
     authserver_meta: dict,
     login_hint: str,
     client_id: str,
     redirect_uri: str,
     scope: str,
-    client_secret_jwk,
     dpop_private_jwk,
 ) -> tuple[str, str, str, dict]:
     """Send a Pushed Authorization Request.
@@ -214,9 +286,7 @@ async def send_par_request(
 
     dpop_nonce, resp = await auth_server_post(
         client=client,
-        authserver_url=authserver_url,
         client_id=client_id,
-        client_secret_jwk=client_secret_jwk,
         dpop_private_jwk=dpop_private_jwk,
         dpop_nonce="",
         post_url=par_url,
@@ -232,7 +302,6 @@ async def exchange_code(
     code: str,
     client_id: str,
     redirect_uri: str,
-    client_secret_jwk,
 ) -> tuple[dict, str]:
     """Exchange authorization code for tokens. Returns (token_body, dpop_nonce)."""
     authserver_url = auth_request["authserver_iss"]
@@ -244,9 +313,7 @@ async def exchange_code(
 
     dpop_nonce, resp = await auth_server_post(
         client=client,
-        authserver_url=authserver_url,
         client_id=client_id,
-        client_secret_jwk=client_secret_jwk,
         dpop_private_jwk=dpop_private_jwk,
         dpop_nonce=auth_request["dpop_authserver_nonce"],
         post_url=token_url,
@@ -265,7 +332,6 @@ async def refresh_tokens(
     client: httpx.AsyncClient,
     session: OAuthSession,
     client_id: str,
-    client_secret_jwk,
 ) -> tuple[dict, str]:
     """Refresh an access token. Returns (token_body, dpop_nonce)."""
     authserver_url = session["authserver_iss"]
@@ -275,9 +341,7 @@ async def refresh_tokens(
 
     dpop_nonce, resp = await auth_server_post(
         client=client,
-        authserver_url=authserver_url,
         client_id=client_id,
-        client_secret_jwk=client_secret_jwk,
         dpop_private_jwk=dpop_private_jwk,
         dpop_nonce=session["dpop_authserver_nonce"],
         post_url=token_url,
@@ -294,7 +358,6 @@ async def revoke_tokens(
     client: httpx.AsyncClient,
     session: OAuthSession,
     client_id: str,
-    client_secret_jwk,
 ) -> None:
     """Revoke access and refresh tokens."""
     authserver_url = session["authserver_iss"]
@@ -309,9 +372,7 @@ async def revoke_tokens(
     for token_type in ["access_token", "refresh_token"]:
         dpop_nonce, resp = await auth_server_post(
             client=client,
-            authserver_url=authserver_url,
             client_id=client_id,
-            client_secret_jwk=client_secret_jwk,
             dpop_private_jwk=dpop_private_jwk,
             dpop_nonce=dpop_nonce,
             post_url=revoke_url,
@@ -320,6 +381,7 @@ async def revoke_tokens(
                 "token_type_hint": token_type,
             },
         )
+        resp.raise_for_status()
 
 
 async def pds_request(

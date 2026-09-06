@@ -1,4 +1,3 @@
-import json
 import webbrowser
 from urllib.parse import quote, urlencode
 
@@ -12,7 +11,6 @@ from textual.widgets import Footer, Input, Static
 from tui.widgets.handle_input import HandleInput
 
 from core.atproto_apps import pick_random_apps
-from core.auth.config import load_secrets
 from core.auth.session import OAuthSession
 from core.auth.oauth import (
     exchange_code,
@@ -22,8 +20,7 @@ from core.auth.oauth import (
 )
 from core.lexicon import OAUTH_SCOPE
 from core.slingshot import resolve_identity
-from tui.local_server import wait_for_callback
-from tui.paths import DATA_DIR
+from tui.local_server import start_callback_listener
 from tui.widgets.breadcrumb import Breadcrumb
 
 CALLBACK_PORT = 23847
@@ -82,10 +79,6 @@ class LoginScreen(Screen):
             self.notify("Could not find PDS for this handle.", severity="error")
             return
 
-        # Load client secrets from TUI data dir
-        secrets = load_secrets(DATA_DIR)
-        client_secret_jwk = json.loads(secrets["client_secret_jwk"])
-
         # Build loopback client ID
         redirect_uri = f"http://127.0.0.1:{CALLBACK_PORT}/oauth/callback"
         client_id = "http://localhost?" + urlencode(
@@ -108,35 +101,38 @@ class LoginScreen(Screen):
         try:
             pkce_verifier, state, dpop_nonce, par_resp = await send_par_request(
                 client=client,
-                authserver_url=authserver_url,
                 authserver_meta=authserver_meta,
                 login_hint=handle,
                 client_id=client_id,
                 redirect_uri=redirect_uri,
                 scope=OAUTH_SCOPE,
-                client_secret_jwk=client_secret_jwk,
                 dpop_private_jwk=dpop_key,
             )
         except Exception:
             self.notify("Authorization request failed.", severity="error")
             return
 
-        # Open browser and wait for callback
+        try:
+            callback_listener = await start_callback_listener(state, CALLBACK_PORT)
+        except Exception:
+            self.notify("Failed to start login callback.", severity="error")
+            return
+
         auth_url = authserver_meta["authorization_endpoint"]
         browser_url = f"{auth_url}?client_id={quote(client_id, safe='')}&request_uri={quote(par_resp['request_uri'], safe='')}"
         webbrowser.open(browser_url)
         self.notify("Opened browser. Complete login there.")
 
         try:
-            callback = await wait_for_callback(port=CALLBACK_PORT)
-        except RuntimeError as e:
-            self.notify(str(e), severity="error")
+            callback = await callback_listener.wait()
+        except RuntimeError as error:
+            self.notify(str(error), severity="error")
             return
         except Exception:
             self.notify("Failed to receive callback.", severity="error")
             return
 
-        if not callback.get("code") or callback.get("state") != state:
+        if not callback.get("code"):
             self.notify("Login failed. Try again.", severity="error")
             return
 
@@ -155,7 +151,6 @@ class LoginScreen(Screen):
                 code=callback["code"],
                 client_id=client_id,
                 redirect_uri=redirect_uri,
-                client_secret_jwk=client_secret_jwk,
             )
         except Exception:
             self.notify("Token exchange failed.", severity="error")
