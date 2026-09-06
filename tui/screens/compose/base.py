@@ -12,6 +12,8 @@ Subclasses must override ``get_post_params()`` to return the keyword
 arguments passed to ``create_post_record``.
 """
 
+import logging
+
 from textual import work
 from textual.screen import Screen
 from textual.widgets import Input, TextArea
@@ -21,6 +23,8 @@ from core.models import AuthError
 from core.pds import create_post_record
 from tui.screens.compose.upload import upload_file
 from tui.util import make_session_updater, require_session
+
+logger = logging.getLogger(__name__)
 
 
 class ComposeScreen(Screen):
@@ -94,7 +98,15 @@ class ComposeScreen(Screen):
             self.notify("Session expired. Please log in again.", severity="error")
             return
         except Exception as error:
-            self.notify(f"Failed to post {self.post_type}: {error}", severity="error")
+            logger.exception(
+                "Post creation failed",
+                extra={
+                    "operation": "create_post",
+                    "route": self.post_type,
+                    "exception_type": type(error).__name__,
+                },
+            )
+            self.notify(f"Failed to post {self.post_type}.", severity="error")
             return
 
         self.app.pop_screen()

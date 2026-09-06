@@ -1,4 +1,4 @@
-import webbrowser
+import logging
 from urllib.parse import quote, urlencode
 
 from authlib.jose import JsonWebKey
@@ -21,9 +21,12 @@ from core.auth.oauth import (
 from core.lexicon import OAUTH_SCOPE
 from core.slingshot import resolve_identity
 from tui.local_server import start_callback_listener
+from tui.paths import DATA_DIR
+from tui.util import open_external_url
 from tui.widgets.breadcrumb import Breadcrumb
 
 CALLBACK_PORT = 23847
+logger = logging.getLogger(__name__)
 
 
 class LoginScreen(Screen):
@@ -49,7 +52,8 @@ class LoginScreen(Screen):
         return Static("\n".join(lines), markup=True, classes="apps-card")
 
     def action_open_url(self, url: str) -> None:
-        webbrowser.open(url)
+        if not open_external_url(url):
+            self.notify("Could not open that link.", severity="error")
 
     def on_mount(self) -> None:
         self.query_one("#login-handle", Input).focus()
@@ -67,7 +71,11 @@ class LoginScreen(Screen):
         # Resolve identity
         try:
             identity = await resolve_identity(client, handle)
-        except Exception:
+        except Exception as error:
+            logger.exception(
+                "Identity resolution failed",
+                extra={"handle": handle, "exception_type": type(error).__name__},
+            )
             self.notify(
                 "Couldn't find that handle. Double-check the spelling?",
                 severity="error",
@@ -89,7 +97,11 @@ class LoginScreen(Screen):
         try:
             authserver_url = await resolve_pds_authserver(client, pds_url)
             authserver_meta = await fetch_authserver_meta(client, authserver_url)
-        except Exception:
+        except Exception as error:
+            logger.exception(
+                "OAuth discovery failed",
+                extra={"handle": handle, "exception_type": type(error).__name__},
+            )
             self.notify("Could not discover auth server.", severity="error")
             return
 
@@ -108,27 +120,46 @@ class LoginScreen(Screen):
                 scope=OAUTH_SCOPE,
                 dpop_private_jwk=dpop_key,
             )
-        except Exception:
+        except Exception as error:
+            logger.exception(
+                "OAuth PAR failed",
+                extra={"handle": handle, "exception_type": type(error).__name__},
+            )
             self.notify("Authorization request failed.", severity="error")
             return
 
         try:
             callback_listener = await start_callback_listener(state, CALLBACK_PORT)
-        except Exception:
+        except Exception as error:
+            logger.exception(
+                "OAuth callback bind failed",
+                extra={"handle": handle, "exception_type": type(error).__name__},
+            )
             self.notify("Failed to start login callback.", severity="error")
             return
 
         auth_url = authserver_meta["authorization_endpoint"]
         browser_url = f"{auth_url}?client_id={quote(client_id, safe='')}&request_uri={quote(par_resp['request_uri'], safe='')}"
-        webbrowser.open(browser_url)
+        if not open_external_url(browser_url):
+            await callback_listener.close()
+            self.notify("Could not open a browser.", severity="error")
+            return
         self.notify("Opened browser. Complete login there.")
 
         try:
             callback = await callback_listener.wait()
         except RuntimeError as error:
+            logger.exception(
+                "OAuth callback failed",
+                extra={"handle": handle, "exception_type": type(error).__name__},
+            )
             self.notify(str(error), severity="error")
             return
-        except Exception:
+        except Exception as error:
+            logger.exception(
+                "OAuth callback failed",
+                extra={"handle": handle, "exception_type": type(error).__name__},
+            )
             self.notify("Failed to receive callback.", severity="error")
             return
 
@@ -152,7 +183,11 @@ class LoginScreen(Screen):
                 client_id=client_id,
                 redirect_uri=redirect_uri,
             )
-        except Exception:
+        except Exception as error:
+            logger.exception(
+                "OAuth token exchange failed",
+                extra={"handle": handle, "exception_type": type(error).__name__},
+            )
             self.notify("Token exchange failed.", severity="error")
             return
 

@@ -1,4 +1,5 @@
 import os
+import logging
 
 import httpx
 from textual.app import App, ComposeResult
@@ -66,6 +67,10 @@ class AtbbsApp(App):
         self._dial = dial
 
     def on_mount(self) -> None:
+        for package_name in ("tui", "core"):
+            package_logger = logging.getLogger(package_name)
+            package_logger.addHandler(logging.NullHandler())
+            package_logger.propagate = False
         self.http_client = httpx.AsyncClient(timeout=10)
         os.makedirs(DATA_DIR, mode=0o700, exist_ok=True)
         os.chmod(DATA_DIR, 0o700)

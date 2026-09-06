@@ -29,6 +29,15 @@ MAX_CONNECTIONS = 20
 _connections = asyncio.Semaphore(MAX_CONNECTIONS)
 
 
+def sanitize_public_text(value: object) -> str:
+    """Remove terminal control characters from untrusted record fields."""
+    return "".join(
+        character
+        for character in str(value)
+        if ord(character) >= 0x20 and not 0x7F <= ord(character) <= 0x9F
+    )
+
+
 def wrap(text: str) -> str:
     """Wrap text to LINE_WIDTH without breaking indentation."""
     out = []
@@ -76,6 +85,13 @@ def strip_iac(data: bytes) -> bytes:
 
 
 async def write(writer: asyncio.StreamWriter, text: str):
+    """Write application text that contains no untrusted terminal controls."""
+    writer.write(wrap(text).encode())
+    await writer.drain()
+
+
+async def write_trusted_ansi(writer: asyncio.StreamWriter, text: str):
+    """Write static, application-owned ANSI output."""
     writer.write(wrap(text).encode())
     await writer.drain()
 
@@ -97,28 +113,35 @@ async def prompt(
 
 
 async def show_bbs(writer, bbs):
-    await write(writer, f"\r\n  {bbs.site.name}\r\n")
-    await write(writer, f"  {bbs.site.description}\r\n")
+    await write(writer, f"\r\n  {sanitize_public_text(bbs.site.name)}\r\n")
+    await write(writer, f"  {sanitize_public_text(bbs.site.description)}\r\n")
     if bbs.site.intro:
         await write(writer, "\r\n")
         for line in bbs.site.intro.splitlines():
-            await write(writer, f"    {line}\r\n")
+            await write(writer, f"    {sanitize_public_text(line)}\r\n")
     await write(writer, "\r\n")
     if bbs.site.boards:
         await write(writer, "  Boards\r\n")
         for i, board in enumerate(bbs.site.boards, 1):
-            await write(writer, f"    {i}. {board.name}: {board.description}\r\n")
+            await write(
+                writer,
+                f"    {i}. {sanitize_public_text(board.name)}: "
+                f"{sanitize_public_text(board.description)}\r\n",
+            )
         await write(writer, "\r\n")
 
     if bbs.news:
-        await write(writer, f"  Latest News: {bbs.news[0].title}\r\n\r\n")
+        await write(
+            writer,
+            f"  Latest News: {sanitize_public_text(bbs.news[0].title)}\r\n\r\n",
+        )
 
     await write(writer, "[#] open board  [n] news  [q] quit\r\n")
 
 
 async def show_board(writer, board, threads, has_next):
-    await write(writer, f"\r\n  {board.name}\r\n")
-    await write(writer, f"  {board.description}\r\n\r\n")
+    await write(writer, f"\r\n  {sanitize_public_text(board.name)}\r\n")
+    await write(writer, f"  {sanitize_public_text(board.description)}\r\n\r\n")
 
     if not threads:
         await write(writer, "  No threads yet.\r\n")
@@ -127,7 +150,8 @@ async def show_board(writer, board, threads, has_next):
             date = format_datetime_utc(thread.last_activity_at or thread.created_at)
             await write(
                 writer,
-                f"  {index}. {thread.title}  ·  {thread.author.handle}  ·  {date}\r\n",
+                f"  {index}. {sanitize_public_text(thread.title)}  ·  "
+                f"{sanitize_public_text(thread.author.handle)}  ·  {date}\r\n",
             )
 
     cmds = ["[#] open thread"]
@@ -138,14 +162,15 @@ async def show_board(writer, board, threads, has_next):
 
 
 async def show_thread_header(writer, thread):
-    await write(writer, f"\r\n  {thread.title}\r\n")
+    await write(writer, f"\r\n  {sanitize_public_text(thread.title)}\r\n")
     await write(
         writer,
-        f"  by {thread.author.handle}  ·  {format_datetime_utc(thread.created_at)}\r\n",
+        f"  by {sanitize_public_text(thread.author.handle)}  ·  "
+        f"{format_datetime_utc(thread.created_at)}\r\n",
     )
     await write(writer, "\r\n")
     for line in thread.body.splitlines():
-        await write(writer, f"    {line}\r\n")
+        await write(writer, f"    {sanitize_public_text(line)}\r\n")
     await write(writer, "\r\n")
 
 
@@ -153,10 +178,11 @@ async def show_replies(writer, replies):
     for reply in replies:
         await write(
             writer,
-            f"  {reply.author.handle}  ·  {format_datetime_utc(reply.created_at)}\r\n",
+            f"  {sanitize_public_text(reply.author.handle)}  ·  "
+            f"{format_datetime_utc(reply.created_at)}\r\n",
         )
         for line in reply.body.splitlines():
-            await write(writer, f"    {line}\r\n")
+            await write(writer, f"    {sanitize_public_text(line)}\r\n")
         await write(writer, "\r\n")
 
 
@@ -172,10 +198,12 @@ async def show_news(writer, news):
     await write(writer, "\r\n  News:\r\n\r\n")
     for item in news:
         await write(
-            writer, f"  {item.title}  ·  {format_datetime_utc(item.created_at)}\r\n"
+            writer,
+            f"  {sanitize_public_text(item.title)}  ·  "
+            f"{format_datetime_utc(item.created_at)}\r\n",
         )
         for line in item.body.splitlines():
-            await write(writer, f"    {line}\r\n")
+            await write(writer, f"    {sanitize_public_text(line)}\r\n")
         await write(writer, "\r\n")
     await write(writer, "[b] back  [q] quit\r\n")
 
@@ -187,7 +215,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
         writer.close()
         return
     async with _connections, httpx.AsyncClient() as client:
-        await write(writer, f"\r\n{LOGO}\r\n")
+        await write_trusted_ansi(writer, f"\r\n{LOGO}\r\n")
         await write(
             writer,
             "  This is a read-only telnet gateway for AT Protocol BBSes.\r\n  Please dial a BBS.\r\n\r\n",

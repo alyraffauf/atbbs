@@ -1,5 +1,11 @@
 """TUI utilities."""
 
+import logging
+import os
+import subprocess
+import sys
+import tempfile
+import webbrowser
 from pathlib import Path
 
 import httpx
@@ -9,6 +15,37 @@ from core.auth.session import OAuthSession, SessionStore
 from core.models import AuthError, BBS
 from core.pds import create_ban_record, create_hidden_record
 from core.resolver import invalidate_bbs_cache
+
+logger = logging.getLogger(__name__)
+
+MAX_ATTACHMENT_DOWNLOAD_BYTES = 100 * 1024 * 1024
+
+
+class AttachmentTooLargeError(ValueError):
+    def __init__(self, size_bytes: int, max_bytes: int) -> None:
+        self.size_bytes = size_bytes
+        self.max_bytes = max_bytes
+        super().__init__(
+            f"Attachment is {size_bytes / 1024 / 1024:.1f} MiB; "
+            f"the download limit is {max_bytes / 1024 / 1024:.0f} MiB."
+        )
+
+
+def open_external_url(url: str) -> bool:
+    if not sys.platform.startswith("linux"):
+        return webbrowser.open(url)
+
+    try:
+        subprocess.Popen(
+            ["xdg-open", url],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except OSError:
+        return False
+    return True
 
 
 def unique_path(path: Path) -> Path:
@@ -25,16 +62,43 @@ def unique_path(path: Path) -> Path:
 
 
 async def download_blob(
-    client: httpx.AsyncClient, url: str, filename: str
+    client: httpx.AsyncClient,
+    url: str,
+    filename: str,
+    downloads_dir: Path | None = None,
+    max_bytes: int = MAX_ATTACHMENT_DOWNLOAD_BYTES,
 ) -> Path:
-    """Fetch a blob URL and save it to the user's Downloads folder."""
-    downloads = Path(user_downloads_dir())
+    """Stream a size-limited blob to a contained, atomically named file."""
+    downloads = (downloads_dir or Path(user_downloads_dir())).resolve()
     downloads.mkdir(parents=True, exist_ok=True)
-    resp = await client.get(url)
-    resp.raise_for_status()
-    path = unique_path(downloads / filename)
-    path.write_bytes(resp.content)
-    return path
+    safe_name = Path(filename.replace("\\", "/")).name
+    if safe_name in ("", ".", ".."):
+        safe_name = "file"
+    path = unique_path(downloads / safe_name)
+    if not path.resolve(strict=False).is_relative_to(downloads):
+        raise ValueError("Attachment path escapes the downloads directory")
+
+    descriptor, temporary_name = tempfile.mkstemp(prefix=".atbbs-", dir=downloads)
+    temporary_path = Path(temporary_name)
+    total = 0
+    try:
+        with os.fdopen(descriptor, "wb") as output:
+            async with client.stream("GET", url) as response:
+                response.raise_for_status()
+                content_length = response.headers.get("content-length")
+                if content_length and int(content_length) > max_bytes:
+                    raise AttachmentTooLargeError(int(content_length), max_bytes)
+                async for chunk in response.aiter_bytes():
+                    total += len(chunk)
+                    if total > max_bytes:
+                        raise AttachmentTooLargeError(total, max_bytes)
+                    output.write(chunk)
+                output.flush()
+                os.fsync(output.fileno())
+        os.replace(temporary_path, path)
+        return path
+    finally:
+        temporary_path.unlink(missing_ok=True)
 
 
 def require_session(screen) -> OAuthSession | None:
@@ -94,7 +158,15 @@ async def ban_user(screen, did: str) -> bool:
     except AuthError:
         screen.notify("Session expired. Please log in again.", severity="error")
         return False
-    except Exception:
+    except Exception as error:
+        logger.exception(
+            "Ban creation failed",
+            extra={
+                "operation": "create_ban",
+                "route": did,
+                "exception_type": type(error).__name__,
+            },
+        )
         screen.notify("Could not ban user.", severity="error")
         return False
 
@@ -115,6 +187,14 @@ async def hide_post(screen, uri: str) -> bool:
     except AuthError:
         screen.notify("Session expired. Please log in again.", severity="error")
         return False
-    except Exception:
+    except Exception as error:
+        logger.exception(
+            "Hide creation failed",
+            extra={
+                "operation": "create_hide",
+                "route": uri,
+                "exception_type": type(error).__name__,
+            },
+        )
         screen.notify("Could not hide post.", severity="error")
         return False

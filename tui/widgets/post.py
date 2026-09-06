@@ -1,5 +1,4 @@
 import re
-import webbrowser
 from urllib.parse import unquote
 
 from textual import work
@@ -13,7 +12,7 @@ from core.util import (
     blob_url,
     format_datetime_local as format_datetime,
 )
-from tui.util import download_blob
+from tui.util import AttachmentTooLargeError, download_blob, open_external_url
 
 ATTACHMENT_LINK_RE = re.compile(r"!?\[([^\]]*)\]\(attachment:([^)\s]+)\)")
 ATTACHMENT_REF_RE = re.compile(r"attachment:([^)\s>\"']+)")
@@ -94,8 +93,15 @@ class AttachmentLink(Static, can_focus=True):
     def _activate(self) -> None:
         if self._filename:
             self._save()
-        else:
-            webbrowser.open(self._url)
+        elif not open_external_url(self._url):
+            self.notify("Could not open that link.", severity="error")
+
+    def save_attachment(self) -> bool:
+        """Start saving this link when it represents an attachment."""
+        if not self._filename:
+            return False
+        self._save()
+        return True
 
     @work
     async def _save(self) -> None:
@@ -104,6 +110,8 @@ class AttachmentLink(Static, can_focus=True):
                 self.app.http_client, self._url, self._filename
             )
             self.notify(f"Saved to {path}")
+        except AttachmentTooLargeError as error:
+            self.notify(str(error), severity="error")
         except Exception:
             self.notify(
                 f"Failed to download {self._filename}.", severity="error"

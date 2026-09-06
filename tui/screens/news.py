@@ -1,3 +1,5 @@
+import logging
+
 from textual import work
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
@@ -10,6 +12,8 @@ from core.pds import delete_record
 from tui.util import make_session_updater, require_sysop
 from tui.widgets.breadcrumb import Breadcrumb
 from tui.widgets.post import Post
+
+logger = logging.getLogger(__name__)
 
 
 class NewsScreen(Screen):
@@ -64,5 +68,14 @@ class NewsScreen(Screen):
             self.notify("News post deleted.")
         except AuthError:
             self.notify("Session expired. Please log in again.", severity="error")
-        except Exception:
+        except Exception as error:
+            logger.exception(
+                "News deletion failed",
+                extra={
+                    "operation": "delete_news",
+                    "route": self.news.uri,
+                    "handle": self.handle,
+                    "exception_type": type(error).__name__,
+                },
+            )
             self.notify("Could not delete news post.", severity="error")

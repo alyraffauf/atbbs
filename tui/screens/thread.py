@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from textual import work
 from textual.app import ComposeResult
@@ -18,6 +19,7 @@ from core.slingshot import get_record, resolve_identity
 from core.util import attachment_cid, blob_url
 from tui.screens.compose import ComposeReplyScreen
 from tui.util import (
+    AttachmentTooLargeError,
     ban_user,
     download_blob,
     hide_post,
@@ -26,7 +28,9 @@ from tui.util import (
     require_sysop,
 )
 from tui.widgets.breadcrumb import Breadcrumb
-from tui.widgets.post import Post
+from tui.widgets.post import AttachmentLink, Post
+
+logger = logging.getLogger(__name__)
 
 
 class ThreadScreen(Screen):
@@ -291,7 +295,15 @@ class ThreadScreen(Screen):
         except AuthError:
             self.notify("Session expired. Please log in again.", severity="error")
             return
-        except Exception:
+        except Exception as error:
+            logger.exception(
+                "Post deletion failed",
+                extra={
+                    "handle": self.handle,
+                    "route": post.record_uri,
+                    "exception_type": type(error).__name__,
+                },
+            )
             self.notify("Failed to delete.", severity="error")
             return
 
@@ -302,6 +314,10 @@ class ThreadScreen(Screen):
 
     def action_save_attachment(self) -> None:
         focused = self.focused
+        if isinstance(focused, AttachmentLink):
+            if not focused.save_attachment():
+                self.notify("That link is not an attachment.", severity="warning")
+            return
         if not isinstance(focused, Post) or not focused.attachments:
             self.notify("No attachments on this post.", severity="warning")
             return
@@ -318,7 +334,9 @@ class ThreadScreen(Screen):
 
             url = blob_url(post.author_pds, post.author_did, cid)
             try:
-                path = await download_blob(client, url, name, downloads)
+                path = await download_blob(client, url, name)
                 self.notify(f"Saved to {path}")
+            except AttachmentTooLargeError as error:
+                self.notify(str(error), severity="error")
             except Exception:
                 self.notify(f"Failed to download {name}.", severity="error")
