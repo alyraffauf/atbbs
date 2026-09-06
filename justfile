@@ -39,8 +39,10 @@ version ver:
     uv lock
 
 # Tag and push a release
-release ver: (version ver)
-    git add -A
+release ver:
+    test -z "$(git status --porcelain)" || { echo "release requires a clean tree" >&2; exit 1; }
+    just version {{ ver }}
+    git add pyproject.toml uv.lock web/package.json web/package-lock.json
     git commit -m "v{{ ver }}"
     git tag "v{{ ver }}"
     git push

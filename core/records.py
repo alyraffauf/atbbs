@@ -211,7 +211,7 @@ async def hydrate_replies(
 
 
 async def _try_refresh_token(client, session, session_updater):
-    """Attempt to refresh an expired OAuth token. Updates session in place."""
+    """Attempt to refresh an expired OAuth token."""
     if not session.get("dpop_private_jwk") or not session.get("refresh_token"):
         return False
     try:

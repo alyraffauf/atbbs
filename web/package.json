@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "lex": "lex-cli generate",
+    "typecheck": "tsc -b",
     "test": "vitest run",
     "build": "tsc -b && vite build",
     "preview": "vite preview"

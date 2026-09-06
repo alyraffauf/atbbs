@@ -14,8 +14,7 @@ export async function fetchNews(bbsDid: string): Promise<NewsPost[]> {
     50,
     undefined,
     bbsDid,
-  ).catch(() => null);
-  if (!backlinks) return [];
+  );
 
   const records = await getRecordsBatch(backlinks.records);
 
