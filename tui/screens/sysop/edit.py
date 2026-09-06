@@ -6,7 +6,7 @@ from textual.widgets import Footer, Input
 
 from core import lexicon
 from core.models import AuthError, BBS, make_at_uri
-from core.records import delete_record, put_board_record, put_site_record
+from core.pds import delete_record, put_board_record, put_site_record
 from core.resolver import invalidate_bbs_cache
 from core.util import now_iso
 from tui.screens.sysop.bbs_form import BBSFormMixin

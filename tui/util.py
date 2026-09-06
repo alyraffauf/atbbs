@@ -5,9 +5,9 @@ from pathlib import Path
 import httpx
 from platformdirs import user_downloads_dir
 
-from core.auth.session import SessionStore
+from core.auth.session import OAuthSession, SessionStore
 from core.models import AuthError, BBS
-from core.records import create_ban_record, create_hidden_record
+from core.pds import create_ban_record, create_hidden_record
 from core.resolver import invalidate_bbs_cache
 
 
@@ -37,7 +37,7 @@ async def download_blob(
     return path
 
 
-def require_session(screen) -> dict | None:
+def require_session(screen) -> OAuthSession | None:
     """Return the user session if logged in, else notify and return None."""
     session = screen.app.user_session
     if not session:
@@ -46,7 +46,7 @@ def require_session(screen) -> dict | None:
     return session
 
 
-def require_sysop(screen, bbs: BBS) -> dict | None:
+def require_sysop(screen, bbs: BBS) -> OAuthSession | None:
     """Return the user session if logged in AND is the BBS sysop.
 
     Shows an error notification and returns None otherwise.
@@ -64,8 +64,16 @@ def require_sysop(screen, bbs: BBS) -> dict | None:
 def make_session_updater(store: SessionStore):
     """Create a session_updater callback for PDS write operations."""
 
-    async def updater(did: str, field: str, value: str):
-        store.update_session_field(did, field, value)
+    async def updater(session, **changes):
+        if "dpop_pds_nonce" in changes:
+            store.update_pds_nonce(session, changes["dpop_pds_nonce"])
+        if "access_token" in changes:
+            store.update_tokens(
+                session,
+                changes["access_token"],
+                changes["refresh_token"],
+                changes["dpop_authserver_nonce"],
+            )
 
     return updater
 

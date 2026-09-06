@@ -3,7 +3,8 @@ from pathlib import Path
 
 import piexif
 
-from core.records import upload_blob
+from core.auth.session import OAuthSession
+from core.pds import upload_blob
 
 
 def strip_image_metadata(data: bytes, mime_type: str) -> bytes:
@@ -16,7 +17,7 @@ def strip_image_metadata(data: bytes, mime_type: str) -> bytes:
         return data
 
 
-async def upload_file(screen, file_path: str, session: dict) -> list[dict] | None:
+async def upload_file(screen, file_path: str, session: OAuthSession) -> list[dict] | None:
     """Upload a file and return attachments list, or None on error."""
     path = Path(file_path).expanduser().resolve()
     if not path.exists():
@@ -30,9 +31,11 @@ async def upload_file(screen, file_path: str, session: dict) -> list[dict] | Non
     mime_type = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
     cleaned_bytes = strip_image_metadata(file_bytes, mime_type)
 
-    async def nonce_updater(did, field, value):
-        if hasattr(screen.app, "user_session") and screen.app.user_session:
-            screen.app.user_session[field] = value
+    async def session_updater(owned_session, **changes):
+        if "dpop_pds_nonce" in changes:
+            screen.app.session_store.update_pds_nonce(
+                owned_session, changes["dpop_pds_nonce"]
+            )
 
     try:
         blob_ref = await upload_blob(
@@ -40,7 +43,7 @@ async def upload_file(screen, file_path: str, session: dict) -> list[dict] | Non
             session,
             cleaned_bytes,
             mime_type,
-            session_updater=nonce_updater,
+            session_updater=session_updater,
         )
         return [{"file": blob_ref, "name": path.name}]
     except Exception as error:

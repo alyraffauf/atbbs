@@ -13,6 +13,7 @@ from tui.widgets.handle_input import HandleInput
 
 from core.atproto_apps import pick_random_apps
 from core.auth.config import load_secrets
+from core.auth.session import OAuthSession
 from core.auth.oauth import (
     exchange_code,
     fetch_authserver_meta,
@@ -161,20 +162,20 @@ class LoginScreen(Screen):
             return
 
         # Store session persistently
-        session_data = {
-            "did": identity.did,
-            "handle": identity.handle,
-            "pds_url": pds_url,
-            "access_token": token_resp["access_token"],
-            "refresh_token": token_resp.get("refresh_token", ""),
-            "authserver_iss": authserver_url,
-            "dpop_authserver_nonce": final_dpop_nonce,
-            "dpop_pds_nonce": "",
-            "dpop_private_jwk": dpop_private_jwk_json,
-            "client_id": client_id,
-        }
-        self.app.session_store.save_session(**session_data)
-        self.app.user_session = session_data
+        session = OAuthSession(
+            did=identity.did,
+            handle=identity.handle,
+            pds_url=pds_url,
+            access_token=token_resp["access_token"],
+            refresh_token=token_resp.get("refresh_token", ""),
+            authserver_iss=authserver_url,
+            dpop_authserver_nonce=final_dpop_nonce,
+            dpop_pds_nonce="",
+            dpop_private_jwk=dpop_private_jwk_json,
+            client_id=client_id,
+        )
+        self.app.session_store.save_session(session)
+        self.app.user_session = session
 
         self.notify(f"Logged in as {identity.handle}.")
         self.app.pop_screen()

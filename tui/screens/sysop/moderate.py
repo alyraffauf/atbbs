@@ -8,7 +8,7 @@ from textual.widgets import Footer, Input, ListItem, ListView, Static
 
 from core import lexicon
 from core.models import AtUri, AuthError, BBS
-from core.records import delete_record, list_pds_records
+from core.pds import delete_record, list_pds_records
 from core.resolver import invalidate_bbs_cache
 from core.slingshot import resolve_identities_batch, resolve_identity
 from tui.util import ban_user, hide_post, make_session_updater

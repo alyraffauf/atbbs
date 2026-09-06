@@ -18,9 +18,9 @@ from textual.widgets import Input, TextArea
 
 from core import limits
 from core.models import AuthError
-from core.records import create_post_record
+from core.pds import create_post_record
 from tui.screens.compose.upload import upload_file
-from tui.util import require_session
+from tui.util import make_session_updater, require_session
 
 
 class ComposeScreen(Screen):
@@ -80,11 +80,13 @@ class ComposeScreen(Screen):
 
         # -- Create the post record ------------------------------------------
         params = self.get_post_params(title, body)
+        updater = make_session_updater(self.app.session_store)
         try:
             resp = await create_post_record(
                 self.app.http_client,
                 session,
                 attachments=attachments or None,
+                session_updater=updater,
                 **params,
             )
             resp.raise_for_status()

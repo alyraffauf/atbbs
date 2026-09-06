@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import httpx
 
 from core import lexicon
+from core.auth.session import OAuthSession
 from core.constellation import get_board_activity, get_replies, get_root_posts
 from core.filters import filter_moderated
 from core.models import AtUri, AuthError, BBS, Board, MiniDoc, Post, Record, make_at_uri
@@ -182,7 +183,7 @@ async def hydrate_replies(
 
 
 async def _try_refresh_token(client, session, session_updater):
-    """Attempt to refresh an expired OAuth token. Updates session in place."""
+    """Attempt to refresh an expired OAuth token."""
     if not session.get("dpop_private_jwk") or not session.get("refresh_token"):
         return False
     try:
@@ -212,18 +213,16 @@ async def _try_refresh_token(client, session, session_updater):
             client_secret_jwk=client_secret_jwk,
         )
 
-        session["access_token"] = token_resp["access_token"]
-        if "refresh_token" in token_resp:
-            session["refresh_token"] = token_resp["refresh_token"]
-        session["dpop_authserver_nonce"] = dpop_nonce
-
-        async def _noop(*a):
+        async def _noop(*args, **kwargs):
             pass
 
         updater = session_updater or _noop
-        await updater(session["did"], "access_token", session["access_token"])
-        await updater(session["did"], "refresh_token", session["refresh_token"])
-        await updater(session["did"], "dpop_authserver_nonce", dpop_nonce)
+        await updater(
+            session,
+            access_token=token_resp["access_token"],
+            refresh_token=token_resp.get("refresh_token") or session["refresh_token"],
+            dpop_authserver_nonce=dpop_nonce,
+        )
         return True
     except Exception:
         return False
@@ -231,7 +230,7 @@ async def _try_refresh_token(client, session, session_updater):
 
 async def pds_post(
     client: httpx.AsyncClient,
-    session: dict,
+    session: OAuthSession,
     endpoint: str,
     body: dict,
     session_updater=None,
@@ -242,7 +241,7 @@ async def pds_post(
     if "dpop_private_jwk" in session and session["dpop_private_jwk"]:
         from core.auth.oauth import pds_request
 
-        async def _noop(*a):
+        async def _noop(*args, **kwargs):
             pass
 
         updater = session_updater or _noop
@@ -256,6 +255,7 @@ async def pds_post(
             else:
                 raise AuthError("Session expired. Please log in again.")
 
+        resp.raise_for_status()
         return resp
 
     resp = await client.post(
@@ -263,12 +263,13 @@ async def pds_post(
         headers={"Authorization": f"Bearer {session['access_token']}"},
         json=body,
     )
+    resp.raise_for_status()
     return resp
 
 
 async def upload_blob(
     client: httpx.AsyncClient,
-    session: dict,
+    session: OAuthSession,
     data: bytes,
     mime_type: str,
     session_updater=None,
@@ -279,7 +280,7 @@ async def upload_blob(
     if "dpop_private_jwk" in session and session["dpop_private_jwk"]:
         from core.auth.oauth import pds_request
 
-        async def _noop(*a):
+        async def _noop(*args, **kwargs):
             pass
 
         updater = session_updater or _noop
@@ -322,7 +323,7 @@ async def upload_blob(
 
 async def create_post_record(
     client: httpx.AsyncClient,
-    session: dict,
+    session: OAuthSession,
     scope: str,
     body: str,
     title: str | None = None,
@@ -361,7 +362,7 @@ async def create_post_record(
 
 async def delete_record(
     client: httpx.AsyncClient,
-    session: dict,
+    session: OAuthSession,
     collection: str,
     rkey: str,
     session_updater=None,
@@ -410,7 +411,7 @@ async def list_pds_records(
 
 async def create_ban_record(
     client: httpx.AsyncClient,
-    session: dict,
+    session: OAuthSession,
     banned_did: str,
     session_updater=None,
 ) -> httpx.Response:
@@ -434,7 +435,7 @@ async def create_ban_record(
 
 async def create_hidden_record(
     client: httpx.AsyncClient,
-    session: dict,
+    session: OAuthSession,
     post_uri: str,
     session_updater=None,
 ) -> httpx.Response:
@@ -458,7 +459,7 @@ async def create_hidden_record(
 
 async def put_board_record(
     client: httpx.AsyncClient,
-    session: dict,
+    session: OAuthSession,
     slug: str,
     name: str,
     description: str,
@@ -487,7 +488,7 @@ async def put_board_record(
 
 async def put_site_record(
     client: httpx.AsyncClient,
-    session: dict,
+    session: OAuthSession,
     site_value: dict,
     session_updater=None,
 ) -> httpx.Response:

@@ -10,10 +10,10 @@ from textual.widgets import Footer, Static
 from core import lexicon
 from core.models import BBS, AtUri, AuthError, Post as PostModel
 from core.records import (
-    delete_record,
     hydrate_replies as fetch_replies,
     post_from_record,
 )
+from core.pds import delete_record
 from core.slingshot import get_record, resolve_identity
 from core.util import attachment_cid, blob_url
 from tui.screens.compose import ComposeReplyScreen
@@ -21,6 +21,7 @@ from tui.util import (
     ban_user,
     download_blob,
     hide_post,
+    make_session_updater,
     require_session,
     require_sysop,
 )
@@ -278,12 +279,14 @@ class ThreadScreen(Screen):
     @work(exclusive=True)
     async def do_delete(self, post: Post) -> None:
         session = self.app.user_session
+        updater = make_session_updater(self.app.session_store)
         try:
             await delete_record(
                 self.app.http_client,
                 session,
                 lexicon.POST,
                 post.rkey,
+                updater,
             )
         except AuthError:
             self.notify("Session expired. Please log in again.", severity="error")

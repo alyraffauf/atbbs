@@ -15,6 +15,8 @@ from authlib.common.security import generate_token
 from authlib.jose import JsonWebKey, jwt
 from authlib.oauth2.rfc7636 import create_s256_code_challenge
 
+from core.auth.session import OAuthSession
+
 
 def is_safe_url(url: str) -> bool:
     """SSRF check — only allows HTTPS URLs with public hostnames."""
@@ -261,7 +263,7 @@ async def exchange_code(
 
 async def refresh_tokens(
     client: httpx.AsyncClient,
-    session: dict,
+    session: OAuthSession,
     client_id: str,
     client_secret_jwk,
 ) -> tuple[dict, str]:
@@ -290,7 +292,7 @@ async def refresh_tokens(
 
 async def revoke_tokens(
     client: httpx.AsyncClient,
-    session: dict,
+    session: OAuthSession,
     client_id: str,
     client_secret_jwk,
 ) -> None:
@@ -324,7 +326,7 @@ async def pds_request(
     client: httpx.AsyncClient,
     method: str,
     url: str,
-    session: dict,
+    session: OAuthSession,
     session_updater,
     body: dict | None = None,
     content: bytes | None = None,
@@ -359,7 +361,7 @@ async def pds_request(
 
         if is_use_dpop_nonce_error(resp):
             dpop_nonce = resp.headers["DPoP-Nonce"]
-            await session_updater(session["did"], "dpop_pds_nonce", dpop_nonce)
+            await session_updater(session, dpop_pds_nonce=dpop_nonce)
             continue
         break
 

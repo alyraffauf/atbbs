@@ -6,7 +6,7 @@ from textual.widgets import Footer
 
 from core import lexicon
 from core.models import AtUri, AuthError, BBS, Post as PostModel
-from core.records import delete_record
+from core.pds import delete_record
 from tui.util import make_session_updater, require_sysop
 from tui.widgets.breadcrumb import Breadcrumb
 from tui.widgets.post import Post

@@ -67,7 +67,8 @@ class AtbbsApp(App):
 
     def on_mount(self) -> None:
         self.http_client = httpx.AsyncClient(timeout=10)
-        os.makedirs(DATA_DIR, exist_ok=True)
+        os.makedirs(DATA_DIR, mode=0o700, exist_ok=True)
+        os.chmod(DATA_DIR, 0o700)
         db_path = os.path.join(DATA_DIR, "atbbs.db")
         self.session_store = SessionStore(db_path)
         self.user_session = None
