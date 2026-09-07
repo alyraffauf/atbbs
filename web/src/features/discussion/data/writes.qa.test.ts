@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createPost } from "./discussionRecords";
+import { createThread } from "../../../atbbs/discussion/commands";
 import type { AuthenticatedRepo } from "../../../atproto/repository";
 import {
   prepareAttachmentViews,
@@ -49,9 +49,15 @@ describe("authenticated writes", () => {
         })),
       },
     } as unknown as AuthenticatedRepo;
-    await expect(createPost(repo, "at://scope", "body")).rejects.toThrow(
-      "rejected",
-    );
+    await expect(
+      createThread(repo, "https://pds.example", {
+        communityDid: "did:plc:community",
+        boardSlug: "general",
+        title: "Title",
+        body: "body",
+        attachments: [],
+      }),
+    ).rejects.toThrow("rejected");
   });
 
   it("returns unwrapped record data", async () => {
@@ -60,11 +66,38 @@ describe("authenticated writes", () => {
       cid: "cid",
       validationStatus: "valid" as const,
     };
+    const post = vi.fn(async () => ({ ok: true, data }));
     const repo = {
       did: "did:plc:test",
-      client: { post: vi.fn(async () => ({ ok: true, data })) },
+      client: { post },
     } as unknown as AuthenticatedRepo;
-    await expect(createPost(repo, "at://scope", "body")).resolves.toBe(data);
+    await expect(
+      createThread(repo, "https://pds.example", {
+        communityDid: "did:plc:community",
+        boardSlug: "general",
+        title: "Title",
+        body: "body",
+        attachments: [],
+      }),
+    ).resolves.toMatchObject({
+      uri: data.uri,
+      did: "did:plc:test",
+      rkey: "example",
+      attachments: [],
+    });
+    expect(post).toHaveBeenCalledWith("com.atproto.repo.createRecord", {
+      input: {
+        repo: "did:plc:test",
+        collection: "xyz.atbbs.post",
+        record: {
+          $type: "xyz.atbbs.post",
+          scope: "at://did:plc:community/xyz.atbbs.board/general",
+          title: "Title",
+          body: "body",
+          createdAt: expect.any(String),
+        },
+      },
+    });
   });
 
   it("uploads prepared bytes with the original media type", async () => {
