@@ -26,21 +26,27 @@ export default function ActivityFeed({ items }: ActivityFeedProps) {
         const reply = parseAtUri(item.replyUri);
         const url = `${threadUrl(item.bbsHandle, thread.did, thread.rkey)}#reply-${reply.rkey}`;
         return (
-          <Link
+          <div
             key={item.replyUri}
-            to={url}
-            className="block border border-neutral-800/50 rounded p-4 mb-2 hover:bg-neutral-800"
+            className="relative border border-neutral-800/50 rounded p-4 mb-2 hover:bg-neutral-800"
           >
-            <PostMeta handle={item.handle} createdAt={item.createdAt} />
-            <p className="text-xs text-neutral-400 mb-1">
-              {item.type === "parent_reply"
-                ? "replied to your reply"
-                : `on: ${item.threadTitle}`}
-            </p>
-            <div className="line-clamp-2">
-              <PostBody>{item.body}</PostBody>
+            <Link
+              to={url}
+              aria-label={`Open activity on ${item.threadTitle || "thread"}`}
+              className="absolute inset-0"
+            />
+            <div className="relative pointer-events-none [&_a]:pointer-events-auto">
+              <PostMeta handle={item.handle} createdAt={item.createdAt} />
+              <p className="text-xs text-neutral-400 mb-1">
+                {item.type === "parent_reply"
+                  ? "replied to your reply"
+                  : `on: ${item.threadTitle}`}
+              </p>
+              <div className="line-clamp-2">
+                <PostBody>{item.body}</PostBody>
+              </div>
             </div>
-          </Link>
+          </div>
         );
       })}
       {shown < items.length && (

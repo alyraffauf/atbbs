@@ -75,40 +75,24 @@ export async function fetchActivity(
   );
   const bbsIdentities = await resolveIdentitiesBatch([...bbsDids]);
 
-  const targets: ActivityTarget[] = [
-    ...rootPosts.flatMap((post): ActivityTarget[] => {
+  const targets = [...rootPosts, ...replyPosts].flatMap(
+    (post): ActivityTarget[] => {
+      const isReply = !!post.value.root;
       const bbsDid = parseAtUri(post.value.scope).did;
       const bbsHandle = bbsIdentities[bbsDid]?.handle;
-      return bbsHandle
-        ? [
-            {
-              sourceUri: post.uri,
-              backlinkSource: `${POST}:root`,
-              type: "reply",
-              threadTitle: post.value.title ?? "",
-              threadUri: post.uri,
-              bbsHandle,
-            },
-          ]
-        : [];
-    }),
-    ...replyPosts.flatMap((reply): ActivityTarget[] => {
-      const bbsDid = parseAtUri(reply.value.scope).did;
-      const bbsHandle = bbsIdentities[bbsDid]?.handle;
-      return bbsHandle
-        ? [
-            {
-              sourceUri: reply.uri,
-              backlinkSource: `${POST}:parent`,
-              type: "parent_reply",
-              threadTitle: "",
-              threadUri: reply.value.root ?? "",
-              bbsHandle,
-            },
-          ]
-        : [];
-    }),
-  ];
+      if (!bbsHandle) return [];
+      return [
+        {
+          sourceUri: post.uri,
+          backlinkSource: `${POST}:${isReply ? "parent" : "root"}`,
+          type: isReply ? "parent_reply" : "reply",
+          threadTitle: isReply ? "" : (post.value.title ?? ""),
+          threadUri: post.value.root ?? post.uri,
+          bbsHandle,
+        },
+      ];
+    },
+  );
   const results = await allSettledBounded(
     targets,
     (target) => fetchBacklinkItems(target, did),
