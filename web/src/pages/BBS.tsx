@@ -67,16 +67,16 @@ export default function BBSPage() {
       if (!repo) throw new Error("Not signed in");
       const siteUri = makeAtUri(bbs.identity.did as Did, SITE, "self");
       const attachments = await uploadAttachments(repo, input.files);
-      const resp = await createPost(repo, siteUri, input.body, {
+      const record = await createPost(repo, siteUri, input.body, {
         title: input.title,
         attachments,
       });
-      return { resp, attachments };
+      return { record, attachments };
     },
-    onSuccess: ({ resp, attachments }, input) => {
-      const rkey = parseAtUri(resp.data.uri).rkey;
+    onSuccess: ({ record, attachments }, input) => {
+      const rkey = parseAtUri(record.uri).rkey;
       const newItem: NewsPost = {
-        uri: resp.data.uri,
+        uri: record.uri,
         rkey,
         title: input.title,
         body: input.body,

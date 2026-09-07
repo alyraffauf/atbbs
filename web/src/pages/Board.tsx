@@ -104,18 +104,18 @@ export default function BoardPage() {
       if (!repo) throw new Error("Not signed in");
       const boardUri = makeAtUri(bbs.identity.did as Did, BOARD, board.slug);
       const attachments = await uploadAttachments(repo, input.files);
-      const resp = await createPost(repo, boardUri, input.body, {
+      const record = await createPost(repo, boardUri, input.body, {
         title: input.title,
         attachments,
       });
-      return resp;
+      return record;
     },
-    onSuccess: (resp, input) => {
+    onSuccess: (record, input) => {
       if (!user) return;
-      const { did, rkey } = parseAtUri(resp.data.uri);
+      const { did, rkey } = parseAtUri(record.uri);
       const now = nowIso();
       const newThread: ThreadItem = {
-        uri: resp.data.uri,
+        uri: record.uri,
         did,
         rkey,
         handle: user.handle,
@@ -147,7 +147,7 @@ export default function BoardPage() {
           };
         },
       );
-      void refetchUntilIndexed(boardKey, resp.data.uri);
+      void refetchUntilIndexed(boardKey, record.uri);
       queryClient.invalidateQueries(myThreadsQuery(user.pdsUrl, user.did));
       setTitle("");
       setBody("");

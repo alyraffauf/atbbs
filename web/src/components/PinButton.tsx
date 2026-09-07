@@ -21,9 +21,8 @@ export default function PinButton({ bbsDid, initialRkey }: PinButtonProps) {
       await deleteRecord(repo, PIN, pinRkey);
       setPinRkey(null);
     } else {
-      const resp = await createPin(repo, bbsDid);
-      const uri = (resp.data as { uri: string }).uri;
-      setPinRkey(parseAtUri(uri).rkey);
+      const record = await createPin(repo, bbsDid);
+      setPinRkey(parseAtUri(record.uri).rkey);
     }
   }, [repo, bbsDid, pinRkey]);
 

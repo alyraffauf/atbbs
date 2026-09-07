@@ -106,23 +106,23 @@ export default function ThreadPage() {
         thread.boardSlug,
       );
       const attachments = await uploadAttachments(repo, input.files);
-      const resp = await createPost(repo, boardUri, input.body, {
+      const record = await createPost(repo, boardUri, input.body, {
         root: threadUri,
         parent: input.parent ?? undefined,
         attachments,
       });
-      return { resp, input, attachments };
+      return { record, input, attachments };
     },
-    onSuccess: ({ resp, input, attachments }) => {
+    onSuccess: ({ record, input, attachments }) => {
       if (!user) return;
-      const { did: newDid, rkey: newRkey } = parseAtUri(resp.data.uri);
+      const { did: newDid, rkey: newRkey } = parseAtUri(record.uri);
       const newRef: BacklinkRef = {
         did: newDid,
         collection: POST,
         rkey: newRkey,
       };
       const newReply: Reply = {
-        uri: resp.data.uri,
+        uri: record.uri,
         did: newDid,
         rkey: newRkey,
         handle: user.handle,

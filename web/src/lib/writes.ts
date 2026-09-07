@@ -1,6 +1,6 @@
 /** Authenticated PDS writes with an explicit repository owner. */
 
-import type { Client } from "@atcute/client";
+import { ok, type Client } from "@atcute/client";
 import { SITE, BOARD, POST, BAN, HIDE, PIN, PROFILE } from "./lexicon";
 import { invalidateAllBBSCaches } from "./bbs";
 import { nowIso } from "./util";
@@ -42,16 +42,6 @@ type Nsid = `${string}.${string}.${string}`;
 const asDid = (value: string) => value as Did;
 const asNsid = (value: string) => value as Nsid;
 
-function assertOk(
-  resp: { ok: boolean; data: unknown },
-  label: string,
-): asserts resp is { ok: true; data: unknown } {
-  if (!resp.ok) {
-    const message = (resp.data as { message?: string })?.message;
-    throw new Error(message ?? `${label} failed`);
-  }
-}
-
 async function createRecord<V extends object>(
   repo: AuthenticatedRepo,
   collection: string,
@@ -60,16 +50,15 @@ async function createRecord<V extends object>(
 ) {
   const did = asDid(repo.did);
   const rpc = repo.client;
-  const resp = await rpc.post("com.atproto.repo.createRecord", {
+  const record = ok(await rpc.post("com.atproto.repo.createRecord", {
     input: {
       repo: did,
       collection: asNsid(collection),
       ...(rkey ? { rkey } : {}),
       record: { $type: collection, ...value },
     },
-  });
-  assertOk(resp, "createRecord");
-  return resp;
+  }));
+  return record;
 }
 
 async function putRecord<V extends object>(
@@ -80,16 +69,15 @@ async function putRecord<V extends object>(
 ) {
   const did = asDid(repo.did);
   const rpc = repo.client;
-  const resp = await rpc.post("com.atproto.repo.putRecord", {
+  const record = ok(await rpc.post("com.atproto.repo.putRecord", {
     input: {
       repo: did,
       collection: asNsid(collection),
       rkey,
       record: { $type: collection, ...value },
     },
-  });
-  assertOk(resp, "putRecord");
-  return resp;
+  }));
+  return record;
 }
 
 export async function deleteRecord(
@@ -99,15 +87,14 @@ export async function deleteRecord(
 ) {
   const did = asDid(repo.did);
   const rpc = repo.client;
-  const resp = await rpc.post("com.atproto.repo.deleteRecord", {
+  const result = ok(await rpc.post("com.atproto.repo.deleteRecord", {
     input: {
       repo: did,
       collection: asNsid(collection),
       rkey,
     },
-  });
-  assertOk(resp, "deleteRecord");
-  return resp;
+  }));
+  return result;
 }
 
 // --- Blob upload ---
@@ -128,20 +115,13 @@ async function stripImageMetadata(file: File): Promise<File> {
 
 async function uploadBlob(rpc: Client, file: File): Promise<BlobRef> {
   const cleanedFile = await stripImageMetadata(file);
-  const fileBytes = new Uint8Array(await cleanedFile.arrayBuffer());
-  // atcute's typed upload signature is awkward for raw binary; cast at boundary.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const resp = await rpc.post("com.atproto.repo.uploadBlob", {
-    input: fileBytes,
+  const result = ok(await rpc.post("com.atproto.repo.uploadBlob", {
+    input: cleanedFile,
     headers: {
       "content-type": cleanedFile.type || "application/octet-stream",
     },
-  } as any);
-  if (!resp.ok) {
-    const message = (resp.data as { message?: string })?.message;
-    throw new Error(message ?? "uploadBlob failed");
-  }
-  return (resp.data as { blob: BlobRef }).blob;
+  }));
+  return result.blob as BlobRef;
 }
 
 export async function uploadAttachments(
