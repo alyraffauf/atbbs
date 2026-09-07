@@ -37,7 +37,7 @@ export async function fetchProfile(handle: string): Promise<Profile | null> {
     did: identity.did,
     handle: identity.handle,
     pdsUrl: identity.pds ?? "",
-    avatar,
+    avatar: avatar ?? undefined,
   };
 
   if (

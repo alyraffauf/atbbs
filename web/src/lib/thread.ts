@@ -10,8 +10,7 @@ import {
   type BacklinkRef,
 } from "./atproto";
 import { POST } from "./lexicon";
-import { makeAtUri, parseAtUri } from "./util";
-import type { Did } from "@atcute/lexicons/syntax";
+import { parseAtUri } from "./util";
 import { recordToReply } from "./replies";
 import { isPostRecord } from "./recordGuards";
 import type { Reply } from "./replies";
@@ -93,10 +92,6 @@ export async function fetchThreadRoot(
     boardSlug,
     attachments: postValue.attachments as ThreadRoot["attachments"],
   };
-}
-
-export function threadUriFor(did: string, tid: string): string {
-  return makeAtUri(did as Did, POST, tid);
 }
 
 export interface ReplyPage {

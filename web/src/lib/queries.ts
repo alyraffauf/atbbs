@@ -3,9 +3,9 @@
 
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import {
-  fetchIdentityDoc,
-  fetchAvatarUrl,
-  fetchBacklinkCount,
+  resolveIdentity,
+  getAvatar,
+  getBacklinkCount,
   getBacklinkCountsBatch,
 } from "./atproto";
 import { PIN } from "./lexicon";
@@ -45,20 +45,20 @@ export const identityQuery = (identifier: string) =>
   queryOptions({
     ...slowQueryOpts,
     queryKey: ["identity", identifier] as const,
-    queryFn: () => fetchIdentityDoc(identifier),
+    queryFn: () => resolveIdentity(identifier),
   });
 
 export const avatarQuery = (did: string) =>
   queryOptions({
     ...slowQueryOpts,
     queryKey: ["avatar", did] as const,
-    queryFn: () => fetchAvatarUrl(did),
+    queryFn: () => getAvatar(did),
   });
 
 export const backlinkCountQuery = (subject: string, source: string) =>
   queryOptions({
     queryKey: ["backlink-count", source, subject] as const,
-    queryFn: () => fetchBacklinkCount(subject, source),
+    queryFn: () => getBacklinkCount(subject, source),
   });
 
 export const profileQuery = (handle: string) =>

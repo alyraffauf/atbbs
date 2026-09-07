@@ -1,7 +1,8 @@
 /** Pure helpers for reply pagination and hydration. */
 
 import { type ATRecord, type BacklinkRef } from "./atproto";
-import { parseAtUri } from "./util";
+import { makeAtUri, parseAtUri } from "./util";
+import type { Did, Nsid } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "./recordGuards";
 export interface Reply {
   uri: string;
@@ -20,7 +21,7 @@ export type { BacklinkRef };
 export const REPLIES_PER_PAGE = 10;
 
 export function refToUri(ref: BacklinkRef): string {
-  return `at://${ref.did}/${ref.collection}/${ref.rkey}`;
+  return makeAtUri(ref.did as Did, ref.collection as Nsid, ref.rkey);
 }
 
 export function pageForReply(

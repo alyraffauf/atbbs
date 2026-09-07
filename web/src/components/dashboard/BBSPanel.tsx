@@ -25,7 +25,7 @@ export default function BBSPanel({
 
   useEffect(() => {
     if (!hasBBS) return;
-    getAvatar(userDid).then(setAvatar);
+    getAvatar(userDid).then((url) => setAvatar(url ?? undefined));
   }, [hasBBS, userDid]);
 
   if (!hasBBS) {

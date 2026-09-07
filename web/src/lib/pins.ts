@@ -9,7 +9,8 @@ import {
 } from "./atproto";
 import { PIN, SITE } from "./lexicon";
 import { isPinRecord, isSiteRecord } from "./recordGuards";
-import { parseAtUri } from "./util";
+import { makeAtUri, parseAtUri } from "./util";
+import type { Did } from "@atcute/lexicons/syntax";
 
 export interface PinnedBBS {
   did: string;
@@ -33,7 +34,7 @@ export async function fetchPins(
   const [identities, siteResults, avatars] = await Promise.all([
     resolveIdentitiesBatch(pinnedDids),
     getRecordsByUri(
-      pinnedDids.map((pinnedDid) => `at://${pinnedDid}/${SITE}/self`),
+      pinnedDids.map((pinnedDid) => makeAtUri(pinnedDid as Did, SITE, "self")),
       { failureMode: "best-effort" },
     ),
     getAvatars(pinnedDids),

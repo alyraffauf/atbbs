@@ -32,7 +32,7 @@ export function useResolvedBBS(query: string): Suggestion | null {
             to: bbsUrl(identity.handle),
             name: siteValue.name ?? identity.handle,
             handle: identity.handle,
-            avatar,
+            avatar: avatar ?? undefined,
           });
         }
       } catch {

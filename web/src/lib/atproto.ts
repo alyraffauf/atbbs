@@ -146,7 +146,7 @@ function collectHydratedRecords(
 
 // --- Records ---
 
-export async function fetchRecord(
+export async function getRecord(
   did: string,
   collection: string,
   rkey: string,
@@ -162,14 +162,6 @@ export async function fetchRecord(
     typeof record.value !== "object"
   ) malformed("Record service");
   return record;
-}
-
-export async function getRecord(
-  did: string,
-  collection: string,
-  rkey: string,
-): Promise<ATRecord> {
-  return fetchRecord(did, collection, rkey);
 }
 
 async function allSettledBounded<T, R>(
@@ -263,7 +255,7 @@ export function requireComplete<T>(result: BoundedResult<T>): T[] {
 
 // --- Identity (DID doc) ---
 
-export async function fetchIdentityDoc(identifier: string): Promise<MiniDoc> {
+export async function resolveIdentity(identifier: string): Promise<MiniDoc> {
   const identity = await fetchJson<MiniDoc>(
     `${SLINGSHOT}/blue.microcosm.identity.resolveMiniDoc?identifier=${encodeURIComponent(identifier)}`,
   );
@@ -274,10 +266,6 @@ export async function fetchIdentityDoc(identifier: string): Promise<MiniDoc> {
     (identity.pds !== undefined && typeof identity.pds !== "string")
   ) malformed("Identity service");
   return identity;
-}
-
-export async function resolveIdentity(identifier: string): Promise<MiniDoc> {
-  return fetchIdentityDoc(identifier);
 }
 
 export async function resolveIdentitiesBatch(
@@ -300,7 +288,7 @@ function extractAvatarCid(value: Record<string, unknown>): string | null {
   return avatar?.ref?.$link ?? null;
 }
 
-export async function fetchAvatarUrl(did: string): Promise<string | null> {
+export async function getAvatar(did: string): Promise<string | null> {
   try {
     const record = await getRecord(did, BSKY_PROFILE, "self");
     const cid = extractAvatarCid(record.value);
@@ -309,11 +297,6 @@ export async function fetchAvatarUrl(did: string): Promise<string | null> {
     if (error instanceof FetchError && error.kind === "not-found") return null;
     throw error;
   }
-}
-
-export async function getAvatar(did: string): Promise<string | undefined> {
-  const url = await fetchAvatarUrl(did);
-  return url ?? undefined;
 }
 
 export async function getAvatars(
@@ -360,7 +343,7 @@ export async function getBacklinks(
   return response;
 }
 
-export async function fetchBacklinkCount(
+export async function getBacklinkCount(
   subject: string,
   source: string,
 ): Promise<number> {
@@ -369,13 +352,6 @@ export async function fetchBacklinkCount(
   );
   if (typeof total !== "number") malformed("Backlink count service");
   return total;
-}
-
-export async function getBacklinkCount(
-  subject: string,
-  source: string,
-): Promise<number> {
-  return fetchBacklinkCount(subject, source);
 }
 
 export async function getBacklinkCountsBatch(

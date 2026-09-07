@@ -23,7 +23,6 @@ import {
 } from "../lib/queries";
 import { queryClient } from "../lib/queryClient";
 import { bbsUrl, boardUrl } from "../lib/routes";
-import { threadUriFor } from "../lib/thread";
 import { REPLIES_PER_PAGE } from "../lib/replies";
 import {
   appendRefAndReply,
@@ -43,7 +42,7 @@ import ThreadCard from "../components/post/ThreadCard";
 
 export default function ThreadPage() {
   const { handle, did, tid } = useParams();
-  const threadUri = threadUriFor(did!, tid!);
+  const threadUri = makeAtUri(did! as Did, POST, tid!);
   const { user, repo } = useAuth();
   const navigate = useNavigate();
 
