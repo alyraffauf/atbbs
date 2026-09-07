@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import { ArrowRight, Pencil, Plus, Shield, Trash2 } from "lucide-react";
 import { ActionLink } from "../nav/ActionButton";
-import { getAvatar } from "../../lib/atproto";
+import { avatarQuery } from "../../lib/queries";
 import { bbsUrl } from "../../lib/routes";
 
 interface BBSPanelProps {
@@ -21,12 +21,10 @@ export default function BBSPanel({
   bbsName,
   onDelete,
 }: BBSPanelProps) {
-  const [avatar, setAvatar] = useState<string>();
-
-  useEffect(() => {
-    if (!hasBBS) return;
-    getAvatar(userDid).then((url) => setAvatar(url ?? undefined));
-  }, [hasBBS, userDid]);
+  const { data: avatar } = useQuery({
+    ...avatarQuery(userDid),
+    enabled: hasBBS,
+  });
 
   if (!hasBBS) {
     return (
