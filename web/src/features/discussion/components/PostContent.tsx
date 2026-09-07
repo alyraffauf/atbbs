@@ -1,4 +1,4 @@
-import type { PostAttachment } from "../../community/data/bbs";
+import type { PostAttachment } from "../../../atbbs/community/read";
 import AttachmentLink from "./AttachmentLink";
 import PostBody, { unembeddedAttachments } from "./PostBody";
 

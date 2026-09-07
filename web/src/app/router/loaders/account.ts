@@ -1,5 +1,5 @@
 import { redirect } from "react-router-dom";
-import { NoBBSError } from "../../../features/community/data/bbs";
+import { NoBBSError } from "../../../atbbs/community/read";
 import { bbsQuery } from "../../../frontend/features/community/queries";
 import { queryClient } from "../../../frontend/app/queryClient";
 import { requireAuth } from "../../../features/auth/loaders";

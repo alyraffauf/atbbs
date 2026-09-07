@@ -3,7 +3,7 @@ import { useAuth } from "../../auth/auth";
 import { PIN } from "../../../atbbs/schema/collections";
 import { createPin } from "../data/pinRecords";
 import { deleteRecord } from "../../../atproto/repository";
-import { findPinRkey } from "../data/pins";
+import { findPinRkey } from "../../../atbbs/community/pins";
 import { pinsQuery } from "../../../frontend/features/community/queries";
 import { ActionButton } from "../../../shared/ui/ActionButton";
 import { Pin, PinOff } from "lucide-react";

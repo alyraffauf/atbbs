@@ -3,7 +3,7 @@ import type { Components } from "react-markdown";
 import AttachmentLink from "./AttachmentLink";
 import { blobUrl } from "../../../atproto/blobUrls";
 import { cdnImageUrl } from "../../../atbbs/media/urls";
-import type { PostAttachment } from "../../community/data/bbs";
+import type { PostAttachment } from "../../../atbbs/community/read";
 
 interface PostBodyProps {
   children: string;

@@ -4,7 +4,7 @@ import type { Did } from "@atcute/lexicons/syntax";
 import type { PostDraft } from "./components/PostComposer";
 import { alertOnError } from "../../frontend/app/browser/alerts";
 import { useAuth } from "../auth/auth";
-import type { BBS } from "../community/data/bbs";
+import type { Community } from "../../atbbs/community/read";
 import { BOARD, POST } from "../../atbbs/schema/collections";
 import { myThreadsQuery } from "../../frontend/features/dashboard/queries";
 import { queryClient } from "../../frontend/app/queryClient";
@@ -27,7 +27,7 @@ import { pendingAttachmentsFromFiles } from "../../frontend/features/discussion/
 import type { BacklinkRef } from "../../atproto/backlinks";
 
 interface ThreadMutationOptions {
-  bbs: BBS;
+  bbs: Community;
   thread: ThreadRoot;
   handle: string;
   page: number;

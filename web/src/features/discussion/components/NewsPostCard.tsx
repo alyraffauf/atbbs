@@ -1,4 +1,4 @@
-import type { NewsPost } from "../../community/data/bbs";
+import type { NewsPost } from "../../../atbbs/community/read";
 import PostActions from "./PostActions";
 import PostContent from "./PostContent";
 import PostMeta from "./PostMeta";

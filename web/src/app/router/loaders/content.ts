@@ -1,5 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router-dom";
-import type { BBS, Board, NewsPost } from "../../../features/community/data/bbs";
+import type {
+  Board,
+  Community,
+  NewsPost,
+} from "../../../atbbs/community/read";
 import type { ThreadRoot } from "../../../features/discussion/data/thread";
 import { bbsQuery } from "../../../frontend/features/community/queries";
 import {
@@ -19,7 +23,7 @@ function requiredParam(
 
 export interface CommunityLoaderData {
   handle: string;
-  bbs: BBS;
+  bbs: Community;
 }
 
 async function loadCommunity(params: LoaderFunctionArgs["params"]) {

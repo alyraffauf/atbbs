@@ -6,7 +6,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import type { Did } from "@atcute/lexicons/syntax";
 import { useAuth } from "../auth/auth";
-import type { BBS, Board } from "../community/data/bbs";
+import type { Board, Community } from "../../atbbs/community/read";
 import type { ThreadItem, ThreadPageResult } from "./data/boardThreads";
 import { BOARD } from "../../atbbs/schema/collections";
 import { myThreadsQuery } from "../../frontend/features/dashboard/queries";
@@ -44,7 +44,11 @@ export async function waitForThreadIndexing(
   }
 }
 
-export function useBoardPosting(bbs: BBS, board: Board, handle: string) {
+export function useBoardPosting(
+  bbs: Community,
+  board: Board,
+  handle: string,
+) {
   const { user, repo } = useAuth();
   const navigate = useNavigate();
 

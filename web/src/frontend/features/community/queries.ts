@@ -1,9 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
 import { PIN } from "../../../atbbs/schema/collections";
-import { resolveBBS } from "../../../features/community/data/bbs";
-import { fetchPins } from "../../../features/community/data/pins";
-import { fetchDiscovery } from "../../../features/community/data/discovery";
-import { fetchHomeSysopInfo } from "../../../features/community/data/home";
+import { resolveCommunity } from "../../../atbbs/community/read";
+import { fetchPins } from "../../../atbbs/community/pins";
+import { fetchDiscovery } from "../../../atbbs/community/discovery";
+import { fetchHomeSysopInfo } from "../../../atbbs/community/home";
 import { getBacklinkCountsBatch } from "../../../atbbs/discussion/hydration";
 import { slowQueryOptions } from "../../app/queryOptions";
 import { getAvatar } from "../../../atbbs/identity/service";
@@ -12,7 +12,7 @@ export const bbsQuery = (handle: string) =>
   queryOptions({
     ...slowQueryOptions,
     queryKey: ["bbs", handle] as const,
-    queryFn: () => resolveBBS(handle),
+    queryFn: () => resolveCommunity(handle),
   });
 
 export const pinsQuery = (pdsUrl: string, did: string) =>

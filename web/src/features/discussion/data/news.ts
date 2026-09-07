@@ -6,7 +6,7 @@ import { POST, SITE } from "../../../atbbs/schema/collections";
 import { makeAtUri, parseAtUri } from "../../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "../../../atbbs/schema/records";
-import type { NewsPost } from "../../community/data/bbs";
+import type { NewsPost } from "../../../atbbs/community/read";
 
 export async function fetchNews(bbsDid: string): Promise<NewsPost[]> {
   const siteUri = makeAtUri(bbsDid as Did, SITE, "self");

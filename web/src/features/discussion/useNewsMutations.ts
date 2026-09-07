@@ -4,7 +4,7 @@ import type { Did } from "@atcute/lexicons/syntax";
 import type { PostDraft } from "./components/PostComposer";
 import { alertOnError } from "../../frontend/app/browser/alerts";
 import { useAuth } from "../auth/auth";
-import type { BBS, NewsPost } from "../community/data/bbs";
+import type { Community, NewsPost } from "../../atbbs/community/read";
 import { POST, SITE } from "../../atbbs/schema/collections";
 import { newsQuery } from "../../frontend/features/discussion/queries";
 import { queryClient } from "../../frontend/app/queryClient";
@@ -16,7 +16,7 @@ import { deleteRecord } from "../../atproto/repository";
 import { uploadAttachments } from "../../atbbs/discussion/attachments";
 import { pendingAttachmentsFromFiles } from "../../frontend/features/discussion/browser/pendingAttachment";
 
-export function usePostNews(bbs: BBS) {
+export function usePostNews(bbs: Community) {
   const { repo } = useAuth();
   return useMutation({
     mutationFn: async (input: PostDraft) => {

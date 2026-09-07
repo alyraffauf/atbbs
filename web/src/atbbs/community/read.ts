@@ -1,13 +1,13 @@
 /** Resolve a handle to a fully hydrated BBS via Slingshot/Constellation. */
 
-import { resolveIdentity, type ResolvedIdentity } from "../../../atproto/identity";
-import { getRecord, type ATRecord } from "../../../atproto/records";
-import { getRecordsByUri } from "../../../atbbs/support/records";
-import { FetchError } from "../../../atproto/transport";
-import { SITE } from "../../../atbbs/schema/collections";
-import { parseAtUri } from "../../../atproto/uri";
-import { isBoardRecord, isSiteRecord } from "../../../atbbs/schema/records";
-import { MAX_BOARDS } from "../../../atbbs/schema/limits";
+import { resolveIdentity } from "../../atproto/identity";
+import { getRecord, type ATRecord } from "../../atproto/records";
+import { getRecordsByUri } from "../support/records";
+import { FetchError } from "../../atproto/transport";
+import { SITE } from "../schema/collections";
+import { parseAtUri } from "../../atproto/uri";
+import { isBoardRecord, isSiteRecord } from "../schema/records";
+import { MAX_BOARDS } from "../schema/limits";
 
 export class BBSNotFoundError extends Error {}
 export class NoBBSError extends Error {}
@@ -44,13 +44,19 @@ export interface Site {
   updatedAt?: string;
 }
 
-export interface BBS {
-  identity: ResolvedIdentity;
+export interface CommunityIdentity {
+  did: string;
+  handle: string;
+  pds?: string;
+}
+
+export interface Community {
+  identity: CommunityIdentity;
   site: Site;
 }
 
-export async function resolveBBS(handle: string): Promise<BBS> {
-  let identity: ResolvedIdentity;
+export async function resolveCommunity(handle: string): Promise<Community> {
+  let identity: CommunityIdentity;
   try {
     identity = await resolveIdentity(handle);
   } catch (error) {

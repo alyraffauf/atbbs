@@ -1,10 +1,10 @@
 /** Fetch a user's atbbs profile and BBS info. */
 
-import { resolveIdentity } from "../../../atproto/identity";
-import { getRecord } from "../../../atproto/records";
-import { getAvatar } from "../../../atbbs/identity/service";
-import { PROFILE, SITE } from "../../../atbbs/schema/collections";
-import { isProfileRecord, isSiteRecord } from "../../../atbbs/schema/records";
+import { resolveIdentity } from "../../atproto/identity";
+import { getRecord } from "../../atproto/records";
+import { getAvatar } from "../identity/service";
+import { PROFILE, SITE } from "../schema/collections";
+import { isProfileRecord, isSiteRecord } from "../schema/records";
 
 export interface Profile {
   did: string;

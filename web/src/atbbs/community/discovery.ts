@@ -1,10 +1,10 @@
 /** Fetch a random list of BBSes from the Lightrail API, with avatars. */
 
-import { getAvatars, resolveIdentitiesBatch } from "../../../atbbs/identity/service";
-import { getRecord } from "../../../atproto/records";
-import { SITE } from "../../../atbbs/schema/collections";
-import { SERVICES } from "../../../atproto/config";
-import { isSiteRecord } from "../../../atbbs/schema/records";
+import { getAvatars, resolveIdentitiesBatch } from "../identity/service";
+import { getRecord } from "../../atproto/records";
+import { SITE } from "../schema/collections";
+import { SERVICES } from "../../atproto/config";
+import { isSiteRecord } from "../schema/records";
 
 export interface DiscoveredBBS {
   did: string;
