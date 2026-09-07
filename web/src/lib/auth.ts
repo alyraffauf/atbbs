@@ -223,8 +223,6 @@ async function login(handle: string): Promise<void> {
     scope: oauthScope,
   });
 
-  // Small pause so the browser flushes sessionStorage before navigating.
-  await new Promise((r) => setTimeout(r, 200));
   window.location.assign(url);
 }
 
