@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { FetchError, getBacklinks, listRecords } from "./atproto";
+import {
+  FetchError,
+  getBacklinks,
+  getRecordsByUri,
+  listRecords,
+} from "./atproto";
 import { fetchThreadRefs, fetchThreadRoot } from "./thread";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -120,5 +125,66 @@ describe("record ownership", () => {
     await expect(
       fetchThreadRoot("did:plc:bbs", "did:plc:author", "thread"),
     ).rejects.toThrow("does not belong");
+  });
+});
+
+describe("record hydration failure policy", () => {
+  const firstUri = "at://did:plc:alice/app.bsky.feed.post/first";
+  const secondUri = "at://did:plc:bob/app.bsky.feed.post/second";
+
+  it("rejects non-missing failures in strict mode", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("server error", { status: 500 })),
+    );
+    await expect(getRecordsByUri([firstUri])).rejects.toMatchObject({
+      kind: "server",
+    });
+  });
+
+  it("omits and reports non-missing failures in best-effort mode", async () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("rate limited", { status: 429 })),
+    );
+    await expect(
+      getRecordsByUri([firstUri], { failureMode: "best-effort" }),
+    ).resolves.toEqual([]);
+    expect(warning).toHaveBeenCalledWith(
+      "Record hydration completed with 1 partial failure(s)",
+      expect.any(Array),
+    );
+    warning.mockRestore();
+  });
+
+  it("omits missing records without reporting them", async () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("missing", { status: 404 })),
+    );
+    await expect(getRecordsByUri([firstUri])).resolves.toEqual([]);
+    expect(warning).not.toHaveBeenCalled();
+    warning.mockRestore();
+  });
+
+  it("deduplicates requests and preserves first-seen order", async () => {
+    const fetchMock = vi.fn(async (input: string | URL | Request) => {
+      const url = new URL(String(input));
+      const did = url.searchParams.get("repo")!;
+      const rkey = url.searchParams.get("rkey")!;
+      return new Response(
+        JSON.stringify({
+          uri: `at://${did}/app.bsky.feed.post/${rkey}`,
+          cid: `cid-${rkey}`,
+          value: {},
+        }),
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const records = await getRecordsByUri([secondUri, firstUri, secondUri]);
+    expect(records.map((record) => record.uri)).toEqual([secondUri, firstUri]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

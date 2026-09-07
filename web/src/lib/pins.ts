@@ -34,6 +34,7 @@ export async function fetchPins(
     resolveIdentitiesBatch(pinnedDids),
     getRecordsByUri(
       pinnedDids.map((pinnedDid) => `at://${pinnedDid}/${SITE}/self`),
+      { failureMode: "best-effort" },
     ),
     getAvatars(pinnedDids),
   ]);

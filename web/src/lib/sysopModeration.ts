@@ -48,7 +48,7 @@ async function hydrateHiddenPosts(uris: string[]): Promise<HiddenInfo[]> {
 
   const [identities, records] = await Promise.all([
     resolveIdentitiesBatch(dids),
-    getRecordsByUri(uris),
+    getRecordsByUri(uris, { failureMode: "best-effort" }),
   ]);
 
   const recordsByUri = new Map(records.map((record) => [record.uri, record]));

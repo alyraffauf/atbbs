@@ -117,6 +117,33 @@ function reportPartialFailures(
   }
 }
 
+export interface RecordHydrationOptions {
+  failureMode?: "strict" | "best-effort";
+}
+
+function collectHydratedRecords(
+  results: PromiseSettledResult<ATRecord>[],
+  failureMode: "strict" | "best-effort",
+): ATRecord[] {
+  const failures = results.filter(
+    (result): result is PromiseRejectedResult =>
+      result.status === "rejected" &&
+      !(result.reason instanceof FetchError && result.reason.kind === "not-found"),
+  );
+  if (failureMode === "strict" && failures.length) {
+    throw failures[0].reason;
+  }
+  if (failureMode === "best-effort") {
+    reportPartialFailures("Record hydration", results);
+  }
+  return results
+    .filter(
+      (result): result is PromiseFulfilledResult<ATRecord> =>
+        result.status === "fulfilled",
+    )
+    .map((result) => result.value);
+}
+
 // --- Records ---
 
 export async function fetchRecord(
@@ -173,32 +200,24 @@ export async function getRecordByUri(uri: string): Promise<ATRecord> {
   return getRecord(did, collection, rkey);
 }
 
-export async function getRecordsByUri(uris: string[]): Promise<ATRecord[]> {
+export async function getRecordsByUri(
+  uris: string[],
+  { failureMode = "strict" }: RecordHydrationOptions = {},
+): Promise<ATRecord[]> {
   const results = await allSettledBounded([...new Set(uris)], getRecordByUri);
-  reportPartialFailures("Record hydration", results);
-  return results
-    .filter(
-      (result): result is PromiseFulfilledResult<ATRecord> =>
-        result.status === "fulfilled",
-    )
-    .map((result) => result.value);
+  return collectHydratedRecords(results, failureMode);
 }
 
 export async function getRecordsBatch(
   refs: BacklinkRef[],
+  { failureMode = "strict" }: RecordHydrationOptions = {},
 ): Promise<ATRecord[]> {
   const unique = [...new Map(refs.map((ref) => [`${ref.did}/${ref.collection}/${ref.rkey}`, ref])).values()];
   const results = await allSettledBounded(
     unique,
     (ref) => getRecord(ref.did, ref.collection, ref.rkey),
   );
-  reportPartialFailures("Record hydration", results);
-  return results
-    .filter(
-      (result): result is PromiseFulfilledResult<ATRecord> =>
-        result.status === "fulfilled",
-    )
-    .map((result) => result.value);
+  return collectHydratedRecords(results, failureMode);
 }
 
 export async function listRecords(
@@ -397,13 +416,16 @@ export async function fetchAndHydrate(
     limit?: number;
     cursor?: string;
     excludeDid?: string;
+    failureMode?: "strict" | "best-effort";
   },
 ): Promise<FetchAndHydrateResult> {
   const limit = opts?.limit ?? 50;
   const backlinks = await getBacklinks(subject, source, limit, opts?.cursor);
   if (!backlinks.records.length) return { records: [], cursor: null };
 
-  const records = await getRecordsBatch(backlinks.records);
+  const records = await getRecordsBatch(backlinks.records, {
+    failureMode: opts?.failureMode,
+  });
 
   const filtered = records.filter((record) => {
     const { did } = parseAtUri(record.uri);

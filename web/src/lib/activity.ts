@@ -29,6 +29,7 @@ async function fetchBacklinkItems(
     const { records } = await fetchAndHydrate(sourceUri, backlinkSource, {
       limit: 50,
       excludeDid,
+      failureMode: "best-effort",
     });
     return records.map((record) => ({
       type,

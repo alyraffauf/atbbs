@@ -91,7 +91,12 @@ export async function hydrateThreadPage(
   }
 
   const threadUris = [...lastActivity.keys()].slice(0, PAGE_SIZE);
-  const rootRecords = await getRecordsByUri(threadUris);
+  // Constellation can retain backlinks to deleted roots, and Slingshot may
+  // report those missing records as a server error. Keep the rest of the
+  // board usable when one stale root cannot be hydrated.
+  const rootRecords = await getRecordsByUri(threadUris, {
+    failureMode: "best-effort",
+  });
 
   const validRoots = rootRecords
     .filter(isPostRecord)
