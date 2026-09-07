@@ -1,9 +1,9 @@
 import { createBrowserRouter, Outlet, redirect } from "react-router-dom";
 
 import Layout from "../components/layout/Layout";
+import RouteErrorPage from "../components/layout/RouteErrorPage";
 
 import Home from "../pages/Home";
-import OAuthCallback from "../pages/OAuthCallback";
 import Profile from "../pages/Profile";
 import BBS from "../pages/BBS";
 import Board from "../pages/Board";
@@ -14,14 +14,19 @@ import SysopModerate from "../pages/SysopModerate";
 import News from "../pages/News";
 import NotFound from "../pages/NotFound";
 
-import { requireNoBBSLoader, requireSysopBBSLoader } from "./loaders";
+import {
+  oauthCallbackLoader,
+  requireNoBBSLoader,
+  requireSysopBBSLoader,
+} from "./loaders";
 
 export const router = createBrowserRouter([
   {
     element: <Layout />,
+    errorElement: <RouteErrorPage />,
     children: [
       { path: "/", element: <Home /> },
-      { path: "/oauth/callback", element: <OAuthCallback /> },
+      { path: "/oauth/callback", loader: oauthCallbackLoader },
       { path: "/account", loader: () => redirect("/") },
       {
         path: "/account/create",
