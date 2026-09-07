@@ -1,4 +1,4 @@
-import type { BBSModeration } from "../../lib/bbsModeration";
+import type { BBSModeration } from "../../features/moderation/data/bbsModeration";
 import type { Reply } from "../../lib/replies";
 import type { ThreadRoot } from "../../lib/thread";
 import type { ReactNode } from "react";

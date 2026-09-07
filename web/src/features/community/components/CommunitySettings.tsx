@@ -1,0 +1,119 @@
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import type { LucideIcon } from "lucide-react";
+import { ArrowRight, Pencil, Plus, Shield, Trash2 } from "lucide-react";
+import { ActionLink } from "../../../shared/ui/ActionButton";
+import { avatarQuery } from "../../../lib/queries/identities";
+import { bbsUrl } from "../../../shared/config/routes";
+
+interface CommunitySettingsProps {
+  hasBBS: boolean;
+  userHandle: string;
+  userDid: string;
+  bbsName: string | null;
+  onDelete: () => void;
+}
+
+export default function CommunitySettings({
+  hasBBS,
+  userHandle,
+  userDid,
+  bbsName,
+  onDelete,
+}: CommunitySettingsProps) {
+  const { data: avatar } = useQuery({
+    ...avatarQuery(userDid),
+    enabled: hasBBS,
+  });
+
+  if (!hasBBS) {
+    return (
+      <>
+        <p className="text-neutral-400 mb-4">No community yet.</p>
+        <ActionLink to="/account/create" icon={Plus}>
+          create a community
+        </ActionLink>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Link
+        to={bbsUrl(userHandle)}
+        className="flex items-center justify-between py-3 -mx-3 px-3 rounded hover:bg-neutral-800 mb-3"
+      >
+        <div className="flex items-center gap-3 min-w-0 text-neutral-200">
+          {avatar && (
+            <img
+              src={avatar}
+              alt=""
+              className="w-6 h-6 rounded-full shrink-0"
+            />
+          )}
+          <span className="truncate">{bbsName ?? `@${userHandle}`}</span>
+        </div>
+        <span className="flex items-center gap-1 text-sm text-neutral-400">
+          view <ArrowRight size={12} />
+        </span>
+      </Link>
+
+      <SettingsRow
+        to="/account/edit"
+        icon={Pencil}
+        label="Edit"
+        hint="Update name, boards, and intro."
+      />
+      <SettingsRow
+        to="/account/moderate"
+        icon={Shield}
+        label="Moderate"
+        hint="Ban users and hide posts."
+      />
+
+      <p className="text-xs text-neutral-500 uppercase tracking-wide mt-8 mb-2">
+        Danger zone
+      </p>
+      <button
+        type="button"
+        onClick={onDelete}
+        className="group flex items-center justify-between py-3 -mx-3 px-3 rounded text-left hover:bg-red-400/10"
+      >
+        <div className="flex items-center gap-3">
+          <Trash2 size={16} className="text-red-400 group-hover:text-red-500" />
+          <div>
+            <div className="text-red-400 group-hover:text-red-500">Delete</div>
+            <div className="text-xs text-neutral-400">
+              Remove your community.
+            </div>
+          </div>
+        </div>
+      </button>
+    </>
+  );
+}
+
+interface SettingsRowProps {
+  to: string;
+  icon: LucideIcon;
+  label: string;
+  hint: string;
+}
+
+function SettingsRow({ to, icon: Icon, label, hint }: SettingsRowProps) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center justify-between py-3 -mx-3 px-3 rounded hover:bg-neutral-800"
+    >
+      <div className="flex items-center gap-3">
+        <Icon size={16} className="text-neutral-400" />
+        <div>
+          <div className="text-neutral-200">{label}</div>
+          <div className="text-xs text-neutral-400">{hint}</div>
+        </div>
+      </div>
+      <ArrowRight size={12} className="text-neutral-500" />
+    </Link>
+  );
+}

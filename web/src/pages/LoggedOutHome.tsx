@@ -2,10 +2,10 @@ import { useMemo, useState } from "react";
 import { Phone, Copy, Check } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { usePageTitle } from "../shared/hooks/usePageTitle";
-import { discoveryQuery, pinCountsQuery } from "../lib/queries/community";
-import DialBBS from "../components/dashboard/DialBBS";
-import { bbsToSuggestion, type Suggestion } from "../lib/suggestions";
-import DiscoveryList from "../components/dashboard/DiscoveryList";
+import { discoveryQuery, pinCountsQuery } from "../features/community/data/community";
+import CommunityPicker from "../features/community/components/CommunityPicker";
+import { bbsToSuggestion, type Suggestion } from "../features/community/data/suggestions";
+import CommunityDirectory from "../features/community/components/CommunityDirectory";
 
 export default function LoggedOutHome() {
   const { data: discovered } = useQuery(discoveryQuery());
@@ -81,9 +81,9 @@ export default function LoggedOutHome() {
           <Phone size={16} /> Find a community
         </h2>
         <div className="mb-6">
-          <DialBBS discovered={discovered} suggestions={suggestions} />
+          <CommunityPicker discovered={discovered} suggestions={suggestions} />
         </div>
-        {rankedByPins && <DiscoveryList discovered={rankedByPins} limit={3} />}
+        {rankedByPins && <CommunityDirectory discovered={rankedByPins} limit={3} />}
       </div>
 
       <div className="border-t border-neutral-800 py-4">

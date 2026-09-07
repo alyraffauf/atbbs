@@ -6,7 +6,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import type { Did } from "@atcute/lexicons/syntax";
 import { useAuth } from "../features/auth/auth";
-import type { BBS, Board } from "../lib/bbs";
+import type { BBS, Board } from "../features/community/data/bbs";
 import type { ThreadItem, ThreadPageResult } from "../lib/boardThreads";
 import { BOARD } from "../shared/config/lexicon";
 import { myThreadsQuery } from "../lib/queries/dashboard";

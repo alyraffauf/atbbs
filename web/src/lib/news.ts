@@ -6,7 +6,7 @@ import { POST, SITE } from "../shared/config/lexicon";
 import { makeAtUri, parseAtUri } from "../shared/protocol/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "./recordGuards";
-import type { NewsPost } from "./bbs";
+import type { NewsPost } from "../features/community/data/bbs";
 
 export async function fetchNews(bbsDid: string): Promise<NewsPost[]> {
   const siteUri = makeAtUri(bbsDid as Did, SITE, "self");

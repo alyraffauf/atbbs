@@ -4,13 +4,13 @@ import Layout from "../layout/Layout";
 import RouteErrorPage from "../layout/RouteErrorPage";
 
 import Home from "../../pages/Home";
-import Profile from "../../pages/Profile";
-import BBS from "../../pages/BBS";
+import ProfilePage from "../../features/profile/pages/ProfilePage";
+import CommunityPage from "../../features/community/pages/CommunityPage";
 import Board from "../../pages/Board";
 import Thread from "../../pages/Thread";
-import SysopCreate from "../../pages/SysopCreate";
-import SysopEdit from "../../pages/SysopEdit";
-import SysopModerate from "../../pages/SysopModerate";
+import CreateCommunityPage from "../../features/community/pages/CreateCommunityPage";
+import EditCommunityPage from "../../features/community/pages/EditCommunityPage";
+import ModerationPage from "../../features/moderation/pages/ModerationPage";
 import News from "../../pages/News";
 import NotFound from "../../pages/NotFound";
 
@@ -42,12 +42,12 @@ export const router = createBrowserRouter([
       {
         path: "/account/create",
         loader: requireNoBBSLoader,
-        element: <SysopCreate />,
+        element: <CreateCommunityPage />,
       },
       {
         path: "/account/edit",
         loader: requireSysopBBSLoader,
-        element: <SysopEdit />,
+        element: <EditCommunityPage />,
         handle: breadcrumbHandle<SysopBBSLoaderData>(({ user, bbs }) => [
           { label: bbs.site.name, to: bbsUrl(user.handle) },
           { label: "Edit" },
@@ -56,7 +56,7 @@ export const router = createBrowserRouter([
       {
         path: "/account/moderate",
         loader: requireSysopBBSLoader,
-        element: <SysopModerate />,
+        element: <ModerationPage />,
         handle: breadcrumbHandle<SysopBBSLoaderData>(({ user, bbs }) => [
           { label: bbs.site.name, to: bbsUrl(user.handle) },
           { label: "Moderate" },
@@ -71,7 +71,7 @@ export const router = createBrowserRouter([
           { label: bbs.site.name, to: bbsUrl(handle) },
         ]),
         children: [
-          { index: true, element: <BBS /> },
+          { index: true, element: <CommunityPage /> },
           {
             path: "board/:slug",
             loader: boardLoader,
@@ -113,7 +113,7 @@ export const router = createBrowserRouter([
           },
         ],
       },
-      { path: "/profile/:handle", element: <Profile /> },
+      { path: "/profile/:handle", element: <ProfilePage /> },
       { path: "*", element: <NotFound /> },
     ],
   },

@@ -2,7 +2,7 @@ import Markdown, { defaultUrlTransform } from "react-markdown";
 import type { Components } from "react-markdown";
 import AttachmentLink from "./AttachmentLink";
 import { blobUrl, cdnImageUrl } from "../../shared/protocol/urls";
-import type { PostAttachment } from "../../lib/bbs";
+import type { PostAttachment } from "../../features/community/data/bbs";
 
 interface PostBodyProps {
   children: string;

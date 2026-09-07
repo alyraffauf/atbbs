@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router-dom";
-import type { BBS, Board, NewsPost } from "../../../lib/bbs";
+import type { BBS, Board, NewsPost } from "../../../features/community/data/bbs";
 import type { ThreadRoot } from "../../../lib/thread";
-import { bbsQuery, newsQuery } from "../../../lib/queries/community";
+import { bbsQuery, newsQuery } from "../../../features/community/data/community";
 import { threadRootQuery } from "../../../lib/queries/discussion";
 import { queryClient } from "../../queryClient";
 

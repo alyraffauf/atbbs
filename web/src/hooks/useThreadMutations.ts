@@ -4,7 +4,7 @@ import type { Did } from "@atcute/lexicons/syntax";
 import type { PostDraft } from "../components/form/ComposeForm";
 import { alertOnError } from "../shared/config/alerts";
 import { useAuth } from "../features/auth/auth";
-import type { BBS } from "../lib/bbs";
+import type { BBS } from "../features/community/data/bbs";
 import { BOARD, POST } from "../shared/config/lexicon";
 import { myThreadsQuery } from "../lib/queries/dashboard";
 import { queryClient } from "../app/queryClient";

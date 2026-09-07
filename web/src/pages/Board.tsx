@@ -5,7 +5,7 @@ import { useAuth } from "../features/auth/auth";
 import { usePageTitle } from "../shared/hooks/usePageTitle";
 import { relativeDate } from "../shared/config/util";
 import * as limits from "../shared/config/limits";
-import { bbsModerationQuery } from "../lib/queries/moderation";
+import { bbsModerationQuery } from "../features/moderation/data/moderation";
 import { boardThreadsInfiniteQuery } from "../lib/queries/discussion";
 import { threadUrl } from "../shared/config/routes";
 import ThreadLink, { ThreadListHeader } from "../components/nav/ThreadLink";

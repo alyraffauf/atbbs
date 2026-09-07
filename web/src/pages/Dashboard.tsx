@@ -1,22 +1,22 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth, type AuthUser } from "../features/auth/auth";
-import { deleteBBS } from "../lib/deletebbs";
+import { deleteBBS } from "../features/community/data/deletebbs";
 import { usePageTitle } from "../shared/hooks/usePageTitle";
 import {
   discoveryQuery,
   homeSysopQuery,
   pinsQuery,
-} from "../lib/queries/community";
+} from "../features/community/data/community";
 import { activityQuery, myThreadsQuery } from "../lib/queries/dashboard";
 import { queryClient } from "../app/queryClient";
-import { invalidateAllBBSCaches } from "../lib/bbs";
-import DialBBS from "../components/dashboard/DialBBS";
-import { bbsToSuggestion, type Suggestion } from "../lib/suggestions";
-import PinnedList from "../components/dashboard/PinnedList";
+import { invalidateAllBBSCaches } from "../features/community/data/bbs";
+import CommunityPicker from "../features/community/components/CommunityPicker";
+import { bbsToSuggestion, type Suggestion } from "../features/community/data/suggestions";
+import PinnedCommunities from "../features/community/components/PinnedCommunities";
 import MyThreadList from "../components/dashboard/MyThreadList";
 import ActivityList from "../components/dashboard/ActivityList";
-import BBSPanel from "../components/dashboard/BBSPanel";
+import CommunitySettings from "../features/community/components/CommunitySettings";
 import ListSkeleton from "../app/layout/ListSkeleton";
 
 type Tab = "inbox" | "threads" | "pinned" | "bbs";
@@ -88,7 +88,7 @@ export default function Dashboard({ user }: DashboardProps) {
   return (
     <>
       <div className="border-b border-neutral-800 mb-6 pb-4">
-        <DialBBS discovered={discovered} suggestions={suggestions} />
+        <CommunityPicker discovered={discovered} suggestions={suggestions} />
       </div>
 
       <div
@@ -133,7 +133,7 @@ export default function Dashboard({ user }: DashboardProps) {
           <p className="text-neutral-400 text-xs mb-4">
             Communities you've pinned for quick access.
           </p>
-          {pins ? <PinnedList pins={pins} /> : <ListSkeleton />}
+          {pins ? <PinnedCommunities pins={pins} /> : <ListSkeleton />}
         </>
       )}
 
@@ -143,7 +143,7 @@ export default function Dashboard({ user }: DashboardProps) {
             Manage your community.
           </p>
           {sysopInfo ? (
-            <BBSPanel
+            <CommunitySettings
               hasBBS={sysopInfo.hasBBS}
               userHandle={user.handle}
               userDid={user.did}

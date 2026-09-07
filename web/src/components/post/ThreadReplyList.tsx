@@ -1,4 +1,4 @@
-import type { BBSModeration } from "../../lib/bbsModeration";
+import type { BBSModeration } from "../../features/moderation/data/bbsModeration";
 import type { Reply } from "../../lib/replies";
 import ReplyCard from "./ReplyCard";
 
