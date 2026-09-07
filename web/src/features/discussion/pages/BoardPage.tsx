@@ -7,6 +7,7 @@ import { relativeDate } from "../../../frontend/ui/dates";
 import * as limits from "../../../atbbs/schema/limits";
 import { bbsModerationQuery } from "../../../frontend/features/moderation/queries";
 import { boardThreadsInfiniteQuery } from "../../../frontend/features/discussion/queries";
+import { getPostModeration } from "../../../atbbs/moderation/policy";
 import { threadUrl } from "../../../frontend/app/router/urls";
 import ThreadListItem, { ThreadListHeader } from "../components/ThreadListItem";
 import PostComposer from "../components/PostComposer";
@@ -34,7 +35,13 @@ export default function BoardPage() {
     isSysop || !moderation
       ? allThreads
       : allThreads.filter(
-          (t) => !moderation.banRkeys[t.did] && !moderation.hideRkeys[t.uri],
+          (thread) =>
+            getPostModeration(
+              moderation,
+              thread,
+              user?.did,
+              bbs.identity.did,
+            ).isVisible,
         );
 
   usePageTitle(`${board.name} — ${bbs.site.name}`);

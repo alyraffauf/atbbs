@@ -1,11 +1,12 @@
-import type { BBSModeration } from "../../moderation/data/bbsModeration";
+import type { ModerationState } from "../../../atbbs/moderation/read";
+import { getPostModeration } from "../../../atbbs/moderation/policy";
 import type { Reply } from "../../../atbbs/discussion/replies";
 import ReplyPostCard from "./ReplyPostCard";
 
 interface ThreadReplyListProps {
   replies: Reply[];
   parentReplies: Record<string, Reply>;
-  moderation: BBSModeration;
+  moderation: ModerationState;
   userDid?: string;
   sysopDid: string;
   onReplyTo: (reply: Reply) => void;
@@ -31,13 +32,10 @@ export default function ThreadReplyList({
   onHide,
   onUnhide,
 }: ThreadReplyListProps) {
-  const isSysop = userDid === sysopDid;
-  const visibleReplies = isSysop
-    ? replies
-    : replies.filter(
-        (reply) =>
-          !moderation.banRkeys[reply.did] && !moderation.hideRkeys[reply.uri],
-      );
+  const visibleReplies = replies.filter(
+    (reply) =>
+      getPostModeration(moderation, reply, userDid, sysopDid).isVisible,
+  );
 
   if (!visibleReplies.length && !userDid) {
     return <p className="text-neutral-400">No replies yet.</p>;
@@ -46,11 +44,15 @@ export default function ThreadReplyList({
   return visibleReplies.map((reply) => {
     const parentUri = reply.parent;
     const parentReply = parentUri ? parentReplies[parentUri] : null;
+    const replyModeration = getPostModeration(
+      moderation,
+      reply,
+      userDid,
+      sysopDid,
+    );
     const parentHidden =
       !!parentReply &&
-      !isSysop &&
-      (!!moderation.banRkeys[parentReply.did] ||
-        !!moderation.hideRkeys[parentReply.uri]);
+      !getPostModeration(moderation, parentReply, userDid, sysopDid).isVisible;
     return (
       <ReplyPostCard
         key={reply.uri}
@@ -58,8 +60,8 @@ export default function ThreadReplyList({
         userDid={userDid ?? ""}
         sysopDid={sysopDid}
         parentPost={parentHidden ? undefined : (parentReply ?? undefined)}
-        banRkey={moderation.banRkeys[reply.did]?.[0] ?? null}
-        hideRkey={moderation.hideRkeys[reply.uri]?.[0] ?? null}
+        banRkey={replyModeration.banRkey}
+        hideRkey={replyModeration.hideRkey}
         onReplyTo={() => onReplyTo(reply)}
         onParentClick={parentUri ? () => onParentClick(parentUri) : undefined}
         onDelete={() => onDelete(reply)}

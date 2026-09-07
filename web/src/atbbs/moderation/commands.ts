@@ -1,17 +1,16 @@
-import type { XyzAtbbsBan, XyzAtbbsHide } from "../../../lexicons";
-import { invalidateAllCommunityCaches } from "../../../frontend/features/community/cache";
-import { BAN, HIDE } from "../../../atbbs/schema/collections";
-import { nowIso } from "../../../atbbs/support/time";
+import type { XyzAtbbsBan, XyzAtbbsHide } from "../../lexicons";
+import { BAN, HIDE } from "../schema/collections";
+import { nowIso } from "../support/time";
 import {
   createRecord,
   deleteRecord,
   type AuthenticatedRepo,
-} from "../../../atproto/repository";
+} from "../../atproto/repository";
 
 type BanValue = Omit<XyzAtbbsBan.Main, "$type">;
 type HideValue = Omit<XyzAtbbsHide.Main, "$type">;
 
-async function deterministicRkey(value: string) {
+export async function deterministicRkey(value: string) {
   const digest = await crypto.subtle.digest(
     "SHA-256",
     new TextEncoder().encode(value),
@@ -33,7 +32,6 @@ export async function createBan(repo: AuthenticatedRepo, did: string) {
     value,
     await deterministicRkey(did),
   );
-  invalidateAllCommunityCaches();
   return response;
 }
 
@@ -48,18 +46,15 @@ export async function createHide(repo: AuthenticatedRepo, uri: string) {
     value,
     await deterministicRkey(uri),
   );
-  invalidateAllCommunityCaches();
   return response;
 }
 
 export async function deleteBan(repo: AuthenticatedRepo, rkey: string) {
   const response = await deleteRecord(repo, BAN, rkey);
-  invalidateAllCommunityCaches();
   return response;
 }
 
 export async function deleteHide(repo: AuthenticatedRepo, rkey: string) {
   const response = await deleteRecord(repo, HIDE, rkey);
-  invalidateAllCommunityCaches();
   return response;
 }

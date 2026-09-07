@@ -6,8 +6,9 @@ import {
   createHide,
   deleteBan,
   deleteHide,
-} from "./data/moderationRecords";
+} from "../../atbbs/moderation/commands";
 import { alertOnError } from "../../frontend/app/browser/alerts";
+import { invalidateAllCommunityCaches } from "../../frontend/features/community/cache";
 
 // Shared ban/unban/hide/unhide mutations
 // `ban` accepts either a DID or a handle
@@ -22,6 +23,7 @@ export function useModerationMutations() {
         : (await resolveIdentity(identifier)).did;
       await createBan(repo, did);
     },
+    onSuccess: invalidateAllCommunityCaches,
     onError: alertOnError("ban"),
   });
 
@@ -30,6 +32,7 @@ export function useModerationMutations() {
       if (!repo) throw new Error("Not signed in");
       await Promise.all(rkeys.map((rkey) => deleteBan(repo, rkey)));
     },
+    onSuccess: invalidateAllCommunityCaches,
     onError: alertOnError("unban"),
   });
 
@@ -38,6 +41,7 @@ export function useModerationMutations() {
       if (!repo) throw new Error("Not signed in");
       await createHide(repo, uri);
     },
+    onSuccess: invalidateAllCommunityCaches,
     onError: alertOnError("hide"),
   });
 
@@ -46,6 +50,7 @@ export function useModerationMutations() {
       if (!repo) throw new Error("Not signed in");
       await Promise.all(rkeys.map((rkey) => deleteHide(repo, rkey)));
     },
+    onSuccess: invalidateAllCommunityCaches,
     onError: alertOnError("unhide"),
   });
 

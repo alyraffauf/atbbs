@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fetchBBSModeration } from "./bbsModeration";
-import { fetchSysopModeration } from "./sysopModeration";
+import { fetchBBSModeration } from "./read";
+import { fetchSysopModeration } from "./sysop";
 
 const bannedDid = "did:plc:banned";
 const hiddenUri = "at://did:plc:author/xyz.atbbs.post/hidden";

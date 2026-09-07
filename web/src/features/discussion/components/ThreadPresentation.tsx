@@ -1,4 +1,5 @@
-import type { BBSModeration } from "../../moderation/data/bbsModeration";
+import type { ModerationState } from "../../../atbbs/moderation/read";
+import { getPostModeration } from "../../../atbbs/moderation/policy";
 import type { Reply } from "../../../atbbs/discussion/replies";
 import type { Thread } from "../../../atbbs/discussion/thread";
 import type { ReactNode } from "react";
@@ -10,7 +11,7 @@ interface ThreadPresentationProps {
   thread: Thread;
   replies: Reply[];
   parentReplies: Record<string, Reply>;
-  moderation: BBSModeration;
+  moderation: ModerationState;
   moderationIsStale: boolean;
   userDid?: string;
   sysopDid: string;
@@ -52,12 +53,14 @@ export default function ThreadPresentation(props: ThreadPresentationProps) {
     onUnhide,
     children,
   } = props;
-  const isSysop = userDid === sysopDid;
-  const threadHidden =
-    !isSysop &&
-    (!!moderation.banRkeys[thread.did] || !!moderation.hideRkeys[thread.uri]);
+  const threadModeration = getPostModeration(
+    moderation,
+    thread,
+    userDid,
+    sysopDid,
+  );
 
-  if (threadHidden) {
+  if (!threadModeration.isVisible) {
     return (
       <p className="text-neutral-400 py-16 text-center">
         This thread has been hidden by the sysop.
@@ -76,8 +79,8 @@ export default function ThreadPresentation(props: ThreadPresentationProps) {
         thread={thread}
         userDid={userDid}
         sysopDid={sysopDid}
-        banRkey={moderation.banRkeys[thread.did]?.[0] ?? null}
-        hideRkey={moderation.hideRkeys[thread.uri]?.[0] ?? null}
+        banRkey={threadModeration.banRkey}
+        hideRkey={threadModeration.hideRkey}
         onDelete={onDeleteThread}
         onBan={() => onBan(thread.did)}
         onUnban={onUnban}
