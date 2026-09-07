@@ -1,8 +1,7 @@
 import type { ThreadRoot } from "../../lib/thread";
-import AttachmentLink from "./AttachmentLink";
 import ModerationBadge from "./ModerationBadge";
 import PostActions from "./PostActions";
-import PostBody, { unembeddedAttachments } from "./PostBody";
+import PostContent from "./PostContent";
 import PostMeta from "./PostMeta";
 
 interface ThreadCardProps {
@@ -33,7 +32,6 @@ export default function ThreadCard({
   const isAuthor = !!(userDid && userDid === thread.did);
   const isSysop = !!(userDid && userDid === sysopDid);
   const isModerated = !!banRkey || !!hideRkey;
-  const remaining = unembeddedAttachments(thread.attachments, thread.body);
 
   return (
     <article
@@ -59,26 +57,13 @@ export default function ThreadCard({
       <h1 className="text-lg text-neutral-200 font-bold mb-3">
         {thread.title}
       </h1>
-      <PostBody
+      <PostContent
+        body={thread.body}
         attachments={thread.attachments}
         pds={thread.authorPds}
         did={thread.did}
-      >
-        {thread.body}
-      </PostBody>
-      {remaining.length > 0 && (
-        <div className="mt-3 space-y-1">
-          {remaining.map((attachment, index) => (
-            <AttachmentLink
-              key={index}
-              pds={thread.authorPds}
-              did={thread.did}
-              cid={attachment.file.ref.$link}
-              name={attachment.name}
-            />
-          ))}
-        </div>
-      )}
+        attachmentListClassName="mt-3 space-y-1"
+      />
     </article>
   );
 }

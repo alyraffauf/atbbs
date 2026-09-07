@@ -1,8 +1,8 @@
 import { truncate } from "../../lib/util";
-import AttachmentLink from "./AttachmentLink";
 import ModerationBadge from "./ModerationBadge";
 import PostActions from "./PostActions";
-import PostBody, { unembeddedAttachments } from "./PostBody";
+import PostBody from "./PostBody";
+import PostContent from "./PostContent";
 import PostMeta from "./PostMeta";
 import type { Reply } from "../../lib/replies";
 
@@ -40,7 +40,6 @@ export default function ReplyCard({
   const isAuthor = userDid === reply.did;
   const isSysop = userDid === sysopDid;
   const isModerated = !!banRkey || !!hideRkey;
-  const remaining = unembeddedAttachments(reply.attachments, reply.body);
 
   return (
     <div
@@ -80,23 +79,12 @@ export default function ReplyCard({
         </button>
       )}
 
-      <PostBody
+      <PostContent
+        body={reply.body}
         attachments={reply.attachments}
         pds={reply.pds}
         did={reply.did}
-      >
-        {reply.body}
-      </PostBody>
-
-      {remaining.map((attachment, index) => (
-        <AttachmentLink
-          key={index}
-          pds={reply.pds}
-          did={reply.did}
-          cid={attachment.file.ref.$link}
-          name={attachment.name}
-        />
-      ))}
+      />
     </div>
   );
 }
