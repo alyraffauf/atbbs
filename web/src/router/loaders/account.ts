@@ -4,12 +4,6 @@ import { bbsQuery } from "../../lib/queries";
 import { queryClient } from "../../lib/queryClient";
 import { requireAuth } from "./auth";
 
-/** Loader for /account/create — just gates the route on auth. */
-export async function requireAuthLoader() {
-  await requireAuth();
-  return null;
-}
-
 export async function requireNoBBSLoader() {
   const user = await requireAuth();
   try {

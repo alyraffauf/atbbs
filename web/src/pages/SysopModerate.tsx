@@ -57,7 +57,7 @@ export default function SysopModerate() {
   const [hideUri, setHideUri] = useState("");
   usePageTitle("Moderate community — atbbs");
 
-  // requireAuthLoader guarantees user is present at render time.
+  // requireSysopBBSLoader guarantees user is present at render time.
   const { data: bbs } = useSuspenseQuery(bbsQuery(user!.handle));
   const { data: moderation } = useSuspenseQuery(
     sysopModerationQuery(user!.pdsUrl, user!.did),

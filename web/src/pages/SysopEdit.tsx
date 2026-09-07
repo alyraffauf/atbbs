@@ -20,7 +20,7 @@ export default function SysopEdit() {
   const { user, repo } = useAuth();
   const navigate = useNavigate();
 
-  // requireAuthLoader has already redirected unauthenticated users, so
+  // requireSysopBBSLoader has already redirected unauthenticated users, so
   // `user` is non-null at render time.
   const { data: bbs } = useSuspenseQuery(bbsQuery(user!.handle));
 
