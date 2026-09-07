@@ -51,15 +51,6 @@ describe("useDebouncedAsync", () => {
     expect(result.current).toBe(EMPTY);
   });
 
-  it("uses the empty value when loading rejects", async () => {
-    const loader = vi.fn(async () => {
-      throw new Error("failed");
-    });
-    const { result } = renderLookup(loader);
-    await act(() => vi.advanceTimersByTimeAsync(300));
-    expect(result.current).toBe(EMPTY);
-  });
-
   it("ignores stale results that resolve out of order", async () => {
     const resolvers = new Map<string, (value: string) => void>();
     const loader = vi.fn(

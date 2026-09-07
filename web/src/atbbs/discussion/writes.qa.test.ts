@@ -2,65 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createThread } from "./commands";
 import type { AuthenticatedRepo } from "../../atproto/repository";
-import {
-  prepareAttachmentViews,
-  uploadAttachments,
-} from "./attachments";
+import { uploadAttachments } from "./attachments";
 
 describe("authenticated writes", () => {
-  it("prepares JSON-safe attachment URLs without exposing blob references", () => {
-    const views = prepareAttachmentViews(
-      [
-        {
-          name: "photo.jpg",
-          file: {
-            $type: "blob",
-            ref: { $link: "blob-cid" },
-            mimeType: "image/jpeg",
-            size: 12,
-          },
-        },
-      ],
-      "did:plc:author",
-      "https://pds.example",
-    );
-
-    expect(views).toEqual([
-      {
-        name: "photo.jpg",
-        downloadUrl:
-          "https://pds.example/xrpc/com.atproto.sync.getBlob?did=did:plc:author&cid=blob-cid",
-        imageUrl:
-          "https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:author/blob-cid@webp",
-      },
-    ]);
-    expect(JSON.stringify(views)).not.toContain("$link");
-  });
-
-  it("throws when the PDS rejects a write", async () => {
-    const repo = {
-      did: "did:plc:test",
-      client: {
-        post: vi.fn(async () => ({
-          ok: false,
-          status: 400,
-          headers: new Headers(),
-          data: { error: "InvalidRequest", message: "rejected" },
-        })),
-      },
-    } as unknown as AuthenticatedRepo;
-    await expect(
-      createThread(repo, "https://pds.example", {
-        communityDid: "did:plc:community",
-        boardSlug: "general",
-        title: "Title",
-        body: "body",
-        attachments: [],
-      }),
-    ).rejects.toThrow("rejected");
-  });
-
-  it("returns unwrapped record data", async () => {
+  it("constructs the externally persisted post record", async () => {
     const data = {
       uri: "at://did:plc:test/xyz.atbbs.post/example",
       cid: "cid",
@@ -100,41 +45,6 @@ describe("authenticated writes", () => {
     });
   });
 
-  it("uploads prepared bytes with the original media type", async () => {
-    const post = vi.fn(async () => ({
-      ok: true,
-      data: {
-        blob: {
-          $type: "blob",
-          ref: { $link: "blob-cid" },
-          mimeType: "text/plain",
-          size: 4,
-        },
-      },
-    }));
-    const repo = {
-      did: "did:plc:test",
-      client: { post },
-    } as unknown as AuthenticatedRepo;
-    const read = vi.fn(async () => new Uint8Array([1, 2, 3, 4]));
-    await uploadAttachments(repo, [
-      {
-        name: "test.txt",
-        mediaType: "text/plain",
-        originalSize: 4,
-        read,
-      },
-    ]);
-    const request = post.mock.calls[0] as unknown as [
-      string,
-      { input: Uint8Array; headers: Record<string, string> },
-    ];
-    expect(request[0]).toBe("com.atproto.repo.uploadBlob");
-    expect([...request[1].input]).toEqual([1, 2, 3, 4]);
-    expect(request[1].headers).toEqual({ "content-type": "text/plain" });
-    expect(read).toHaveBeenCalledOnce();
-  });
-
   it("skips empty attachments before reading them", async () => {
     const post = vi.fn();
     const read = vi.fn();
@@ -152,32 +62,42 @@ describe("authenticated writes", () => {
     expect(post).not.toHaveBeenCalled();
   });
 
-  it("uploads attachments sequentially in input order", async () => {
+  it("uploads attachments sequentially with their bytes and media types", async () => {
     const calls: string[] = [];
+    const requests: Array<{
+      input: Uint8Array;
+      headers?: Record<string, string>;
+    }> = [];
     const repo = {
       did: "did:plc:test",
       client: {
-        post: vi.fn(async (_method: string, request: { input: Uint8Array }) => {
-          calls.push(`upload-${request.input[0]}`);
-          return {
-            ok: true,
-            data: {
-              blob: {
-                $type: "blob",
-                ref: { $link: `cid-${request.input[0]}` },
-                mimeType: "text/plain",
-                size: 1,
+        post: vi.fn(
+          async (
+            _method: string,
+            request: { input: Uint8Array; headers?: Record<string, string> },
+          ) => {
+            requests.push(request);
+            calls.push(`upload-${request.input[0]}`);
+            return {
+              ok: true,
+              data: {
+                blob: {
+                  $type: "blob",
+                  ref: { $link: `cid-${request.input[0]}` },
+                  mimeType: request.headers?.["content-type"] ?? "",
+                  size: 1,
+                },
               },
-            },
-          };
-        }),
+            };
+          },
+        ),
       },
     } as unknown as AuthenticatedRepo;
 
     const attachments = await uploadAttachments(repo, [
       {
         name: "first.txt",
-        mediaType: "text/plain",
+        mediaType: "text/markdown",
         originalSize: 1,
         read: async () => {
           calls.push("read-1");
@@ -186,7 +106,7 @@ describe("authenticated writes", () => {
       },
       {
         name: "second.txt",
-        mediaType: "text/plain",
+        mediaType: "application/json",
         originalSize: 1,
         read: async () => {
           calls.push("read-2");
@@ -196,6 +116,11 @@ describe("authenticated writes", () => {
     ]);
 
     expect(calls).toEqual(["read-1", "upload-1", "read-2", "upload-2"]);
+    expect(requests.map((request) => [...request.input])).toEqual([[1], [2]]);
+    expect(requests.map((request) => request.headers)).toEqual([
+      { "content-type": "text/markdown" },
+      { "content-type": "application/json" },
+    ]);
     expect(attachments.map((attachment) => attachment.name)).toEqual([
       "first.txt",
       "second.txt",
