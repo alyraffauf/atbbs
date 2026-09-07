@@ -1,11 +1,11 @@
 import type { XyzAtbbsBoard, XyzAtbbsSite } from "../lexicons";
 import { invalidateAllBBSCaches } from "./bbs";
-import { BOARD, SITE } from "./lexicon";
+import { BOARD, SITE } from "../shared/config/lexicon";
 import {
   createRecord,
   putRecord,
   type AuthenticatedRepo,
-} from "./protocol/repository";
+} from "../shared/protocol/repository";
 
 type SiteValue = Omit<XyzAtbbsSite.Main, "$type">;
 type BoardValue = Omit<XyzAtbbsBoard.Main, "$type">;

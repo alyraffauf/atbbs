@@ -3,11 +3,11 @@ import { isCanonicalResourceUri } from "@atcute/lexicons/syntax";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useLoaderData } from "react-router-dom";
 import { sysopModerationQuery } from "../lib/queries/moderation";
-import HandleInput from "../components/form/HandleInput";
-import { Button } from "../components/form/Form";
-import { usePageTitle } from "../hooks/usePageTitle";
+import HandleInput from "../shared/ui/HandleInput";
+import { Button } from "../shared/ui/Form";
+import { usePageTitle } from "../shared/hooks/usePageTitle";
 import { useModerationMutations } from "../hooks/useModerationMutations";
-import type { SysopBBSLoaderData } from "../router/loaders";
+import type { SysopBBSLoaderData } from "../app/router/loaders";
 
 interface ModerationListItemProps {
   label: string;

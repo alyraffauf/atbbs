@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Check, X } from "lucide-react";
-import { Input, Textarea, Button } from "../form/Form";
-import * as limits from "../../lib/limits";
+import { Input, Textarea, Button } from "../../shared/ui/Form";
+import * as limits from "../../shared/config/limits";
 
 interface EditProfileProps {
   initialName: string;

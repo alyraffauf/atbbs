@@ -1,11 +1,11 @@
 /** Thread detail fetchers: root post, reply refs, and the hydrated
  *  reply records for one page of the thread. */
 
-import { getBacklinks, type BacklinkRef } from "./protocol/backlinks";
-import { resolveIdentitiesBatch, resolveIdentity } from "./protocol/identities";
-import { getRecord, getRecordsBatch } from "./protocol/records";
-import { POST } from "./lexicon";
-import { parseAtUri } from "./protocol/uri";
+import { getBacklinks, type BacklinkRef } from "../shared/protocol/backlinks";
+import { resolveIdentitiesBatch, resolveIdentity } from "../shared/protocol/identities";
+import { getRecord, getRecordsBatch } from "../shared/protocol/records";
+import { POST } from "../shared/config/lexicon";
+import { parseAtUri } from "../shared/protocol/uri";
 import { recordToReply } from "./replies";
 import { isPostRecord } from "./recordGuards";
 import type { Reply } from "./replies";

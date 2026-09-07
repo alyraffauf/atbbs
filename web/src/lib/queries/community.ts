@@ -1,11 +1,11 @@
 import { queryOptions } from "@tanstack/react-query";
-import { PIN } from "../lexicon";
+import { PIN } from "../../shared/config/lexicon";
 import { resolveBBS } from "../bbs";
 import { fetchNews } from "../news";
 import { fetchPins } from "../pins";
 import { fetchDiscovery } from "../discovery";
 import { fetchHomeSysopInfo } from "../home";
-import { getBacklinkCountsBatch } from "../protocol/backlinks";
+import { getBacklinkCountsBatch } from "../../shared/protocol/backlinks";
 import { slowQueryOptions } from "./options";
 
 export const bbsQuery = (handle: string) =>

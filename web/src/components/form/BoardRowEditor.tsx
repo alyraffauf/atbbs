@@ -1,5 +1,5 @@
-import { Input } from "./Form";
-import * as limits from "../../lib/limits";
+import { Input } from "../../shared/ui/Form";
+import * as limits from "../../shared/config/limits";
 
 export interface BoardRow {
   slug: string;

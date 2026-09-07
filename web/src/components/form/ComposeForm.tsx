@@ -1,8 +1,8 @@
 import { useRef, useState, type SyntheticEvent } from "react";
 import { Send, Paperclip } from "lucide-react";
-import { Input, Textarea, Button } from "./Form";
-import FileChips from "./FileChips";
-import { MAX_ATTACHMENTS } from "../../lib/limits";
+import { Input, Textarea, Button } from "../../shared/ui/Form";
+import FileChips from "../../shared/ui/FileChips";
+import { MAX_ATTACHMENTS } from "../../shared/config/limits";
 
 export interface PostDraft {
   body: string;

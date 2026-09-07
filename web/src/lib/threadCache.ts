@@ -1,10 +1,10 @@
-import { queryClient } from "./queryClient";
+import { queryClient } from "../app/queryClient";
 import { threadPageQuery, threadRefsQuery } from "./queries/discussion";
 import { REPLIES_PER_PAGE, refToUri } from "./replies";
-import type { BacklinkRef } from "./protocol/backlinks";
+import type { BacklinkRef } from "../shared/protocol/backlinks";
 import type { ReplyPage } from "./thread";
 import type { Reply } from "./replies";
-import type { BoundedResult } from "./protocol/records";
+import type { BoundedResult } from "../shared/protocol/records";
 
 export async function cancelRefsRefetch(threadUri: string) {
   await queryClient.cancelQueries({

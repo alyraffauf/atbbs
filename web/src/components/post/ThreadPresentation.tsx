@@ -2,7 +2,7 @@ import type { BBSModeration } from "../../lib/bbsModeration";
 import type { Reply } from "../../lib/replies";
 import type { ThreadRoot } from "../../lib/thread";
 import type { ReactNode } from "react";
-import PageNav from "../nav/PageNav";
+import PageNav from "../../shared/ui/PageNav";
 import ThreadCard from "./ThreadCard";
 import ThreadReplyList from "./ThreadReplyList";
 

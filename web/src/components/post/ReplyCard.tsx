@@ -1,4 +1,4 @@
-import { truncate } from "../../lib/util";
+import { truncate } from "../../shared/config/util";
 import ModerationBadge from "./ModerationBadge";
 import PostActions, { type PostAction } from "./PostActions";
 import PostBody from "./PostBody";

@@ -1,4 +1,4 @@
-import { useAuth } from "../lib/auth";
+import { useAuth } from "../features/auth/auth";
 import Dashboard from "./Dashboard";
 import LoggedOutHome from "./LoggedOutHome";
 

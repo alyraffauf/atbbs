@@ -2,17 +2,17 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import type { Did } from "@atcute/lexicons/syntax";
 import type { PostDraft } from "../components/form/ComposeForm";
-import { alertOnError } from "../lib/alerts";
-import { useAuth } from "../lib/auth";
+import { alertOnError } from "../shared/config/alerts";
+import { useAuth } from "../features/auth/auth";
 import type { BBS, NewsPost } from "../lib/bbs";
-import { POST, SITE } from "../lib/lexicon";
+import { POST, SITE } from "../shared/config/lexicon";
 import { newsQuery } from "../lib/queries/community";
-import { queryClient } from "../lib/queryClient";
-import { bbsUrl } from "../lib/routes";
-import { nowIso } from "../lib/util";
-import { makeAtUri, parseAtUri } from "../lib/protocol/uri";
+import { queryClient } from "../app/queryClient";
+import { bbsUrl } from "../shared/config/routes";
+import { nowIso } from "../shared/config/util";
+import { makeAtUri, parseAtUri } from "../shared/protocol/uri";
 import { createPost } from "../lib/discussionRecords";
-import { deleteRecord, uploadAttachments } from "../lib/protocol/repository";
+import { deleteRecord, uploadAttachments } from "../shared/protocol/repository";
 
 export function usePostNews(bbs: BBS) {
   const { repo } = useAuth();

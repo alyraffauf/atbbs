@@ -5,7 +5,7 @@
 import { useSearchParams } from "react-router-dom";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { threadPageQuery, threadRefsQuery } from "../lib/queries/discussion";
-import { parseAtUri } from "../lib/protocol/uri";
+import { parseAtUri } from "../shared/protocol/uri";
 import {
   REPLIES_PER_PAGE,
   clampPage,

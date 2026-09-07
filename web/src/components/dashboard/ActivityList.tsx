@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
-import { parseAtUri } from "../../lib/protocol/uri";
-import { threadUrl } from "../../lib/routes";
+import { parseAtUri } from "../../shared/protocol/uri";
+import { threadUrl } from "../../shared/config/routes";
 import PostBody from "../post/PostBody";
 import PostMeta from "../post/PostMeta";
 import type { ActivityItem } from "../../lib/activity";

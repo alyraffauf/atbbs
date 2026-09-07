@@ -1,8 +1,8 @@
 import { useState, type SyntheticEvent } from "react";
 
-import * as limits from "../../lib/limits";
+import * as limits from "../../shared/config/limits";
 import BoardRowEditor, { type BoardRow } from "./BoardRowEditor";
-import { Button, Input, Textarea } from "./Form";
+import { Button, Input, Textarea } from "../../shared/ui/Form";
 
 export interface CommunityDraft {
   name: string;

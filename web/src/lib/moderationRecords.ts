@@ -1,12 +1,12 @@
 import type { XyzAtbbsBan, XyzAtbbsHide } from "../lexicons";
 import { invalidateAllBBSCaches } from "./bbs";
-import { BAN, HIDE } from "./lexicon";
-import { nowIso } from "./util";
+import { BAN, HIDE } from "../shared/config/lexicon";
+import { nowIso } from "../shared/config/util";
 import {
   createRecord,
   deleteRecord,
   type AuthenticatedRepo,
-} from "./protocol/repository";
+} from "../shared/protocol/repository";
 
 type BanValue = Omit<XyzAtbbsBan.Main, "$type">;
 type HideValue = Omit<XyzAtbbsHide.Main, "$type">;

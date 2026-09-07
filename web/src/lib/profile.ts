@@ -1,8 +1,8 @@
 /** Fetch a user's atbbs profile and BBS info. */
 
-import { getAvatar, resolveIdentity } from "./protocol/identities";
-import { getRecord } from "./protocol/records";
-import { PROFILE, SITE } from "./lexicon";
+import { getAvatar, resolveIdentity } from "../shared/protocol/identities";
+import { getRecord } from "../shared/protocol/records";
+import { PROFILE, SITE } from "../shared/config/lexicon";
 import { isProfileRecord, isSiteRecord } from "./recordGuards";
 
 export interface Profile {

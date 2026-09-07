@@ -3,15 +3,15 @@ import { useLoaderData } from "react-router-dom";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import ComposeForm from "../components/form/ComposeForm";
 import ThreadPresentation from "../components/post/ThreadPresentation";
-import { useAuth } from "../lib/auth";
-import * as limits from "../lib/limits";
+import { useAuth } from "../features/auth/auth";
+import * as limits from "../shared/config/limits";
 import { bbsModerationQuery } from "../lib/queries/moderation";
 import type { Reply } from "../lib/replies";
 import { useModerationMutations } from "../hooks/useModerationMutations";
-import { usePageTitle } from "../hooks/usePageTitle";
+import { usePageTitle } from "../shared/hooks/usePageTitle";
 import { useThreadMutations } from "../hooks/useThreadMutations";
 import { useThreadReplies } from "../hooks/useThreadReplies";
-import type { ThreadLoaderData } from "../router/loaders";
+import type { ThreadLoaderData } from "../app/router/loaders";
 
 export default function ThreadPage() {
   const { handle, bbs, thread } = useLoaderData() as ThreadLoaderData;

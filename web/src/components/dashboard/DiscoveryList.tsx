@@ -1,5 +1,5 @@
 import ListLink from "../nav/ListLink";
-import { bbsUrl } from "../../lib/routes";
+import { bbsUrl } from "../../shared/config/routes";
 import type { DiscoveredBBS } from "../../lib/discovery";
 
 interface DiscoveryListProps {

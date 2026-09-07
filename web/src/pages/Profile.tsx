@@ -2,16 +2,16 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { MessageSquare } from "lucide-react";
-import { useAuth } from "../lib/auth";
-import { usePageTitle } from "../hooks/usePageTitle";
+import { useAuth } from "../features/auth/auth";
+import { usePageTitle } from "../shared/hooks/usePageTitle";
 import { putProfile } from "../lib/profileRecords";
 import { myThreadsQuery } from "../lib/queries/dashboard";
 import { profileQuery } from "../lib/queries/profile";
-import { queryClient } from "../lib/queryClient";
+import { queryClient } from "../app/queryClient";
 import ViewProfile from "../components/profile/ViewProfile";
 import EditProfile from "../components/profile/EditProfile";
 import MyThreadList from "../components/dashboard/MyThreadList";
-import ListSkeleton from "../components/layout/ListSkeleton";
+import ListSkeleton from "../app/layout/ListSkeleton";
 
 export default function Profile() {
   const { handle } = useParams();

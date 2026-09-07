@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import Avatar from "../Avatar";
+import Avatar from "../../shared/ui/Avatar";
 
 interface ListLinkProps {
   to: string;

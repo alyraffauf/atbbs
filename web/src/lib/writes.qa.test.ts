@@ -4,7 +4,7 @@ import { createPost } from "./discussionRecords";
 import {
   uploadAttachments,
   type AuthenticatedRepo,
-} from "./protocol/repository";
+} from "../shared/protocol/repository";
 
 describe("authenticated writes", () => {
   it("throws when the PDS rejects a write", async () => {

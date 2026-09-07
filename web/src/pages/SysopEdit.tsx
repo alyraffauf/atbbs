@@ -1,17 +1,17 @@
 import { useLoaderData, useNavigate } from "react-router-dom";
-import { useAuth } from "../lib/auth";
+import { useAuth } from "../features/auth/auth";
 import { putBoard, putSite } from "../lib/communityRecords";
-import { deleteRecord } from "../lib/protocol/repository";
-import { BOARD } from "../lib/lexicon";
-import { nowIso } from "../lib/util";
-import { makeAtUri } from "../lib/protocol/uri";
+import { deleteRecord } from "../shared/protocol/repository";
+import { BOARD } from "../shared/config/lexicon";
+import { nowIso } from "../shared/config/util";
+import { makeAtUri } from "../shared/protocol/uri";
 import type { Did } from "@atcute/lexicons/syntax";
-import { usePageTitle } from "../hooks/usePageTitle";
-import { bbsUrl } from "../lib/routes";
+import { usePageTitle } from "../shared/hooks/usePageTitle";
+import { bbsUrl } from "../shared/config/routes";
 import CommunityForm, {
   type CommunityDraft,
 } from "../components/form/CommunityForm";
-import type { SysopBBSLoaderData } from "../router/loaders";
+import type { SysopBBSLoaderData } from "../app/router/loaders";
 
 export default function SysopEdit() {
   const { repo } = useAuth();

@@ -1,8 +1,8 @@
 /** Load a sysop's bans + hides, hydrated with identities and post previews. */
 
-import { resolveIdentitiesBatch } from "./protocol/identities";
-import { getRecordsByUri } from "./protocol/records";
-import { parseAtUri } from "./protocol/uri";
+import { resolveIdentitiesBatch } from "../shared/protocol/identities";
+import { getRecordsByUri } from "../shared/protocol/records";
+import { parseAtUri } from "../shared/protocol/uri";
 import { fetchBBSModeration } from "./bbsModeration";
 
 export interface HiddenInfo {

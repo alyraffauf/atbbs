@@ -1,11 +1,11 @@
 /** Debounced BBS resolution — resolves a handle to a BBS name if one exists. */
 
-import { getAvatar, resolveIdentity } from "../lib/protocol/identities";
-import { getRecord } from "../lib/protocol/records";
-import { SITE } from "../lib/lexicon";
-import { bbsUrl } from "../lib/routes";
+import { getAvatar, resolveIdentity } from "../shared/protocol/identities";
+import { getRecord } from "../shared/protocol/records";
+import { SITE } from "../shared/config/lexicon";
+import { bbsUrl } from "../shared/config/routes";
 import type { Suggestion } from "../lib/suggestions";
-import { useDebouncedAsync } from "./useDebouncedAsync";
+import { useDebouncedAsync } from "../shared/hooks/useDebouncedAsync";
 
 const DEBOUNCE_MS = 300;
 

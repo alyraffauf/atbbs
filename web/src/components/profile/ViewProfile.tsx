@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import { Pencil, ChevronRight, Monitor } from "lucide-react";
-import Avatar from "../Avatar";
+import Avatar from "../../shared/ui/Avatar";
 import PostBody from "../post/PostBody";
-import { ActionButton } from "../nav/ActionButton";
-import { bbsUrl } from "../../lib/routes";
+import { ActionButton } from "../../shared/ui/ActionButton";
+import { bbsUrl } from "../../shared/config/routes";
 import type { Profile } from "../../lib/profile";
 
 interface ViewProfileProps {

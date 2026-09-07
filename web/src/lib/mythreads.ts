@@ -1,9 +1,9 @@
 /** Fetch the user's own root posts (threads) across all BBSes. */
 
-import { resolveIdentitiesBatch } from "./protocol/identities";
-import { listRecords, requireComplete } from "./protocol/records";
-import { POST } from "./lexicon";
-import { parseAtUri } from "./protocol/uri";
+import { resolveIdentitiesBatch } from "../shared/protocol/identities";
+import { listRecords, requireComplete } from "../shared/protocol/records";
+import { POST } from "../shared/config/lexicon";
+import { parseAtUri } from "../shared/protocol/uri";
 import { isPostRecord } from "./recordGuards";
 
 export interface MyThread {

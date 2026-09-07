@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { makeAtUri, parseAtUri } from "./protocol/uri";
+import { makeAtUri, parseAtUri } from "../shared/protocol/uri";
 
 describe("AT URI helpers", () => {
   it("parses canonical record URIs", () => {

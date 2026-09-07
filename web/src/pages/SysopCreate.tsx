@@ -1,14 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../lib/auth";
+import { useAuth } from "../features/auth/auth";
 import { createBoard, createSite } from "../lib/communityRecords";
-import { deleteRecord } from "../lib/protocol/repository";
-import { BOARD } from "../lib/lexicon";
-import { DEFAULT_BOARD } from "../lib/shared";
-import { nowIso } from "../lib/util";
-import { makeAtUri } from "../lib/protocol/uri";
+import { deleteRecord } from "../shared/protocol/repository";
+import { BOARD } from "../shared/config/lexicon";
+import { DEFAULT_BOARD } from "../shared/config/shared";
+import { nowIso } from "../shared/config/util";
+import { makeAtUri } from "../shared/protocol/uri";
 import type { Did } from "@atcute/lexicons/syntax";
-import { usePageTitle } from "../hooks/usePageTitle";
-import { bbsUrl } from "../lib/routes";
+import { usePageTitle } from "../shared/hooks/usePageTitle";
+import { bbsUrl } from "../shared/config/routes";
 import CommunityForm, {
   type CommunityDraft,
 } from "../components/form/CommunityForm";

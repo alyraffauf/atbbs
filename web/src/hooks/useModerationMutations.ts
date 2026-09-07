@@ -1,13 +1,13 @@
 import { useMutation } from "@tanstack/react-query";
-import { useAuth } from "../lib/auth";
-import { resolveIdentity } from "../lib/protocol/identities";
+import { useAuth } from "../features/auth/auth";
+import { resolveIdentity } from "../shared/protocol/identities";
 import {
   createBan,
   createHide,
   deleteBan,
   deleteHide,
 } from "../lib/moderationRecords";
-import { alertOnError } from "../lib/alerts";
+import { alertOnError } from "../shared/config/alerts";
 
 // Shared ban/unban/hide/unhide mutations
 // `ban` accepts either a DID or a handle

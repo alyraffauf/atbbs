@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import { ArrowRight, Pencil, Plus, Shield, Trash2 } from "lucide-react";
-import { ActionLink } from "../nav/ActionButton";
+import { ActionLink } from "../../shared/ui/ActionButton";
 import { avatarQuery } from "../../lib/queries/identities";
-import { bbsUrl } from "../../lib/routes";
+import { bbsUrl } from "../../shared/config/routes";
 
 interface BBSPanelProps {
   hasBBS: boolean;

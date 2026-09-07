@@ -1,17 +1,17 @@
 import { PenLine } from "lucide-react";
 import { useLoaderData } from "react-router-dom";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { useAuth } from "../lib/auth";
-import { usePageTitle } from "../hooks/usePageTitle";
-import { relativeDate } from "../lib/util";
-import * as limits from "../lib/limits";
+import { useAuth } from "../features/auth/auth";
+import { usePageTitle } from "../shared/hooks/usePageTitle";
+import { relativeDate } from "../shared/config/util";
+import * as limits from "../shared/config/limits";
 import { bbsModerationQuery } from "../lib/queries/moderation";
 import { boardThreadsInfiniteQuery } from "../lib/queries/discussion";
-import { threadUrl } from "../lib/routes";
+import { threadUrl } from "../shared/config/routes";
 import ThreadLink, { ThreadListHeader } from "../components/nav/ThreadLink";
 import ComposeForm from "../components/form/ComposeForm";
-import ListSkeleton from "../components/layout/ListSkeleton";
-import type { BoardLoaderData } from "../router/loaders";
+import ListSkeleton from "../app/layout/ListSkeleton";
+import type { BoardLoaderData } from "../app/router/loaders";
 import { useBoardPosting } from "../hooks/useBoardPosting";
 
 export default function BoardPage() {

@@ -1,8 +1,8 @@
 import { useLoaderData } from "react-router-dom";
-import { useAuth } from "../lib/auth";
-import { usePageTitle } from "../hooks/usePageTitle";
+import { useAuth } from "../features/auth/auth";
+import { usePageTitle } from "../shared/hooks/usePageTitle";
 import NewsCard from "../components/post/NewsCard";
-import type { NewsLoaderData } from "../router/loaders";
+import type { NewsLoaderData } from "../app/router/loaders";
 import { useDeleteNews } from "../hooks/useNewsMutations";
 
 export default function NewsPage() {

@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "../lib/auth";
-import { PIN } from "../lib/lexicon";
+import { useAuth } from "../features/auth/auth";
+import { PIN } from "../shared/config/lexicon";
 import { createPin } from "../lib/pinRecords";
-import { deleteRecord } from "../lib/protocol/repository";
+import { deleteRecord } from "../shared/protocol/repository";
 import { findPinRkey } from "../lib/pins";
 import { pinsQuery } from "../lib/queries/community";
-import { ActionButton } from "./nav/ActionButton";
+import { ActionButton } from "../shared/ui/ActionButton";
 import { Pin, PinOff } from "lucide-react";
 
 interface PinButtonProps {

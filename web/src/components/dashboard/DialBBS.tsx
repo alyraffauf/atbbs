@@ -1,14 +1,14 @@
 import { useState, type SyntheticEvent } from "react";
 import { ArrowRight, Dices } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import HandleInput from "../form/HandleInput";
-import IdentityRow from "../IdentityRow";
-import { Button } from "../form/Form";
-import { useDropdown } from "../../hooks/useDropdown";
+import HandleInput from "../../shared/ui/HandleInput";
+import IdentityRow from "../../shared/ui/IdentityRow";
+import { Button } from "../../shared/ui/Form";
+import { useDropdown } from "../../shared/hooks/useDropdown";
 import { useResolvedBBS } from "../../hooks/useResolvedBBS";
 import type { DiscoveredBBS } from "../../lib/discovery";
 import type { Suggestion } from "../../lib/suggestions";
-import { bbsUrl } from "../../lib/routes";
+import { bbsUrl } from "../../shared/config/routes";
 
 interface DialBBSProps {
   discovered?: DiscoveredBBS[];

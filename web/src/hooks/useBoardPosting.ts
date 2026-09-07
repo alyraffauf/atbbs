@@ -5,19 +5,19 @@ import {
 } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import type { Did } from "@atcute/lexicons/syntax";
-import { useAuth } from "../lib/auth";
+import { useAuth } from "../features/auth/auth";
 import type { BBS, Board } from "../lib/bbs";
 import type { ThreadItem, ThreadPageResult } from "../lib/boardThreads";
-import { BOARD } from "../lib/lexicon";
+import { BOARD } from "../shared/config/lexicon";
 import { myThreadsQuery } from "../lib/queries/dashboard";
 import { boardThreadsInfiniteQuery } from "../lib/queries/discussion";
-import { queryClient } from "../lib/queryClient";
-import { threadUrl } from "../lib/routes";
-import { nowIso } from "../lib/util";
-import { makeAtUri, parseAtUri } from "../lib/protocol/uri";
+import { queryClient } from "../app/queryClient";
+import { threadUrl } from "../shared/config/routes";
+import { nowIso } from "../shared/config/util";
+import { makeAtUri, parseAtUri } from "../shared/protocol/uri";
 import { createPost } from "../lib/discussionRecords";
-import { uploadAttachments } from "../lib/protocol/repository";
-import { alertOnError } from "../lib/alerts";
+import { uploadAttachments } from "../shared/protocol/repository";
+import { alertOnError } from "../shared/config/alerts";
 import type { PostDraft } from "../components/form/ComposeForm";
 
 export async function waitForThreadIndexing(

@@ -10,20 +10,20 @@ import {
   Megaphone,
   ChevronDown,
 } from "lucide-react";
-import { useAuth } from "../lib/auth";
-import { usePageTitle } from "../hooks/usePageTitle";
-import { truncate } from "../lib/util";
-import * as limits from "../lib/limits";
+import { useAuth } from "../features/auth/auth";
+import { usePageTitle } from "../shared/hooks/usePageTitle";
+import { truncate } from "../shared/config/util";
+import * as limits from "../shared/config/limits";
 import { newsQuery } from "../lib/queries/community";
-import { boardUrl, newsUrl, profileUrl } from "../lib/routes";
+import { boardUrl, newsUrl, profileUrl } from "../shared/config/routes";
 import ComposeForm from "../components/form/ComposeForm";
-import Localtime from "../components/Localtime";
+import Localtime from "../shared/ui/Localtime";
 import ListLink from "../components/nav/ListLink";
-import ActionBar from "../components/nav/ActionBar";
-import { ActionLink } from "../components/nav/ActionButton";
+import ActionBar from "../shared/ui/ActionBar";
+import { ActionLink } from "../shared/ui/ActionButton";
 import PinButton from "../components/PinButton";
-import ListSkeleton from "../components/layout/ListSkeleton";
-import type { CommunityLoaderData } from "../router/loaders";
+import ListSkeleton from "../app/layout/ListSkeleton";
+import type { CommunityLoaderData } from "../app/router/loaders";
 import { usePostNews } from "../hooks/useNewsMutations";
 
 const INITIAL_NEWS_COUNT = 3;

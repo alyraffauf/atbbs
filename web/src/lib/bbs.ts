@@ -1,13 +1,13 @@
 /** Resolve a handle to a fully hydrated BBS via Slingshot/Constellation. */
 
-import { resolveIdentity, type MiniDoc } from "./protocol/identities";
-import { getRecord, getRecordsByUri, type ATRecord } from "./protocol/records";
-import { FetchError } from "./protocol/transport";
-import { queryClient } from "./queryClient";
-import { SITE } from "./lexicon";
-import { parseAtUri } from "./protocol/uri";
+import { resolveIdentity, type MiniDoc } from "../shared/protocol/identities";
+import { getRecord, getRecordsByUri, type ATRecord } from "../shared/protocol/records";
+import { FetchError } from "../shared/protocol/transport";
+import { queryClient } from "../app/queryClient";
+import { SITE } from "../shared/config/lexicon";
+import { parseAtUri } from "../shared/protocol/uri";
 import { isBoardRecord, isSiteRecord } from "./recordGuards";
-import { MAX_BOARDS } from "./limits";
+import { MAX_BOARDS } from "../shared/config/limits";
 
 export class BBSNotFoundError extends Error {}
 export class NoBBSError extends Error {}

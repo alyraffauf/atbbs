@@ -2,14 +2,14 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import type { Did } from "@atcute/lexicons/syntax";
 import type { PostDraft } from "../components/form/ComposeForm";
-import { alertOnError } from "../lib/alerts";
-import { useAuth } from "../lib/auth";
+import { alertOnError } from "../shared/config/alerts";
+import { useAuth } from "../features/auth/auth";
 import type { BBS } from "../lib/bbs";
-import { BOARD, POST } from "../lib/lexicon";
+import { BOARD, POST } from "../shared/config/lexicon";
 import { myThreadsQuery } from "../lib/queries/dashboard";
-import { queryClient } from "../lib/queryClient";
+import { queryClient } from "../app/queryClient";
 import { REPLIES_PER_PAGE, type Reply } from "../lib/replies";
-import { bbsUrl } from "../lib/routes";
+import { bbsUrl } from "../shared/config/routes";
 import type { ThreadRoot } from "../lib/thread";
 import {
   appendRefAndReply,
@@ -18,11 +18,11 @@ import {
   removeRefAndReply,
   setRefs,
 } from "../lib/threadCache";
-import { nowIso } from "../lib/util";
-import { makeAtUri, parseAtUri } from "../lib/protocol/uri";
+import { nowIso } from "../shared/config/util";
+import { makeAtUri, parseAtUri } from "../shared/protocol/uri";
 import { createPost } from "../lib/discussionRecords";
-import { deleteRecord, uploadAttachments } from "../lib/protocol/repository";
-import type { BacklinkRef } from "../lib/protocol/backlinks";
+import { deleteRecord, uploadAttachments } from "../shared/protocol/repository";
+import type { BacklinkRef } from "../shared/protocol/backlinks";
 
 interface ThreadMutationOptions {
   bbs: BBS;
