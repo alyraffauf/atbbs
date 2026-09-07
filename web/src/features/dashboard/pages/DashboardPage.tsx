@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth, type AuthUser } from "../../auth/auth";
 import { deleteBBS } from "../../community/data/deletebbs";
-import { usePageTitle } from "../../../shared/hooks/usePageTitle";
+import { usePageTitle } from "../../../frontend/app/browser/usePageTitle";
 import {
   discoveryQuery,
   homeSysopQuery,

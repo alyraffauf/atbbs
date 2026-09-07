@@ -3,7 +3,7 @@
 import type { AuthenticatedRepo } from "../../../shared/protocol/repository";
 import { getBacklinks } from "../../../shared/protocol/backlinks";
 import { getRecord, listRecords, requireComplete } from "../../../shared/protocol/records";
-import { BAN, BOARD, HIDE, POST, SITE } from "../../../shared/config/lexicon";
+import { BAN, BOARD, HIDE, POST, SITE } from "../../../atbbs/schema/collections";
 import { makeAtUri, parseAtUri } from "../../../shared/protocol/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { deleteRecord } from "../../../shared/protocol/repository";

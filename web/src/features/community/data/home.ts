@@ -2,7 +2,7 @@
  *  what's it called? A full BBS fetch only happens on the BBS page itself. */
 
 import { getRecord } from "../../../shared/protocol/records";
-import { SITE } from "../../../shared/config/lexicon";
+import { SITE } from "../../../atbbs/schema/collections";
 
 export interface HomeSysopInfo {
   hasBBS: boolean;

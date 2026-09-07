@@ -4,7 +4,7 @@
 import { getBacklinks, type BacklinkRef } from "../../../shared/protocol/backlinks";
 import { resolveIdentitiesBatch, resolveIdentity } from "../../../shared/protocol/identities";
 import { getRecord, getRecordsBatch } from "../../../shared/protocol/records";
-import { POST } from "../../../shared/config/lexicon";
+import { POST } from "../../../atbbs/schema/collections";
 import { parseAtUri } from "../../../shared/protocol/uri";
 import { recordToReply } from "./replies";
 import { isPostRecord } from "../../../shared/protocol/recordGuards";

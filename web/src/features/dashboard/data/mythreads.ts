@@ -2,7 +2,7 @@
 
 import { resolveIdentitiesBatch } from "../../../shared/protocol/identities";
 import { listRecords, requireComplete } from "../../../shared/protocol/records";
-import { POST } from "../../../shared/config/lexicon";
+import { POST } from "../../../atbbs/schema/collections";
 import { parseAtUri } from "../../../shared/protocol/uri";
 import { isPostRecord } from "../../../shared/protocol/recordGuards";
 

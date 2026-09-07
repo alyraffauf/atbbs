@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { formatFullDate, relativeDate } from "../../../shared/config/util";
-import { profileUrl } from "../../../shared/config/routes";
+import { formatFullDate, relativeDate } from "../../../frontend/ui/dates";
+import { profileUrl } from "../../../frontend/app/router/urls";
 
 interface PostMetaProps {
   handle: string;

@@ -1,4 +1,4 @@
-import { CDN, SERVICES } from "../config/shared";
+import { CDN, SERVICES } from "../../atproto/config";
 import { getRecord } from "./records";
 import {
   allSettledBounded,

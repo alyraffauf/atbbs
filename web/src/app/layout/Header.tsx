@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../features/auth/auth";
 import { useLoginModal } from "../../features/auth/loginModal";
-import { profileUrl } from "../../shared/config/routes";
+import { profileUrl } from "../../frontend/app/router/urls";
 import Logo from "./Logo";
 import HeaderBreadcrumbs from "./HeaderBreadcrumbs";
 import MobileMenu from "./MobileMenu";

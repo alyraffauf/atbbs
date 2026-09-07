@@ -1,5 +1,5 @@
 import { useEffect, useState, type InputHTMLAttributes } from "react";
-import { HANDLE_PLACEHOLDERS as PLACEHOLDERS } from "../config/shared";
+import { HANDLE_PLACEHOLDERS as PLACEHOLDERS } from "../../frontend/features/auth/config";
 import { inputStyles } from "./Form";
 
 interface HandleInputProps extends Omit<

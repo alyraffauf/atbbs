@@ -1,5 +1,5 @@
 import { ok, type Client } from "@atcute/client";
-import { MAX_ATTACHMENT_BYTES, MAX_IMAGE_PIXELS } from "../config/limits";
+import { MAX_ATTACHMENT_BYTES, MAX_IMAGE_PIXELS } from "../../atbbs/schema/limits";
 import type { XyzAtbbsPost } from "../../lexicons";
 
 export interface AuthenticatedRepo {

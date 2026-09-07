@@ -2,14 +2,14 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import type { Did } from "@atcute/lexicons/syntax";
 import type { PostDraft } from "./components/PostComposer";
-import { alertOnError } from "../../shared/config/alerts";
+import { alertOnError } from "../../frontend/app/browser/alerts";
 import { useAuth } from "../auth/auth";
 import type { BBS } from "../community/data/bbs";
-import { BOARD, POST } from "../../shared/config/lexicon";
+import { BOARD, POST } from "../../atbbs/schema/collections";
 import { myThreadsQuery } from "../dashboard/data/dashboardQueries";
 import { queryClient } from "../../app/queryClient";
 import { REPLIES_PER_PAGE, type Reply } from "./data/replies";
-import { bbsUrl } from "../../shared/config/routes";
+import { bbsUrl } from "../../frontend/app/router/urls";
 import type { ThreadRoot } from "./data/thread";
 import {
   appendRefAndReply,
@@ -18,7 +18,7 @@ import {
   removeRefAndReply,
   setRefs,
 } from "./data/threadCache";
-import { nowIso } from "../../shared/config/util";
+import { nowIso } from "../../atbbs/support/time";
 import { makeAtUri, parseAtUri } from "../../shared/protocol/uri";
 import { createPost } from "./data/discussionRecords";
 import { deleteRecord, uploadAttachments } from "../../shared/protocol/repository";

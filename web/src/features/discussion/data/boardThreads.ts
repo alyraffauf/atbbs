@@ -8,7 +8,7 @@
 import { getAvatars, resolveIdentitiesBatch } from "../../../shared/protocol/identities";
 import { getBacklinkCountsBatch, getBacklinks } from "../../../shared/protocol/backlinks";
 import { getRecordsBatch, getRecordsByUri } from "../../../shared/protocol/records";
-import { POST, BOARD } from "../../../shared/config/lexicon";
+import { POST, BOARD } from "../../../atbbs/schema/collections";
 import { makeAtUri, parseAtUri } from "../../../shared/protocol/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "../../../shared/protocol/recordGuards";

@@ -4,10 +4,10 @@ import { resolveIdentity, type MiniDoc } from "../../../shared/protocol/identiti
 import { getRecord, getRecordsByUri, type ATRecord } from "../../../shared/protocol/records";
 import { FetchError } from "../../../shared/protocol/transport";
 import { queryClient } from "../../../app/queryClient";
-import { SITE } from "../../../shared/config/lexicon";
+import { SITE } from "../../../atbbs/schema/collections";
 import { parseAtUri } from "../../../shared/protocol/uri";
 import { isBoardRecord, isSiteRecord } from "../../../shared/protocol/recordGuards";
-import { MAX_BOARDS } from "../../../shared/config/limits";
+import { MAX_BOARDS } from "../../../atbbs/schema/limits";
 
 export class BBSNotFoundError extends Error {}
 export class NoBBSError extends Error {}

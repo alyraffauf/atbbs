@@ -2,7 +2,7 @@
 
 import { getAvatar, resolveIdentity } from "../../../shared/protocol/identities";
 import { getRecord } from "../../../shared/protocol/records";
-import { PROFILE, SITE } from "../../../shared/config/lexicon";
+import { PROFILE, SITE } from "../../../atbbs/schema/collections";
 import { isProfileRecord, isSiteRecord } from "../../../shared/protocol/recordGuards";
 
 export interface Profile {

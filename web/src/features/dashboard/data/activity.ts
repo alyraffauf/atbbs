@@ -3,7 +3,7 @@
 import { fetchAndHydrate } from "../../../shared/protocol/backlinks";
 import { resolveIdentitiesBatch } from "../../../shared/protocol/identities";
 import { listRecords } from "../../../shared/protocol/records";
-import { POST } from "../../../shared/config/lexicon";
+import { POST } from "../../../atbbs/schema/collections";
 import { isPostRecord } from "../../../shared/protocol/recordGuards";
 import { parseAtUri } from "../../../shared/protocol/uri";
 

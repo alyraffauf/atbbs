@@ -2,7 +2,7 @@
  *  are hidden, and the rkeys of those records (so the sysop can undo). */
 
 import { listRecords, requireComplete } from "../../../shared/protocol/records";
-import { BAN, HIDE } from "../../../shared/config/lexicon";
+import { BAN, HIDE } from "../../../atbbs/schema/collections";
 import { parseAtUri } from "../../../shared/protocol/uri";
 import { isBanRecord, isHideRecord } from "../../../shared/protocol/recordGuards";
 

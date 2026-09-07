@@ -1,6 +1,6 @@
 export function formatFullDate(iso: string): string {
   const date = new Date(iso);
-  const pad = (num: number) => String(num).padStart(2, "0");
+  const pad = (number: number) => String(number).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
@@ -11,16 +11,4 @@ export function relativeDate(iso: string): string {
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
   if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
   return formatFullDate(iso);
-}
-
-/** ISO datetime branded so it's assignable to atcute's `datetimeString` types. */
-type IsoDatetime = `${number}-${number}-${number}T${string}`;
-
-export function nowIso(): IsoDatetime {
-  return new Date().toISOString() as IsoDatetime;
-}
-
-export function truncate(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + "...";
 }

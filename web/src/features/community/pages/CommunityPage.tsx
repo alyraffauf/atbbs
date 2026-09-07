@@ -11,11 +11,11 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useAuth } from "../../auth/auth";
-import { usePageTitle } from "../../../shared/hooks/usePageTitle";
-import { truncate } from "../../../shared/config/util";
-import * as limits from "../../../shared/config/limits";
+import { usePageTitle } from "../../../frontend/app/browser/usePageTitle";
+import { truncate } from "../../../atbbs/support/text";
+import * as limits from "../../../atbbs/schema/limits";
 import { newsQuery } from "../../discussion/data/discussionQueries";
-import { boardUrl, newsUrl, profileUrl } from "../../../shared/config/routes";
+import { boardUrl, newsUrl, profileUrl } from "../../../frontend/app/router/urls";
 import PostComposer from "../../discussion/components/PostComposer";
 import Localtime from "../../../shared/ui/Localtime";
 import DirectoryEntryLink from "../components/DirectoryEntryLink";

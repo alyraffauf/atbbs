@@ -2,7 +2,7 @@
 
 import { getBacklinks } from "../../../shared/protocol/backlinks";
 import { getRecordsBatch } from "../../../shared/protocol/records";
-import { POST, SITE } from "../../../shared/config/lexicon";
+import { POST, SITE } from "../../../atbbs/schema/collections";
 import { makeAtUri, parseAtUri } from "../../../shared/protocol/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "../../../shared/protocol/recordGuards";

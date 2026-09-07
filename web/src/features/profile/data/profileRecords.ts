@@ -1,6 +1,6 @@
 import type { XyzAtbbsProfile } from "../../../lexicons";
-import { PROFILE } from "../../../shared/config/lexicon";
-import { nowIso } from "../../../shared/config/util";
+import { PROFILE } from "../../../atbbs/schema/collections";
+import { nowIso } from "../../../atbbs/support/time";
 import { putRecord, type AuthenticatedRepo } from "../../../shared/protocol/repository";
 
 type ProfileValue = Omit<XyzAtbbsProfile.Main, "$type">;

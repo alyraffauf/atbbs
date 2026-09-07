@@ -2,13 +2,13 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/auth";
 import { createBoard, createSite } from "../data/communityRecords";
 import { deleteRecord } from "../../../shared/protocol/repository";
-import { BOARD } from "../../../shared/config/lexicon";
-import { DEFAULT_BOARD } from "../../../shared/config/shared";
-import { nowIso } from "../../../shared/config/util";
+import { BOARD } from "../../../atbbs/schema/collections";
+import { DEFAULT_BOARD } from "../../../atbbs/community/config";
+import { nowIso } from "../../../atbbs/support/time";
 import { makeAtUri } from "../../../shared/protocol/uri";
 import type { Did } from "@atcute/lexicons/syntax";
-import { usePageTitle } from "../../../shared/hooks/usePageTitle";
-import { bbsUrl } from "../../../shared/config/routes";
+import { usePageTitle } from "../../../frontend/app/browser/usePageTitle";
+import { bbsUrl } from "../../../frontend/app/router/urls";
 import CommunityEditor, {
   type CommunityDraft,
 } from "../components/CommunityEditor";

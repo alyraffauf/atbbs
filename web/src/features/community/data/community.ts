@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { PIN } from "../../../shared/config/lexicon";
+import { PIN } from "../../../atbbs/schema/collections";
 import { resolveBBS } from "./bbs";
 import { fetchPins } from "./pins";
 import { fetchDiscovery } from "./discovery";

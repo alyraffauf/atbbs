@@ -4,7 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import { ArrowRight, Pencil, Plus, Shield, Trash2 } from "lucide-react";
 import { ActionLink } from "../../../shared/ui/ActionButton";
 import { avatarQuery } from "../../../shared/queries/identities";
-import { bbsUrl } from "../../../shared/config/routes";
+import { bbsUrl } from "../../../frontend/app/router/urls";
 
 interface CommunitySettingsProps {
   hasBBS: boolean;

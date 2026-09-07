@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import type { useAuth } from "../../features/auth/auth";
 import { useLoginModal } from "../../features/auth/loginModal";
-import { profileUrl } from "../../shared/config/routes";
+import { profileUrl } from "../../frontend/app/router/urls";
 
 interface MobileMenuProps {
   user: ReturnType<typeof useAuth>["user"];

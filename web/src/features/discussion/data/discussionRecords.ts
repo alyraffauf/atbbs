@@ -1,6 +1,6 @@
 import type { XyzAtbbsPost } from "../../../lexicons";
-import { POST } from "../../../shared/config/lexicon";
-import { nowIso } from "../../../shared/config/util";
+import { POST } from "../../../atbbs/schema/collections";
+import { nowIso } from "../../../atbbs/support/time";
 import { createRecord, type AuthenticatedRepo } from "../../../shared/protocol/repository";
 
 type Attachment = Omit<XyzAtbbsPost.Attachment, "$type">;

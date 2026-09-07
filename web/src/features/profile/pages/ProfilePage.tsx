@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { MessageSquare } from "lucide-react";
 import { useAuth } from "../../auth/auth";
-import { usePageTitle } from "../../../shared/hooks/usePageTitle";
+import { usePageTitle } from "../../../frontend/app/browser/usePageTitle";
 import { putProfile } from "../data/profileRecords";
 import { myThreadsQuery } from "../../dashboard/data/dashboardQueries";
 import { profileQuery } from "../data/profileQueries";

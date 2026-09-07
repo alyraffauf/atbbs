@@ -1,4 +1,4 @@
-import { truncate } from "../../../shared/config/util";
+import { truncate } from "../../../atbbs/support/text";
 import ModerationBadge from "./ModerationBadge";
 import PostActions, { type PostAction } from "./PostActions";
 import PostBody from "./PostBody";

@@ -1,5 +1,5 @@
 import DirectoryEntryLink from "./DirectoryEntryLink";
-import { bbsUrl } from "../../../shared/config/routes";
+import { bbsUrl } from "../../../frontend/app/router/urls";
 import type { DiscoveredBBS } from "../data/discovery";
 
 interface CommunityDirectoryProps {

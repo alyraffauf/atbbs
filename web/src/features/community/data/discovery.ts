@@ -2,8 +2,8 @@
 
 import { getAvatars, resolveIdentitiesBatch } from "../../../shared/protocol/identities";
 import { getRecord } from "../../../shared/protocol/records";
-import { SITE } from "../../../shared/config/lexicon";
-import { SERVICES } from "../../../shared/config/shared";
+import { SITE } from "../../../atbbs/schema/collections";
+import { SERVICES } from "../../../atproto/config";
 import { isSiteRecord } from "../../../shared/protocol/recordGuards";
 
 export interface DiscoveredBBS {

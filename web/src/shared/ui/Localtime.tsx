@@ -1,4 +1,4 @@
-import { formatFullDate, relativeDate } from "../config/util";
+import { formatFullDate, relativeDate } from "../../frontend/ui/dates";
 
 export default function Localtime({ iso }: { iso: string }) {
   if (!iso) return null;

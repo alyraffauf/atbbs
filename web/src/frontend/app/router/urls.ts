@@ -1,8 +1,5 @@
-// Internal URL builders. handle/slug are user-authored and encoded;
-// did/rkey are AT Proto formats with URL-safe character sets.
-
-export const bbsUrl = (handle: string) =>
-  `/bbs/${encodeURIComponent(handle)}`;
+// Handles and slugs are user-authored. DIDs and rkeys already use URL-safe syntax.
+export const bbsUrl = (handle: string) => `/bbs/${encodeURIComponent(handle)}`;
 
 export const boardUrl = (handle: string, slug: string) =>
   `/bbs/${encodeURIComponent(handle)}/board/${encodeURIComponent(slug)}`;

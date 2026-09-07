@@ -1,6 +1,6 @@
 import type { XyzAtbbsBoard, XyzAtbbsSite } from "../../../lexicons";
 import { invalidateAllBBSCaches } from "./bbs";
-import { BOARD, SITE } from "../../../shared/config/lexicon";
+import { BOARD, SITE } from "../../../atbbs/schema/collections";
 import {
   createRecord,
   putRecord,

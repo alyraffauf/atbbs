@@ -6,7 +6,7 @@ import {
   listRecords,
   requireComplete,
 } from "../../../shared/protocol/records";
-import { PIN, SITE } from "../../../shared/config/lexicon";
+import { PIN, SITE } from "../../../atbbs/schema/collections";
 import { isPinRecord, isSiteRecord } from "../../../shared/protocol/recordGuards";
 import { makeAtUri, parseAtUri } from "../../../shared/protocol/uri";
 import type { Did } from "@atcute/lexicons/syntax";

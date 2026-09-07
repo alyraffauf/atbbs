@@ -1,7 +1,7 @@
 import type { XyzAtbbsBan, XyzAtbbsHide } from "../../../lexicons";
 import { invalidateAllBBSCaches } from "../../community/data/bbs";
-import { BAN, HIDE } from "../../../shared/config/lexicon";
-import { nowIso } from "../../../shared/config/util";
+import { BAN, HIDE } from "../../../atbbs/schema/collections";
+import { nowIso } from "../../../atbbs/support/time";
 import {
   createRecord,
   deleteRecord,

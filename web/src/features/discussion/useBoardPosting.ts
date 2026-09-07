@@ -8,16 +8,16 @@ import type { Did } from "@atcute/lexicons/syntax";
 import { useAuth } from "../auth/auth";
 import type { BBS, Board } from "../community/data/bbs";
 import type { ThreadItem, ThreadPageResult } from "./data/boardThreads";
-import { BOARD } from "../../shared/config/lexicon";
+import { BOARD } from "../../atbbs/schema/collections";
 import { myThreadsQuery } from "../dashboard/data/dashboardQueries";
 import { boardThreadsInfiniteQuery } from "./data/discussionQueries";
 import { queryClient } from "../../app/queryClient";
-import { threadUrl } from "../../shared/config/routes";
-import { nowIso } from "../../shared/config/util";
+import { threadUrl } from "../../frontend/app/router/urls";
+import { nowIso } from "../../atbbs/support/time";
 import { makeAtUri, parseAtUri } from "../../shared/protocol/uri";
 import { createPost } from "./data/discussionRecords";
 import { uploadAttachments } from "../../shared/protocol/repository";
-import { alertOnError } from "../../shared/config/alerts";
+import { alertOnError } from "../../frontend/app/browser/alerts";
 import type { PostDraft } from "./components/PostComposer";
 
 export async function waitForThreadIndexing(

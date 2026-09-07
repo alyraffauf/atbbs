@@ -29,7 +29,7 @@ import {
   type ThreadLoaderData,
 } from "./loaders";
 import { breadcrumbHandle } from "./breadcrumbs";
-import { bbsUrl, boardUrl } from "../../shared/config/routes";
+import { bbsUrl, boardUrl } from "../../frontend/app/router/urls";
 
 export const router = createBrowserRouter([
   {

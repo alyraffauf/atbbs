@@ -8,7 +8,7 @@ import { useDropdown } from "../../../shared/hooks/useDropdown";
 import { useResolvedCommunity } from "../useResolvedCommunity";
 import type { DiscoveredBBS } from "../data/discovery";
 import type { Suggestion } from "../data/suggestions";
-import { bbsUrl } from "../../../shared/config/routes";
+import { bbsUrl } from "../../../frontend/app/router/urls";
 
 interface CommunityPickerProps {
   discovered?: DiscoveredBBS[];

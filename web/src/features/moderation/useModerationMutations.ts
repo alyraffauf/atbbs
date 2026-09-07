@@ -7,7 +7,7 @@ import {
   deleteBan,
   deleteHide,
 } from "./data/moderationRecords";
-import { alertOnError } from "../../shared/config/alerts";
+import { alertOnError } from "../../frontend/app/browser/alerts";
 
 // Shared ban/unban/hide/unhide mutations
 // `ban` accepts either a DID or a handle

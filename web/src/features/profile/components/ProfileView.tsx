@@ -3,7 +3,7 @@ import { Pencil, ChevronRight, Monitor } from "lucide-react";
 import Avatar from "../../../shared/ui/Avatar";
 import PostBody from "../../discussion/components/PostBody";
 import { ActionButton } from "../../../shared/ui/ActionButton";
-import { bbsUrl } from "../../../shared/config/routes";
+import { bbsUrl } from "../../../frontend/app/router/urls";
 import type { Profile } from "../data/profile";
 
 interface ProfileViewProps {

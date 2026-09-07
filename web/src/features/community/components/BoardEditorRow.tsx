@@ -1,5 +1,5 @@
 import { Input } from "../../../shared/ui/Form";
-import * as limits from "../../../shared/config/limits";
+import * as limits from "../../../atbbs/schema/limits";
 
 export interface BoardRow {
   slug: string;

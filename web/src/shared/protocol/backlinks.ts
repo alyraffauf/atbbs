@@ -1,4 +1,4 @@
-import { SERVICES } from "../config/shared";
+import { SERVICES } from "../../atproto/config";
 import { parseAtUri } from "./uri";
 import { resolveIdentitiesBatch } from "./identities";
 import { getRecordsBatch } from "./records";

@@ -1,4 +1,4 @@
-import { bbsUrl } from "../../../shared/config/routes";
+import { bbsUrl } from "../../../frontend/app/router/urls";
 
 export interface Suggestion {
   to: string;

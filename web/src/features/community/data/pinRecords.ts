@@ -1,6 +1,6 @@
 import type { XyzAtbbsPin } from "../../../lexicons";
-import { PIN } from "../../../shared/config/lexicon";
-import { nowIso } from "../../../shared/config/util";
+import { PIN } from "../../../atbbs/schema/collections";
+import { nowIso } from "../../../atbbs/support/time";
 import { createRecord, type AuthenticatedRepo } from "../../../shared/protocol/repository";
 
 type PinValue = Omit<XyzAtbbsPin.Main, "$type">;

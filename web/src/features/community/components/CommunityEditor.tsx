@@ -1,6 +1,6 @@
 import { useState, type SyntheticEvent } from "react";
 
-import * as limits from "../../../shared/config/limits";
+import * as limits from "../../../atbbs/schema/limits";
 import BoardEditorRow, { type BoardRow } from "./BoardEditorRow";
 import { Button, Input, Textarea } from "../../../shared/ui/Form";
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import DirectoryEntryLink from "./DirectoryEntryLink";
-import { bbsUrl } from "../../../shared/config/routes";
+import { bbsUrl } from "../../../frontend/app/router/urls";
 import type { PinnedBBS } from "../data/pins";
 
 const PAGE_SIZE = 5;

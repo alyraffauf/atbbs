@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../auth/auth";
-import { PIN } from "../../../shared/config/lexicon";
+import { PIN } from "../../../atbbs/schema/collections";
 import { createPin } from "../data/pinRecords";
 import { deleteRecord } from "../../../shared/protocol/repository";
 import { findPinRkey } from "../data/pins";

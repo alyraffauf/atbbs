@@ -5,7 +5,7 @@ import { useLoaderData } from "react-router-dom";
 import { sysopModerationQuery } from "../data/moderation";
 import HandleInput from "../../../shared/ui/HandleInput";
 import { Button } from "../../../shared/ui/Form";
-import { usePageTitle } from "../../../shared/hooks/usePageTitle";
+import { usePageTitle } from "../../../frontend/app/browser/usePageTitle";
 import { useModerationMutations } from "../useModerationMutations";
 import type { SysopBBSLoaderData } from "../../../app/router/loaders";
 
