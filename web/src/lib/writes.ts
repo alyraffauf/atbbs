@@ -183,6 +183,18 @@ export async function putSite(repo: AuthenticatedRepo, site: SiteValue) {
   return resp;
 }
 
+function buildBoardValue(
+  name: string,
+  description: string,
+  createdAt: string,
+): BoardValue {
+  return {
+    name,
+    description,
+    createdAt: createdAt as BoardValue["createdAt"],
+  };
+}
+
 export async function putBoard(
   repo: AuthenticatedRepo,
   slug: string,
@@ -190,11 +202,7 @@ export async function putBoard(
   description: string,
   createdAt: string,
 ) {
-  const value: BoardValue = {
-    name,
-    description,
-    createdAt: createdAt as BoardValue["createdAt"],
-  };
+  const value = buildBoardValue(name, description, createdAt);
   const resp = await putRecord(repo, BOARD, slug, value);
   invalidateAllBBSCaches();
   return resp;
@@ -207,11 +215,7 @@ export async function createBoard(
   description: string,
   createdAt: string,
 ) {
-  const value: BoardValue = {
-    name,
-    description,
-    createdAt: createdAt as BoardValue["createdAt"],
-  };
+  const value = buildBoardValue(name, description, createdAt);
   const resp = await createRecord(repo, BOARD, value, slug);
   invalidateAllBBSCaches();
   return resp;
