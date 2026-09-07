@@ -14,7 +14,7 @@ import { boardThreadsInfiniteQuery } from "./data/discussionQueries";
 import { queryClient } from "../../app/queryClient";
 import { threadUrl } from "../../frontend/app/router/urls";
 import { nowIso } from "../../atbbs/support/time";
-import { makeAtUri, parseAtUri } from "../../shared/protocol/uri";
+import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import { createPost } from "./data/discussionRecords";
 import { uploadAttachments } from "../../shared/protocol/repository";
 import { alertOnError } from "../../frontend/app/browser/alerts";

@@ -1,11 +1,13 @@
 /** Thread detail fetchers: root post, reply refs, and the hydrated
  *  reply records for one page of the thread. */
 
-import { getBacklinks, type BacklinkRef } from "../../../shared/protocol/backlinks";
-import { resolveIdentitiesBatch, resolveIdentity } from "../../../shared/protocol/identities";
-import { getRecord, getRecordsBatch } from "../../../shared/protocol/records";
+import { getBacklinks, type BacklinkRef } from "../../../atproto/backlinks";
+import { resolveIdentity } from "../../../atproto/identity";
+import { getRecord } from "../../../atproto/records";
+import { resolveIdentitiesBatch } from "../../../atbbs/support/identities";
+import { getRecordsBatch } from "../../../atbbs/support/records";
 import { POST } from "../../../atbbs/schema/collections";
-import { parseAtUri } from "../../../shared/protocol/uri";
+import { parseAtUri } from "../../../atproto/uri";
 import { recordToReply } from "./replies";
 import { isPostRecord } from "../../../shared/protocol/recordGuards";
 import type { Reply } from "./replies";

@@ -1,6 +1,6 @@
 /** Debounced handle typeahead using Bluesky's public API. */
 
-import { searchHandles, type HandleMatch } from "../protocol/bsky";
+import { searchHandles, type HandleMatch } from "../../atproto/actors";
 import { useDebouncedAsync } from "./useDebouncedAsync";
 
 const DEBOUNCE_MS = 300;

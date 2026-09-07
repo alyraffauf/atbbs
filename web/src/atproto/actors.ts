@@ -24,6 +24,13 @@ export async function searchHandles(
       avatar?: string;
     }[];
   };
+  if (
+    !data ||
+    !Array.isArray(data.actors) ||
+    data.actors.some((actor) => !actor || typeof actor.handle !== "string")
+  ) {
+    return [];
+  }
   return data.actors.map((actor) => ({
     handle: actor.handle,
     displayName: actor.displayName ?? actor.handle,

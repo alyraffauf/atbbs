@@ -4,7 +4,7 @@ import { putBoard, putSite } from "../data/communityRecords";
 import { deleteRecord } from "../../../shared/protocol/repository";
 import { BOARD } from "../../../atbbs/schema/collections";
 import { nowIso } from "../../../atbbs/support/time";
-import { makeAtUri } from "../../../shared/protocol/uri";
+import { makeAtUri } from "../../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { usePageTitle } from "../../../frontend/app/browser/usePageTitle";
 import { bbsUrl } from "../../../frontend/app/router/urls";

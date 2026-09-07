@@ -19,10 +19,10 @@ import {
   setRefs,
 } from "./data/threadCache";
 import { nowIso } from "../../atbbs/support/time";
-import { makeAtUri, parseAtUri } from "../../shared/protocol/uri";
+import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import { createPost } from "./data/discussionRecords";
 import { deleteRecord, uploadAttachments } from "../../shared/protocol/repository";
-import type { BacklinkRef } from "../../shared/protocol/backlinks";
+import type { BacklinkRef } from "../../atproto/backlinks";
 
 interface ThreadMutationOptions {
   bbs: BBS;

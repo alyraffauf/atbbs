@@ -1,7 +1,8 @@
 /** Debounced BBS resolution — resolves a handle to a BBS name if one exists. */
 
-import { getAvatar, resolveIdentity } from "../../shared/protocol/identities";
-import { getRecord } from "../../shared/protocol/records";
+import { resolveIdentity } from "../../atproto/identity";
+import { getRecord } from "../../atproto/records";
+import { getAvatar } from "../../atbbs/support/identities";
 import { SITE } from "../../atbbs/schema/collections";
 import { bbsUrl } from "../../frontend/app/router/urls";
 import type { Suggestion } from "./data/suggestions";

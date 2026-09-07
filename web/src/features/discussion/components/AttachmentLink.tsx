@@ -1,5 +1,5 @@
 import { Paperclip } from "lucide-react";
-import { blobUrl } from "../../../shared/protocol/urls";
+import { blobUrl } from "../../../atproto/blobUrls";
 
 interface AttachmentLinkProps {
   pds: string;

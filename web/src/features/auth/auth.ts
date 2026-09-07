@@ -13,7 +13,7 @@ import {
 } from "@atcute/oauth-browser-client";
 import type { ActorResolver, ResolvedActor } from "@atcute/identity-resolver";
 import type { ActorIdentifier } from "@atcute/lexicons/syntax";
-import { resolveIdentity } from "../../shared/protocol/identities";
+import { resolveIdentity } from "../../atproto/identity";
 import type { AuthenticatedRepo } from "../../shared/protocol/repository";
 
 // --- OAuth setup (deferred until config is available) ---

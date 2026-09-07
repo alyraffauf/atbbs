@@ -18,7 +18,7 @@ import type {
   XyzAtbbsProfile,
   XyzAtbbsSite,
 } from "../../lexicons";
-import type { ATRecord } from "./records";
+import type { ATRecord } from "../../atproto/records";
 
 export type TypedRecord<T> = Omit<ATRecord, "value"> & { value: T };
 

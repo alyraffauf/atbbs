@@ -10,7 +10,7 @@ import { newsQuery } from "./data/discussionQueries";
 import { queryClient } from "../../app/queryClient";
 import { bbsUrl } from "../../frontend/app/router/urls";
 import { nowIso } from "../../atbbs/support/time";
-import { makeAtUri, parseAtUri } from "../../shared/protocol/uri";
+import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import { createPost } from "./data/discussionRecords";
 import { deleteRecord, uploadAttachments } from "../../shared/protocol/repository";
 

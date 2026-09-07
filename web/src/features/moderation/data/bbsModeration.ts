@@ -1,9 +1,9 @@
 /** Lookup tables for a BBS's moderation state: who is banned, which posts
  *  are hidden, and the rkeys of those records (so the sysop can undo). */
 
-import { listRecords, requireComplete } from "../../../shared/protocol/records";
+import { listRecords, requireComplete } from "../../../atproto/records";
 import { BAN, HIDE } from "../../../atbbs/schema/collections";
-import { parseAtUri } from "../../../shared/protocol/uri";
+import { parseAtUri } from "../../../atproto/uri";
 import { isBanRecord, isHideRecord } from "../../../shared/protocol/recordGuards";
 
 // Fields must be JSON-safe — this shape is persisted via localStorage.

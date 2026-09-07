@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "../auth/auth";
-import { resolveIdentity } from "../../shared/protocol/identities";
+import { resolveIdentity } from "../../atproto/identity";
 import {
   createBan,
   createHide,

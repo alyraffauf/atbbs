@@ -1,11 +1,11 @@
 /** Activity data — replies to your posts from other users. */
 
-import { fetchAndHydrate } from "../../../shared/protocol/backlinks";
-import { resolveIdentitiesBatch } from "../../../shared/protocol/identities";
-import { listRecords } from "../../../shared/protocol/records";
+import { fetchAndHydrate } from "../../../atbbs/support/backlinks";
+import { resolveIdentitiesBatch } from "../../../atbbs/support/identities";
+import { listRecords } from "../../../atproto/records";
 import { POST } from "../../../atbbs/schema/collections";
 import { isPostRecord } from "../../../shared/protocol/recordGuards";
-import { parseAtUri } from "../../../shared/protocol/uri";
+import { parseAtUri } from "../../../atproto/uri";
 
 export interface ActivityItem {
   type: "reply" | "parent_reply";

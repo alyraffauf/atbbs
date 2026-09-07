@@ -1,9 +1,9 @@
 /** Fetch the list of news posts a sysop has published to their site. */
 
-import { getBacklinks } from "../../../shared/protocol/backlinks";
-import { getRecordsBatch } from "../../../shared/protocol/records";
+import { getBacklinks } from "../../../atproto/backlinks";
+import { getRecordsBatch } from "../../../atbbs/support/records";
 import { POST, SITE } from "../../../atbbs/schema/collections";
-import { makeAtUri, parseAtUri } from "../../../shared/protocol/uri";
+import { makeAtUri, parseAtUri } from "../../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "../../../shared/protocol/recordGuards";
 import type { NewsPost } from "../../community/data/bbs";

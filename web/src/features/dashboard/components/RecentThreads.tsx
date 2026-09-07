@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatFullDate, relativeDate } from "../../../frontend/ui/dates";
-import { parseAtUri } from "../../../shared/protocol/uri";
+import { parseAtUri } from "../../../atproto/uri";
 import { threadUrl } from "../../../frontend/app/router/urls";
 import type { MyThread } from "../data/mythreads";
 

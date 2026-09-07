@@ -1,8 +1,8 @@
 /** Pure helpers for reply pagination and hydration. */
 
-import type { BacklinkRef } from "../../../shared/protocol/backlinks";
-import type { ATRecord } from "../../../shared/protocol/records";
-import { makeAtUri, parseAtUri } from "../../../shared/protocol/uri";
+import type { BacklinkRef } from "../../../atproto/backlinks";
+import type { ATRecord } from "../../../atproto/records";
+import { makeAtUri, parseAtUri } from "../../../atproto/uri";
 import type { Did, Nsid } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "../../../shared/protocol/recordGuards";
 export interface Reply {

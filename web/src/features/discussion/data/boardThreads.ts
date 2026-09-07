@@ -5,11 +5,12 @@
  *  returns newest posts first, the first time a thread URI appears is its
  *  most recent activity — giving us bump order naturally. */
 
-import { getAvatars, resolveIdentitiesBatch } from "../../../shared/protocol/identities";
-import { getBacklinkCountsBatch, getBacklinks } from "../../../shared/protocol/backlinks";
-import { getRecordsBatch, getRecordsByUri } from "../../../shared/protocol/records";
+import { getBacklinks } from "../../../atproto/backlinks";
+import { getAvatars, resolveIdentitiesBatch } from "../../../atbbs/support/identities";
+import { getBacklinkCountsBatch } from "../../../atbbs/support/backlinks";
+import { getRecordsBatch, getRecordsByUri } from "../../../atbbs/support/records";
 import { POST, BOARD } from "../../../atbbs/schema/collections";
-import { makeAtUri, parseAtUri } from "../../../shared/protocol/uri";
+import { makeAtUri, parseAtUri } from "../../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "../../../shared/protocol/recordGuards";
 

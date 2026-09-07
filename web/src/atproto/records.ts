@@ -1,13 +1,6 @@
-import { SERVICES } from "../../atproto/config";
+import { SERVICES } from "./config";
 import { parseAtUri } from "./uri";
-import {
-  allSettledBounded,
-  FetchError,
-  fetchJson,
-  malformed,
-  reportPartialFailures,
-} from "./transport";
-import type { BacklinkRef } from "./backlinks";
+import { fetchJson, malformed } from "./transport";
 
 const SLINGSHOT = SERVICES.slingshot;
 
@@ -23,32 +16,15 @@ export interface BoundedResult<T> {
   nextCursor: string | null;
 }
 
-export interface RecordHydrationOptions {
-  failureMode?: "strict" | "best-effort";
-}
-
-function collectHydratedRecords(
-  results: PromiseSettledResult<ATRecord>[],
-  failureMode: "strict" | "best-effort",
-) {
-  const failures = results.filter(
-    (result): result is PromiseRejectedResult =>
-      result.status === "rejected" &&
-      !(
-        result.reason instanceof FetchError &&
-        result.reason.kind === "not-found"
-      ),
+function isRecord(value: unknown): value is ATRecord {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Partial<ATRecord>;
+  return (
+    typeof record.uri === "string" &&
+    typeof record.cid === "string" &&
+    !!record.value &&
+    typeof record.value === "object"
   );
-  if (failureMode === "strict" && failures.length) throw failures[0].reason;
-  if (failureMode === "best-effort") {
-    reportPartialFailures("Record hydration", results);
-  }
-  return results
-    .filter(
-      (result): result is PromiseFulfilledResult<ATRecord> =>
-        result.status === "fulfilled",
-    )
-    .map((result) => result.value);
 }
 
 export async function getRecord(
@@ -59,13 +35,7 @@ export async function getRecord(
   const record = await fetchJson<ATRecord>(
     `${SLINGSHOT}/com.atproto.repo.getRecord?repo=${encodeURIComponent(did)}&collection=${encodeURIComponent(collection)}&rkey=${encodeURIComponent(rkey)}`,
   );
-  if (
-    !record ||
-    typeof record.uri !== "string" ||
-    typeof record.cid !== "string" ||
-    !record.value ||
-    typeof record.value !== "object"
-  ) {
+  if (!isRecord(record)) {
     malformed("Record service");
   }
   return record;
@@ -74,29 +44,6 @@ export async function getRecord(
 export function getRecordByUri(uri: string) {
   const { did, collection, rkey } = parseAtUri(uri);
   return getRecord(did, collection, rkey);
-}
-
-export async function getRecordsByUri(
-  uris: string[],
-  { failureMode = "strict" }: RecordHydrationOptions = {},
-) {
-  const results = await allSettledBounded([...new Set(uris)], getRecordByUri);
-  return collectHydratedRecords(results, failureMode);
-}
-
-export async function getRecordsBatch(
-  refs: BacklinkRef[],
-  { failureMode = "strict" }: RecordHydrationOptions = {},
-) {
-  const unique = [
-    ...new Map(
-      refs.map((ref) => [`${ref.did}/${ref.collection}/${ref.rkey}`, ref]),
-    ).values(),
-  ];
-  const results = await allSettledBounded(unique, (ref) =>
-    getRecord(ref.did, ref.collection, ref.rkey),
-  );
-  return collectHydratedRecords(results, failureMode);
 }
 
 export async function listRecords(
@@ -127,6 +74,7 @@ export async function listRecords(
     if (
       !data ||
       !Array.isArray(data.records) ||
+      data.records.some((record) => !isRecord(record)) ||
       (data.cursor != null && typeof data.cursor !== "string")
     ) {
       malformed("PDS record listing");

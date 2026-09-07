@@ -17,11 +17,8 @@ import {
   threadRootQuery,
 } from "./features/discussion/data/discussionQueries";
 import { createRecord, type AuthenticatedRepo } from "./shared/protocol/repository";
-import {
-  allSettledBounded,
-  fetchJson,
-  type FetchError,
-} from "./shared/protocol/transport";
+import { allSettledBounded } from "./atbbs/support/batch";
+import { fetchJson, type FetchError } from "./atproto/transport";
 
 afterEach(() => {
   queryClient.clear();

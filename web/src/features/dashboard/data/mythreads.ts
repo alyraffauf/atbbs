@@ -1,9 +1,9 @@
 /** Fetch the user's own root posts (threads) across all BBSes. */
 
-import { resolveIdentitiesBatch } from "../../../shared/protocol/identities";
-import { listRecords, requireComplete } from "../../../shared/protocol/records";
+import { resolveIdentitiesBatch } from "../../../atbbs/support/identities";
+import { listRecords, requireComplete } from "../../../atproto/records";
 import { POST } from "../../../atbbs/schema/collections";
-import { parseAtUri } from "../../../shared/protocol/uri";
+import { parseAtUri } from "../../../atproto/uri";
 import { isPostRecord } from "../../../shared/protocol/recordGuards";
 
 export interface MyThread {

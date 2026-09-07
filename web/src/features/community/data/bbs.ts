@@ -1,11 +1,12 @@
 /** Resolve a handle to a fully hydrated BBS via Slingshot/Constellation. */
 
-import { resolveIdentity, type MiniDoc } from "../../../shared/protocol/identities";
-import { getRecord, getRecordsByUri, type ATRecord } from "../../../shared/protocol/records";
-import { FetchError } from "../../../shared/protocol/transport";
+import { resolveIdentity, type ResolvedIdentity } from "../../../atproto/identity";
+import { getRecord, type ATRecord } from "../../../atproto/records";
+import { getRecordsByUri } from "../../../atbbs/support/records";
+import { FetchError } from "../../../atproto/transport";
 import { queryClient } from "../../../app/queryClient";
 import { SITE } from "../../../atbbs/schema/collections";
-import { parseAtUri } from "../../../shared/protocol/uri";
+import { parseAtUri } from "../../../atproto/uri";
 import { isBoardRecord, isSiteRecord } from "../../../shared/protocol/recordGuards";
 import { MAX_BOARDS } from "../../../atbbs/schema/limits";
 
@@ -45,7 +46,7 @@ export interface Site {
 }
 
 export interface BBS {
-  identity: MiniDoc;
+  identity: ResolvedIdentity;
   site: Site;
 }
 
@@ -56,7 +57,7 @@ export function invalidateAllBBSCaches() {
 }
 
 export async function resolveBBS(handle: string): Promise<BBS> {
-  let identity: MiniDoc;
+  let identity: ResolvedIdentity;
   try {
     identity = await resolveIdentity(handle);
   } catch (error) {

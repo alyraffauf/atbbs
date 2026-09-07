@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getBacklinks } from "./backlinks";
-import { getRecordsByUri, listRecords } from "./records";
-import { FetchError } from "./transport";
+import { getBacklinks } from "../../atproto/backlinks";
+import { listRecords } from "../../atproto/records";
+import { FetchError } from "../../atproto/transport";
+import { getRecordsByUri } from "../../atbbs/support/records";
 import { fetchThreadRefs, fetchThreadRoot } from "../../features/discussion/data/thread";
 
 afterEach(() => vi.unstubAllGlobals());

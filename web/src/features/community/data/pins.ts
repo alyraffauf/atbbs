@@ -1,14 +1,14 @@
 /** Fetch and resolve the user's pinned BBSes. */
 
-import { getAvatars, resolveIdentitiesBatch } from "../../../shared/protocol/identities";
+import { getAvatars, resolveIdentitiesBatch } from "../../../atbbs/support/identities";
 import {
-  getRecordsByUri,
   listRecords,
   requireComplete,
-} from "../../../shared/protocol/records";
+} from "../../../atproto/records";
+import { getRecordsByUri } from "../../../atbbs/support/records";
 import { PIN, SITE } from "../../../atbbs/schema/collections";
 import { isPinRecord, isSiteRecord } from "../../../shared/protocol/recordGuards";
-import { makeAtUri, parseAtUri } from "../../../shared/protocol/uri";
+import { makeAtUri, parseAtUri } from "../../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 
 export interface PinnedBBS {

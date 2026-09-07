@@ -1,10 +1,10 @@
 /** Delete a user's entire BBS: boards, news posts, bans, hides, then the site record. */
 
 import type { AuthenticatedRepo } from "../../../shared/protocol/repository";
-import { getBacklinks } from "../../../shared/protocol/backlinks";
-import { getRecord, listRecords, requireComplete } from "../../../shared/protocol/records";
+import { getBacklinks } from "../../../atproto/backlinks";
+import { getRecord, listRecords, requireComplete } from "../../../atproto/records";
 import { BAN, BOARD, HIDE, POST, SITE } from "../../../atbbs/schema/collections";
-import { makeAtUri, parseAtUri } from "../../../shared/protocol/uri";
+import { makeAtUri, parseAtUri } from "../../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { deleteRecord } from "../../../shared/protocol/repository";
 
