@@ -1,6 +1,6 @@
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { defaultShouldDehydrateQuery } from "@tanstack/react-query";
-import { version } from "../../package.json";
+import { version } from "../../../package.json";
 
 const CACHE_SCHEMA_VERSION = 2;
 const BUSTER = `${version}:${CACHE_SCHEMA_VERSION}`;

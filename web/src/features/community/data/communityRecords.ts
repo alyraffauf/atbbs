@@ -1,5 +1,5 @@
 import type { XyzAtbbsBoard, XyzAtbbsSite } from "../../../lexicons";
-import { invalidateAllBBSCaches } from "./bbs";
+import { invalidateAllCommunityCaches } from "../../../frontend/features/community/cache";
 import { BOARD, SITE } from "../../../atbbs/schema/collections";
 import {
   createRecord,
@@ -12,13 +12,13 @@ type BoardValue = Omit<XyzAtbbsBoard.Main, "$type">;
 
 export async function createSite(repo: AuthenticatedRepo, site: SiteValue) {
   const response = await createRecord(repo, SITE, site, "self");
-  invalidateAllBBSCaches();
+  invalidateAllCommunityCaches();
   return response;
 }
 
 export async function putSite(repo: AuthenticatedRepo, site: SiteValue) {
   const response = await putRecord(repo, SITE, "self", site);
-  invalidateAllBBSCaches();
+  invalidateAllCommunityCaches();
   return response;
 }
 
@@ -47,7 +47,7 @@ export async function putBoard(
     slug,
     boardValue(name, description, createdAt),
   );
-  invalidateAllBBSCaches();
+  invalidateAllCommunityCaches();
   return response;
 }
 
@@ -64,6 +64,6 @@ export async function createBoard(
     boardValue(name, description, createdAt),
     slug,
   );
-  invalidateAllBBSCaches();
+  invalidateAllCommunityCaches();
   return response;
 }

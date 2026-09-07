@@ -2,7 +2,10 @@ import { useState } from "react";
 import { Phone, Copy, Check } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { usePageTitle } from "../../../frontend/app/browser/usePageTitle";
-import { discoveryQuery, pinCountsQuery } from "../../community/data/community";
+import {
+  discoveryQuery,
+  pinCountsQuery,
+} from "../../../frontend/features/community/queries";
 import CommunityPicker from "../../community/components/CommunityPicker";
 import { bbsToSuggestion } from "../../community/data/suggestions";
 import CommunityDirectory from "../../community/components/CommunityDirectory";

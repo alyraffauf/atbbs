@@ -1,4 +1,4 @@
-import { STALE_SLOW } from "../../app/queryClient";
+import { STALE_SLOW } from "./queryClient";
 
 export const slowQueryOptions = {
   staleTime: STALE_SLOW,

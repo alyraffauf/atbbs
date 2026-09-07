@@ -4,7 +4,6 @@ import { resolveIdentity, type ResolvedIdentity } from "../../../atproto/identit
 import { getRecord, type ATRecord } from "../../../atproto/records";
 import { getRecordsByUri } from "../../../atbbs/support/records";
 import { FetchError } from "../../../atproto/transport";
-import { queryClient } from "../../../app/queryClient";
 import { SITE } from "../../../atbbs/schema/collections";
 import { parseAtUri } from "../../../atproto/uri";
 import { isBoardRecord, isSiteRecord } from "../../../atbbs/schema/records";
@@ -48,12 +47,6 @@ export interface Site {
 export interface BBS {
   identity: ResolvedIdentity;
   site: Site;
-}
-
-export function invalidateAllBBSCaches() {
-  queryClient.invalidateQueries({ queryKey: ["bbs"] });
-  queryClient.invalidateQueries({ queryKey: ["bbs-moderation"] });
-  queryClient.invalidateQueries({ queryKey: ["sysop-moderation"] });
 }
 
 export async function resolveBBS(handle: string): Promise<BBS> {

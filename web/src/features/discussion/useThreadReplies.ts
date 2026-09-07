@@ -4,7 +4,10 @@
 
 import { useSearchParams } from "react-router-dom";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { threadPageQuery, threadRefsQuery } from "./data/discussionQueries";
+import {
+  threadPageQuery,
+  threadRefsQuery,
+} from "../../frontend/features/discussion/queries";
 import { parseAtUri } from "../../atproto/uri";
 import {
   REPLIES_PER_PAGE,

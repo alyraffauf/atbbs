@@ -1,21 +1,21 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { boardLoader } from "./app/router/loaders/content";
-import { queryClient } from "./app/queryClient";
+import { queryClient } from "./frontend/app/queryClient";
 import {
   bbsQuery,
   discoveryQuery,
   homeSysopQuery,
   pinCountsQuery,
   pinsQuery,
-} from "./features/community/data/community";
+} from "./frontend/features/community/queries";
 import {
   boardThreadsInfiniteQuery,
   newsQuery,
   threadPageQuery,
   threadRefsQuery,
   threadRootQuery,
-} from "./features/discussion/data/discussionQueries";
+} from "./frontend/features/discussion/queries";
 import { createRecord, type AuthenticatedRepo } from "./atproto/repository";
 import { allSettledBounded } from "./atbbs/support/batch";
 import { fetchJson, type FetchError } from "./atproto/transport";

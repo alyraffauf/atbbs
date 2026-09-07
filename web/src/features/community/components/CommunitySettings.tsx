@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import { ArrowRight, Pencil, Plus, Shield, Trash2 } from "lucide-react";
 import { ActionLink } from "../../../shared/ui/ActionButton";
-import { avatarQuery } from "../../../shared/queries/identities";
+import { avatarQuery } from "../../../frontend/features/community/queries";
 import { bbsUrl } from "../../../frontend/app/router/urls";
 
 interface CommunitySettingsProps {

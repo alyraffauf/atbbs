@@ -2,7 +2,7 @@ import { useState } from "react";
 import { isCanonicalResourceUri } from "@atcute/lexicons/syntax";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useLoaderData } from "react-router-dom";
-import { sysopModerationQuery } from "../data/moderation";
+import { sysopModerationQuery } from "../../../frontend/features/moderation/queries";
 import HandleInput from "../../../shared/ui/HandleInput";
 import { Button } from "../../../shared/ui/Form";
 import { usePageTitle } from "../../../frontend/app/browser/usePageTitle";

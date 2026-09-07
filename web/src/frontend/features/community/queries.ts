@@ -1,11 +1,12 @@
 import { queryOptions } from "@tanstack/react-query";
 import { PIN } from "../../../atbbs/schema/collections";
-import { resolveBBS } from "./bbs";
-import { fetchPins } from "./pins";
-import { fetchDiscovery } from "./discovery";
-import { fetchHomeSysopInfo } from "./home";
+import { resolveBBS } from "../../../features/community/data/bbs";
+import { fetchPins } from "../../../features/community/data/pins";
+import { fetchDiscovery } from "../../../features/community/data/discovery";
+import { fetchHomeSysopInfo } from "../../../features/community/data/home";
 import { getBacklinkCountsBatch } from "../../../atbbs/discussion/hydration";
-import { slowQueryOptions } from "../../../shared/queries/options";
+import { slowQueryOptions } from "../../app/queryOptions";
+import { getAvatar } from "../../../atbbs/identity/service";
 
 export const bbsQuery = (handle: string) =>
   queryOptions({
@@ -34,4 +35,11 @@ export const homeSysopQuery = (did: string) =>
   queryOptions({
     queryKey: ["home-sysop", did] as const,
     queryFn: () => fetchHomeSysopInfo(did),
+  });
+
+export const avatarQuery = (did: string) =>
+  queryOptions({
+    ...slowQueryOptions,
+    queryKey: ["avatar", did] as const,
+    queryFn: () => getAvatar(did),
   });

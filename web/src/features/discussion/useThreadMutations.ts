@@ -6,8 +6,8 @@ import { alertOnError } from "../../frontend/app/browser/alerts";
 import { useAuth } from "../auth/auth";
 import type { BBS } from "../community/data/bbs";
 import { BOARD, POST } from "../../atbbs/schema/collections";
-import { myThreadsQuery } from "../dashboard/data/dashboardQueries";
-import { queryClient } from "../../app/queryClient";
+import { myThreadsQuery } from "../../frontend/features/dashboard/queries";
+import { queryClient } from "../../frontend/app/queryClient";
 import { REPLIES_PER_PAGE, type Reply } from "./data/replies";
 import { bbsUrl } from "../../frontend/app/router/urls";
 import type { ThreadRoot } from "./data/thread";
@@ -17,7 +17,7 @@ import {
   getRefs,
   removeRefAndReply,
   setRefs,
-} from "./data/threadCache";
+} from "../../frontend/features/discussion/cache";
 import { nowIso } from "../../atbbs/support/time";
 import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import { createPost } from "./data/discussionRecords";

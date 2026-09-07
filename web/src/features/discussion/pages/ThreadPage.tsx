@@ -5,7 +5,7 @@ import PostComposer from "../components/PostComposer";
 import ThreadPresentation from "../components/ThreadPresentation";
 import { useAuth } from "../../auth/auth";
 import * as limits from "../../../atbbs/schema/limits";
-import { bbsModerationQuery } from "../../moderation/data/moderation";
+import { bbsModerationQuery } from "../../../frontend/features/moderation/queries";
 import type { Reply } from "../data/replies";
 import { useModerationMutations } from "../../moderation/useModerationMutations";
 import { usePageTitle } from "../../../frontend/app/browser/usePageTitle";

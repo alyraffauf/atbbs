@@ -1,5 +1,5 @@
 import type { XyzAtbbsBan, XyzAtbbsHide } from "../../../lexicons";
-import { invalidateAllBBSCaches } from "../../community/data/bbs";
+import { invalidateAllCommunityCaches } from "../../../frontend/features/community/cache";
 import { BAN, HIDE } from "../../../atbbs/schema/collections";
 import { nowIso } from "../../../atbbs/support/time";
 import {
@@ -33,7 +33,7 @@ export async function createBan(repo: AuthenticatedRepo, did: string) {
     value,
     await deterministicRkey(did),
   );
-  invalidateAllBBSCaches();
+  invalidateAllCommunityCaches();
   return response;
 }
 
@@ -48,18 +48,18 @@ export async function createHide(repo: AuthenticatedRepo, uri: string) {
     value,
     await deterministicRkey(uri),
   );
-  invalidateAllBBSCaches();
+  invalidateAllCommunityCaches();
   return response;
 }
 
 export async function deleteBan(repo: AuthenticatedRepo, rkey: string) {
   const response = await deleteRecord(repo, BAN, rkey);
-  invalidateAllBBSCaches();
+  invalidateAllCommunityCaches();
   return response;
 }
 
 export async function deleteHide(repo: AuthenticatedRepo, rkey: string) {
   const response = await deleteRecord(repo, HIDE, rkey);
-  invalidateAllBBSCaches();
+  invalidateAllCommunityCaches();
   return response;
 }

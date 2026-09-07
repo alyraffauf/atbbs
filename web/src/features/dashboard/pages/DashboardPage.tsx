@@ -7,10 +7,13 @@ import {
   discoveryQuery,
   homeSysopQuery,
   pinsQuery,
-} from "../../community/data/community";
-import { activityQuery, myThreadsQuery } from "../data/dashboardQueries";
-import { queryClient } from "../../../app/queryClient";
-import { invalidateAllBBSCaches } from "../../community/data/bbs";
+} from "../../../frontend/features/community/queries";
+import {
+  activityQuery,
+  myThreadsQuery,
+} from "../../../frontend/features/dashboard/queries";
+import { queryClient } from "../../../frontend/app/queryClient";
+import { invalidateAllCommunityCaches } from "../../../frontend/features/community/cache";
 import CommunityPicker from "../../community/components/CommunityPicker";
 import { bbsToSuggestion } from "../../community/data/suggestions";
 import PinnedCommunities from "../../community/components/PinnedCommunities";
@@ -60,7 +63,7 @@ export default function DashboardPage({ user }: DashboardPageProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(homeSysopQuery(user.did));
-      invalidateAllBBSCaches();
+      invalidateAllCommunityCaches();
     },
     onError: (error: unknown) => {
       alert(

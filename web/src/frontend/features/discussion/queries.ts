@@ -1,7 +1,11 @@
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
-import { hydrateThreadPage } from "./boardThreads";
-import { fetchThreadRefs, fetchThreadRoot, hydrateReplyPage } from "./thread";
-import { fetchNews } from "./news";
+import { hydrateThreadPage } from "../../../features/discussion/data/boardThreads";
+import {
+  fetchThreadRefs,
+  fetchThreadRoot,
+  hydrateReplyPage,
+} from "../../../features/discussion/data/thread";
+import { fetchNews } from "../../../features/discussion/data/news";
 import type { BacklinkRef } from "../../../atproto/backlinks";
 
 export const boardThreadsInfiniteQuery = (bbsDid: string, slug: string) =>

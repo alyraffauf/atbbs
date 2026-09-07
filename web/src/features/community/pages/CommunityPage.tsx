@@ -14,7 +14,7 @@ import { useAuth } from "../../auth/auth";
 import { usePageTitle } from "../../../frontend/app/browser/usePageTitle";
 import { truncate } from "../../../atbbs/support/text";
 import * as limits from "../../../atbbs/schema/limits";
-import { newsQuery } from "../../discussion/data/discussionQueries";
+import { newsQuery } from "../../../frontend/features/discussion/queries";
 import { boardUrl, newsUrl, profileUrl } from "../../../frontend/app/router/urls";
 import PostComposer from "../../discussion/components/PostComposer";
 import Localtime from "../../../shared/ui/Localtime";

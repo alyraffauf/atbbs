@@ -1,7 +1,7 @@
 import { redirect } from "react-router-dom";
 import { NoBBSError } from "../../../features/community/data/bbs";
-import { bbsQuery } from "../../../features/community/data/community";
-import { queryClient } from "../../queryClient";
+import { bbsQuery } from "../../../frontend/features/community/queries";
+import { queryClient } from "../../../frontend/app/queryClient";
 import { requireAuth } from "../../../features/auth/loaders";
 
 export async function requireNoBBSLoader() {
