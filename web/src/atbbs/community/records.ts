@@ -23,11 +23,13 @@ function boardValue(
   name: string,
   description: string,
   createdAt: string,
+  updatedAt?: string,
 ): BoardValue {
   return {
     name,
     description,
     createdAt: createdAt as BoardValue["createdAt"],
+    ...(updatedAt ? { updatedAt: updatedAt as BoardValue["updatedAt"] } : {}),
   };
 }
 
@@ -37,12 +39,13 @@ export async function putBoard(
   name: string,
   description: string,
   createdAt: string,
+  updatedAt: string,
 ) {
   const response = await putRecord(
     repo,
     BOARD,
     slug,
-    boardValue(name, description, createdAt),
+    boardValue(name, description, createdAt, updatedAt),
   );
   return response;
 }

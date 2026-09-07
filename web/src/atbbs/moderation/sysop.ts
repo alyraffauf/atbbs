@@ -4,6 +4,8 @@ import { resolveIdentitiesBatch } from "../identity/service";
 import { getRecordsByUri } from "../support/records";
 import { parseAtUri } from "../../atproto/uri";
 import { fetchBBSModeration } from "./read";
+import { isPostRecord } from "../schema/records";
+import { malformed } from "../../atproto/transport";
 
 export interface HiddenInfo {
   uri: string;
@@ -35,10 +37,8 @@ async function hydrateHiddenPosts(uris: string[]): Promise<HiddenInfo[]> {
     const handle = identities[did]?.handle ?? did;
     const record = recordsByUri.get(uri);
     if (record) {
-      const value = record.value as unknown as {
-        title?: string;
-        body?: string;
-      };
+      if (!isPostRecord(record)) malformed("Hidden post record");
+      const value = record.value;
       return {
         uri,
         handle,

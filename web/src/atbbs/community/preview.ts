@@ -2,6 +2,8 @@ import { resolveIdentity } from "../../atproto/identity";
 import { getRecord } from "../../atproto/records";
 import { getAvatar } from "../identity/service";
 import { SITE } from "../schema/collections";
+import { isSiteRecord } from "../schema/records";
+import { malformed } from "../../atproto/transport";
 
 export interface CommunityPreview {
   handle: string;
@@ -17,10 +19,10 @@ export async function resolveCommunityPreview(
     getRecord(identity.did, SITE, "self"),
     getAvatar(identity.did),
   ]);
-  const siteValue = siteRecord.value as { name?: string };
+  if (!isSiteRecord(siteRecord)) malformed("Site record");
   return {
     handle: identity.handle,
-    name: siteValue.name ?? identity.handle,
+    name: siteRecord.value.name || identity.handle,
     avatar: avatar ?? undefined,
   };
 }

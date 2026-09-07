@@ -2,6 +2,7 @@ import type { AuthenticatedRepo } from "../atproto/repository";
 import type { Client } from "@atcute/client";
 import { deleteRecord } from "../atproto/repository";
 import { getRecord } from "../atproto/records";
+import { malformed } from "../atproto/transport";
 import { makeAtUri, parseAtUri } from "../atproto/uri";
 import type { RecordKey } from "@atcute/lexicons/syntax";
 import {
@@ -31,6 +32,7 @@ import {
 } from "./moderation/commands";
 import { putProfile } from "./profile/commands";
 import { BOARD, PIN } from "./schema/collections";
+import { isBoardRecord, isSiteRecord } from "./schema/records";
 import { nowIso } from "./support/time";
 
 export interface BoardDraft {
@@ -134,16 +136,43 @@ export function createAtbbsWriter(
     async updateCommunity(draft) {
       const updatedAt = nowIso();
       const existing = await getRecord(repo.did, "xyz.atbbs.site", "self");
-      const existingSite = existing.value as {
-        boards?: string[];
-        createdAt?: string;
-      };
+      if (!isSiteRecord(existing)) malformed("Existing site record");
+      const existingSite = existing.value;
+      const existingBoards = new Map<string, string>();
+      for (const boardUri of existingSite.boards) {
+        const address = parseAtUri(boardUri);
+        if (address.did !== repo.did || address.collection !== BOARD) {
+          malformed("Existing site board reference");
+        }
+        existingBoards.set(address.rkey, boardUri);
+      }
+
+      const boardCreatedAt = new Map<string, string>();
+      await Promise.all(
+        draft.boards.map(async (board) => {
+          const existingUri = existingBoards.get(board.slug);
+          if (!existingUri) return;
+          const record = await getRecord(repo.did, BOARD, board.slug);
+          if (!isBoardRecord(record)) malformed("Existing board record");
+          const address = parseAtUri(record.uri);
+          if (
+            address.did !== repo.did ||
+            address.collection !== BOARD ||
+            address.rkey !== board.slug
+          ) {
+            malformed("Existing board record address");
+          }
+          boardCreatedAt.set(board.slug, record.value.createdAt);
+        }),
+      );
+
       for (const board of draft.boards) {
         await putBoard(
           repo,
           board.slug,
           board.name,
           board.description,
+          boardCreatedAt.get(board.slug) ?? updatedAt,
           updatedAt,
         );
       }
@@ -154,21 +183,17 @@ export function createAtbbsWriter(
         boards: draft.boards.map((board) =>
           makeAtUri(repo.did, BOARD, board.slug as RecordKey),
         ),
-        createdAt: existingSite.createdAt || updatedAt,
+        createdAt: existingSite.createdAt,
         updatedAt,
       });
       const currentSlugs = new Set(draft.boards.map((board) => board.slug));
-      for (const boardUri of existingSite.boards ?? []) {
+      for (const boardUri of existingSite.boards) {
         const { rkey } = parseAtUri(boardUri);
         if (!currentSlugs.has(rkey)) {
           await deleteRecord(repo, "xyz.atbbs.board", rkey);
         }
       }
-      return communityFromDraft(
-        repo,
-        draft,
-        existingSite.createdAt || updatedAt,
-      );
+      return communityFromDraft(repo, draft, existingSite.createdAt);
     },
 
     deleteCommunity: () => deleteBBS(repo, repo.did, pdsUrl),

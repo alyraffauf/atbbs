@@ -5,6 +5,7 @@ import { listRecords, requireComplete } from "../../atproto/records";
 import { BAN, HIDE } from "../schema/collections";
 import { parseAtUri } from "../../atproto/uri";
 import { isBanRecord, isHideRecord } from "../schema/records";
+import { malformed } from "../../atproto/transport";
 
 // Fields must be JSON-safe — this shape is persisted via localStorage.
 export interface ModerationState {
@@ -27,13 +28,13 @@ export async function fetchBBSModeration(
 
   const banRkeys: Record<string, string[]> = {};
   for (const record of banRecs) {
-    if (!isBanRecord(record)) continue;
+    if (!isBanRecord(record)) malformed("Ban record");
     (banRkeys[record.value.did] ??= []).push(parseAtUri(record.uri).rkey);
   }
 
   const hideRkeys: Record<string, string[]> = {};
   for (const record of hideRecs) {
-    if (!isHideRecord(record)) continue;
+    if (!isHideRecord(record)) malformed("Hide record");
     (hideRkeys[record.value.uri] ??= []).push(parseAtUri(record.uri).rkey);
   }
 

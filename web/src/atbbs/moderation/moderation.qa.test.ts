@@ -52,7 +52,15 @@ function installModerationFetchMock() {
         );
       }
       return new Response(
-        JSON.stringify(record(hiddenUri, { title: "Hidden", body: "Body" })),
+        JSON.stringify(
+          record(hiddenUri, {
+            $type: "xyz.atbbs.post",
+            scope: "at://did:plc:sysop/xyz.atbbs.board/general",
+            title: "Hidden",
+            body: "Body",
+            createdAt: "2026-01-01T00:00:00Z",
+          }),
+        ),
       );
     }),
   );

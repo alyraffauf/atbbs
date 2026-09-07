@@ -1,10 +1,13 @@
 /** Fetch a random list of BBSes from the Lightrail API, with avatars. */
 
 import { getAvatars, resolveIdentitiesBatch } from "../identity/service";
-import { getRecord } from "../../atproto/records";
 import { SITE } from "../schema/collections";
 import { SERVICES } from "../../atproto/config";
-import { isSiteRecord } from "../schema/records";
+import { isSiteRecord, type SiteRecord } from "../schema/records";
+import { fetchJson, malformed } from "../../atproto/transport";
+import { getRecordsByUri } from "../support/records";
+import { makeAtUri, parseAtUri } from "../../atproto/uri";
+import type { Did } from "@atcute/lexicons/syntax";
 
 export interface DiscoveredBBS {
   did: string;
@@ -19,37 +22,48 @@ interface LightrailRepo {
 }
 
 export async function fetchDiscovery(): Promise<DiscoveredBBS[]> {
-  let repos: LightrailRepo[] = [];
-  try {
-    const response = await fetch(
-      `${SERVICES.lightrail}/com.atproto.sync.listReposByCollection?collection=${SITE}&limit=50`,
-    );
-    const data = (await response.json()) as { repos: LightrailRepo[] };
-    repos = data.repos;
-  } catch {
-    return [];
+  const data = await fetchJson<{ repos: LightrailRepo[] }>(
+    `${SERVICES.lightrail}/com.atproto.sync.listReposByCollection?collection=${SITE}&limit=50`,
+  );
+  if (
+    !data ||
+    !Array.isArray(data.repos) ||
+    data.repos.some(
+      (repo) =>
+        !repo || typeof repo.did !== "string" || !repo.did.startsWith("did:"),
+    )
+  ) {
+    malformed("Discovery service");
   }
+  const repos = data.repos;
   if (!repos.length) return [];
 
-  const identities = await resolveIdentitiesBatch(
-    repos.map((repo) => repo.did),
-  );
+  const dids = [...new Set(repos.map((repo) => repo.did))];
+  const [identities, siteRecords] = await Promise.all([
+    resolveIdentitiesBatch(dids),
+    getRecordsByUri(
+      dids.map((did) => makeAtUri(did as Did, SITE, "self")),
+      { failureMode: "best-effort" },
+    ),
+  ]);
+
+  const sites = new Map<string, SiteRecord>();
+  for (const siteRecord of siteRecords) {
+    if (!isSiteRecord(siteRecord)) malformed("Discovered site record");
+    sites.set(parseAtUri(siteRecord.uri).did, siteRecord);
+  }
 
   const items: DiscoveredBBS[] = [];
-  for (const repo of repos) {
-    if (!(repo.did in identities)) continue;
-    try {
-      const siteRecord = await getRecord(repo.did, SITE, "self");
-      if (!isSiteRecord(siteRecord)) continue;
-      items.push({
-        did: repo.did,
-        handle: identities[repo.did].handle,
-        name: siteRecord.value.name || identities[repo.did].handle,
-        description: siteRecord.value.description || "",
-      });
-    } catch {
-      continue;
-    }
+  for (const repoDid of dids) {
+    const identity = identities[repoDid];
+    const siteRecord = sites.get(repoDid);
+    if (!identity || !siteRecord) continue;
+    items.push({
+      did: repoDid,
+      handle: identity.handle,
+      name: siteRecord.value.name || identity.handle,
+      description: siteRecord.value.description,
+    });
   }
 
   const avatars = await getAvatars(items.map((item) => item.did));

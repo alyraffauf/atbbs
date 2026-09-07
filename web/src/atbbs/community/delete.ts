@@ -7,6 +7,8 @@ import { BAN, BOARD, HIDE, POST, SITE } from "../schema/collections";
 import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { deleteRecord } from "../../atproto/repository";
+import { malformed } from "../../atproto/transport";
+import { isSiteRecord } from "../schema/records";
 
 export async function deleteBBS(
   repo: AuthenticatedRepo,
@@ -16,18 +18,23 @@ export async function deleteBBS(
   const failed: string[] = [];
 
   const existing = await getRecord(did, SITE, "self");
-  const siteValue = existing.value as Record<string, unknown>;
-  const boardUris: string[] = (
-    Array.isArray(siteValue.boards) ? siteValue.boards : []
-  ) as string[];
+  if (!isSiteRecord(existing)) malformed("Existing site record");
+  const boardUris = existing.value.boards;
+
+  const boardRkeys = boardUris.map((uri) => {
+    const address = parseAtUri(uri);
+    if (address.did !== did || address.collection !== BOARD) {
+      malformed("Existing site board reference");
+    }
+    return address.rkey;
+  });
 
   // Delete boards
-  for (const uri of boardUris) {
+  for (const rkey of boardRkeys) {
     try {
-      const { rkey } = parseAtUri(uri);
       await deleteRecord(repo, BOARD, rkey);
     } catch {
-      failed.push(`board/${uri}`);
+      failed.push(`board/${rkey}`);
     }
   }
 

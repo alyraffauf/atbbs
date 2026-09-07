@@ -5,6 +5,7 @@ import { getRecord } from "../../atproto/records";
 import { getAvatar } from "../identity/service";
 import { PROFILE, SITE } from "../schema/collections";
 import { isProfileRecord, isSiteRecord } from "../schema/records";
+import { FetchError, malformed } from "../../atproto/transport";
 
 export interface Profile {
   did: string;
@@ -23,8 +24,9 @@ export async function fetchProfile(handle: string): Promise<Profile | null> {
   let identity;
   try {
     identity = await resolveIdentity(handle);
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof FetchError && error.kind === "not-found") return null;
+    throw error;
   }
 
   const [[profileResult, siteResult], avatar] = await Promise.all([
@@ -42,10 +44,18 @@ export async function fetchProfile(handle: string): Promise<Profile | null> {
     avatar: avatar ?? undefined,
   };
 
-  if (
-    profileResult.status === "fulfilled" &&
-    isProfileRecord(profileResult.value)
-  ) {
+  for (const result of [profileResult, siteResult]) {
+    if (
+      result.status === "rejected" &&
+      (!(result.reason instanceof FetchError) ||
+        result.reason.kind !== "not-found")
+    ) {
+      throw result.reason;
+    }
+  }
+
+  if (profileResult.status === "fulfilled") {
+    if (!isProfileRecord(profileResult.value)) malformed("Profile record");
     const value = profileResult.value.value;
     profile.name = value.name;
     profile.pronouns = value.pronouns;
@@ -53,7 +63,8 @@ export async function fetchProfile(handle: string): Promise<Profile | null> {
     profile.createdAt = value.createdAt;
   }
 
-  if (siteResult.status === "fulfilled" && isSiteRecord(siteResult.value)) {
+  if (siteResult.status === "fulfilled") {
+    if (!isSiteRecord(siteResult.value)) malformed("Site record");
     const value = siteResult.value.value;
     profile.bbsName = value.name;
     profile.bbsDescription = value.description;

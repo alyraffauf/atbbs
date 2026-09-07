@@ -3,6 +3,8 @@
 
 import { getRecord } from "../../atproto/records";
 import { SITE } from "../schema/collections";
+import { isSiteRecord } from "../schema/records";
+import { FetchError, malformed } from "../../atproto/transport";
 
 export interface HomeSysopInfo {
   hasBBS: boolean;
@@ -12,9 +14,12 @@ export interface HomeSysopInfo {
 export async function fetchHomeSysopInfo(did: string): Promise<HomeSysopInfo> {
   try {
     const record = await getRecord(did, SITE, "self");
-    const value = record.value as { name?: string };
-    return { hasBBS: true, bbsName: value.name ?? null };
-  } catch {
+    if (!isSiteRecord(record)) malformed("Site record");
+    return { hasBBS: true, bbsName: record.value.name };
+  } catch (error) {
+    if (!(error instanceof FetchError) || error.kind !== "not-found") {
+      throw error;
+    }
     return { hasBBS: false, bbsName: null };
   }
 }

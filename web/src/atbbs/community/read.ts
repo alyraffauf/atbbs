@@ -3,8 +3,8 @@
 import { resolveIdentity } from "../../atproto/identity";
 import { getRecord, type ATRecord } from "../../atproto/records";
 import { getRecordsByUri } from "../support/records";
-import { FetchError } from "../../atproto/transport";
-import { SITE } from "../schema/collections";
+import { FetchError, malformed } from "../../atproto/transport";
+import { BOARD, SITE } from "../schema/collections";
 import { parseAtUri } from "../../atproto/uri";
 import { isBoardRecord, isSiteRecord } from "../schema/records";
 import { MAX_BOARDS } from "../schema/limits";
@@ -64,7 +64,7 @@ export async function resolveCommunity(handle: string): Promise<Community> {
   }
 
   if (!isSiteRecord(siteRecord)) {
-    throw new NoBBSError(`${handle} has an invalid site record.`);
+    malformed("Site record");
   }
   const siteValue = siteRecord.value;
   const boardUris: string[] = siteValue.boards ?? [];
@@ -86,12 +86,22 @@ export async function resolveCommunity(handle: string): Promise<Community> {
   }
 
   const boardRecords = await getRecordsByUri(boardUris);
+  if (boardRecords.length !== boardUris.length) {
+    malformed("Site board references");
+  }
 
   const boards: Board[] = [];
   boardRecords.forEach((record) => {
-    if (!isBoardRecord(record)) return;
+    if (!isBoardRecord(record)) malformed("Board record");
     const board = record.value;
     const parsed = parseAtUri(record.uri);
+    if (
+      parsed.did !== identity.did ||
+      parsed.collection !== BOARD ||
+      !boardUris.includes(record.uri)
+    ) {
+      malformed("Board record address");
+    }
     boards.push({
       slug: parsed.rkey,
       name: board.name,
