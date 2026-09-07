@@ -93,13 +93,13 @@ The web app and TUI query existing network infrastructure:
 
 ## Configuration
 
-On first run, atbbs generates:
+**TUI only:** On first run, the TUI creates `atbbs.db`, a SQLite database for OAuth sessions. The TUI stores the database and other local data in the platform data directory:
 
-- `atbbs.db` — SQLite database for OAuth sessions
+- Linux: `~/.local/share/atbbs/`
+- macOS: `~/Library/Application Support/atbbs/`
+- Windows: `%APPDATA%/atbbs/`
 
-**Web app (Docker)**: Set `PUBLIC_URL` to your domain for OAuth callbacks (required).
-
-**TUI**: Data is stored in `~/.local/share/atbbs/` (Linux), `~/Library/Application Support/atbbs/` (macOS), or `%APPDATA%/atbbs/` (Windows).
+**Docker web app only:** Set `PUBLIC_URL` to your domain. OAuth callbacks require it. The web app does not use `atbbs.db` or the TUI data directory.
 
 ## License
 
