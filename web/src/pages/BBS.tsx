@@ -1,4 +1,4 @@
-import { useState, type SyntheticEvent } from "react";
+import { useState } from "react";
 import { Link, useRouteLoaderData } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -22,7 +22,7 @@ import { boardUrl, newsUrl, profileUrl } from "../lib/routes";
 import { queryClient } from "../lib/queryClient";
 import { alertOnError } from "../lib/alerts";
 import type { NewsPost } from "../lib/bbs";
-import ComposeForm from "../components/form/ComposeForm";
+import ComposeForm, { type PostDraft } from "../components/form/ComposeForm";
 import Localtime from "../components/Localtime";
 import ListLink from "../components/nav/ListLink";
 import ActionBar from "../components/nav/ActionBar";
@@ -38,9 +38,6 @@ export default function BBSPage() {
     "community",
   ) as CommunityLoaderData;
   const { user, repo } = useAuth();
-  const [newsTitle, setNewsTitle] = useState("");
-  const [newsBody, setNewsBody] = useState("");
-  const [newsFiles, setNewsFiles] = useState<File[]>([]);
   const [showAllNews, setShowAllNews] = useState(false);
 
   const { data: news } = useQuery(newsQuery(bbs.identity.did));
@@ -49,16 +46,12 @@ export default function BBSPage() {
   const isSysop = user && user.did === bbs.identity.did;
 
   const postNewsMutation = useMutation({
-    mutationFn: async (input: {
-      title: string;
-      body: string;
-      files: File[];
-    }) => {
+    mutationFn: async (input: PostDraft) => {
       if (!repo) throw new Error("Not signed in");
       const siteUri = makeAtUri(bbs.identity.did as Did, SITE, "self");
       const attachments = await uploadAttachments(repo, input.files);
       const record = await createPost(repo, siteUri, input.body, {
-        title: input.title,
+        title: input.title ?? "",
         attachments,
       });
       return { record, attachments };
@@ -68,7 +61,7 @@ export default function BBSPage() {
       const newItem: NewsPost = {
         uri: record.uri,
         rkey,
-        title: input.title,
+        title: input.title ?? "",
         body: input.body,
         createdAt: nowIso(),
         attachments: attachments.length
@@ -79,22 +72,9 @@ export default function BBSPage() {
         newsQuery(bbs.identity.did).queryKey,
         (prev) => [newItem, ...(prev ?? [])],
       );
-      setNewsTitle("");
-      setNewsBody("");
-      setNewsFiles([]);
     },
     onError: alertOnError("post"),
   });
-
-  function onPostNews(event: SyntheticEvent) {
-    event.preventDefault();
-    if (postNewsMutation.isPending) return;
-    postNewsMutation.mutate({
-      title: newsTitle.trim(),
-      body: newsBody.trim(),
-      files: newsFiles,
-    });
-  }
 
   const visibleNews = news
     ? showAllNews
@@ -159,20 +139,15 @@ export default function BBSPage() {
             </summary>
             <ComposeForm
               className="mt-4"
-              onSubmit={onPostNews}
-              title={newsTitle}
-              onTitleChange={setNewsTitle}
-              titlePlaceholder="Headline"
-              titleMaxLength={limits.POST_TITLE}
-              body={newsBody}
-              onBodyChange={setNewsBody}
+              onSave={(draft) => postNewsMutation.mutateAsync(draft)}
+              title={{
+                placeholder: "Headline",
+                maxLength: limits.POST_TITLE,
+              }}
               bodyPlaceholder="Announcement body..."
               bodyRows={3}
               bodyMaxLength={limits.POST_BODY}
-              files={newsFiles}
-              onFilesChange={setNewsFiles}
               submitLabel="post"
-              posting={postNewsMutation.isPending}
             />
           </details>
         )}

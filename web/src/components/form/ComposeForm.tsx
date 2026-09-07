@@ -1,62 +1,74 @@
-import { useRef, type SyntheticEvent } from "react";
+import { useRef, useState, type SyntheticEvent } from "react";
 import { Send, Paperclip } from "lucide-react";
 import { Input, Textarea, Button } from "./Form";
 import FileChips from "./FileChips";
 import { MAX_ATTACHMENTS } from "../../lib/limits";
 
-interface ComposeFormProps {
-  onSubmit: (e: SyntheticEvent) => void;
+export interface PostDraft {
   body: string;
-  onBodyChange: (value: string) => void;
+  title?: string;
+  files: File[];
+}
+
+interface FieldConfig {
+  placeholder?: string;
+  maxLength?: number;
+}
+
+interface ComposeFormProps {
+  onSave: (draft: PostDraft) => Promise<unknown>;
+  initialDraft?: Partial<PostDraft>;
   bodyPlaceholder?: string;
   bodyRows?: number;
   bodyMaxLength?: number;
-  title?: string;
-  onTitleChange?: (value: string) => void;
-  titlePlaceholder?: string;
-  titleMaxLength?: number;
-  files: File[];
-  onFilesChange: (files: File[]) => void;
+  title?: FieldConfig;
   replyingTo?: { uri: string; handle: string } | null;
   onClearReplyTo?: () => void;
   submitLabel?: string;
-  posting?: boolean;
   className?: string;
 }
 
 export default function ComposeForm({
-  onSubmit,
-  body,
-  onBodyChange,
+  onSave,
+  initialDraft,
   bodyPlaceholder = "What's on your mind?",
   bodyRows = 4,
   title,
-  onTitleChange,
-  titlePlaceholder = "Title",
-  files,
-  onFilesChange,
   replyingTo,
   onClearReplyTo,
   bodyMaxLength,
-  titleMaxLength,
   submitLabel = "post",
-  posting = false,
   className = "",
 }: ComposeFormProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const postingRef = useRef(false);
+  const [draft, setDraft] = useState<PostDraft>(() => ({
+    body: initialDraft?.body ?? "",
+    ...(title ? { title: initialDraft?.title ?? "" } : {}),
+    files: [...(initialDraft?.files ?? [])],
+  }));
+  const [posting, setPosting] = useState(false);
+
+  const body = draft.body;
+  const files = draft.files;
+
+  function updateDraft(update: Partial<PostDraft>) {
+    setDraft((current) => ({ ...current, ...update }));
+  }
 
   function insertSnippet(snippet: string) {
     const textarea = textareaRef.current;
     const isFocused = !!textarea && document.activeElement === textarea;
     if (!textarea || !isFocused) {
       const sep = body.length > 0 && !body.endsWith("\n") ? "\n" : "";
-      onBodyChange(body + sep + snippet);
+      updateDraft({ body: body + sep + snippet });
       return;
     }
     const start = textarea.selectionStart ?? body.length;
     const end = textarea.selectionEnd ?? body.length;
     const next = body.slice(0, start) + snippet + body.slice(end);
-    onBodyChange(next);
+    updateDraft({ body: next });
     requestAnimationFrame(() => {
       textarea.focus();
       const cursor = start + snippet.length;
@@ -70,13 +82,13 @@ export default function ComposeForm({
       0,
       MAX_ATTACHMENTS,
     );
-    onFilesChange(combined);
+    updateDraft({ files: combined });
   }
 
   const attachmentsAtLimit = files.length >= MAX_ATTACHMENTS;
 
   function removeFile(index: number) {
-    onFilesChange(files.filter((_, i) => i !== index));
+    updateDraft({ files: files.filter((_, i) => i !== index) });
   }
 
   function insertAttachment(file: File) {
@@ -87,8 +99,30 @@ export default function ComposeForm({
     insertSnippet(snippet);
   }
 
+  async function submit(event: SyntheticEvent) {
+    event.preventDefault();
+    if (postingRef.current) return;
+    const normalizedDraft: PostDraft = {
+      body: draft.body.trim(),
+      ...(title ? { title: draft.title?.trim() ?? "" } : {}),
+      files: draft.files,
+    };
+    postingRef.current = true;
+    setPosting(true);
+    try {
+      await onSave(normalizedDraft);
+      setDraft({ body: "", ...(title ? { title: "" } : {}), files: [] });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch {
+      // The mutation reports the failure. Keep the draft for another attempt.
+    } finally {
+      postingRef.current = false;
+      setPosting(false);
+    }
+  }
+
   return (
-    <form onSubmit={onSubmit} className={`space-y-3 ${className}`}>
+    <form onSubmit={submit} className={`space-y-3 ${className}`}>
       {replyingTo && onClearReplyTo && (
         <div className="text-xs text-neutral-400">
           <span>replying to {replyingTo.handle}</span>
@@ -103,14 +137,14 @@ export default function ComposeForm({
         </div>
       )}
 
-      {onTitleChange !== undefined && (
+      {title && (
         <Input
           name="title"
-          value={title ?? ""}
-          onChange={(e) => onTitleChange(e.target.value)}
-          placeholder={titlePlaceholder}
+          value={draft.title ?? ""}
+          onChange={(e) => updateDraft({ title: e.target.value })}
+          placeholder={title.placeholder ?? "Title"}
           required
-          maxLength={titleMaxLength}
+          maxLength={title.maxLength}
         />
       )}
 
@@ -118,7 +152,7 @@ export default function ComposeForm({
         ref={textareaRef}
         name="body"
         value={body}
-        onChange={(e) => onBodyChange(e.target.value)}
+        onChange={(e) => updateDraft({ body: e.target.value })}
         onKeyDown={(e) => {
           if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
@@ -155,6 +189,7 @@ export default function ComposeForm({
               <Paperclip size={14} /> attach
             </span>
             <input
+              ref={fileInputRef}
               name="attachments"
               type="file"
               multiple

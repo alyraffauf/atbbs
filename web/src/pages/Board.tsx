@@ -1,4 +1,3 @@
-import { useState, type SyntheticEvent } from "react";
 import { PenLine } from "lucide-react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import {
@@ -25,7 +24,7 @@ import { threadUrl } from "../lib/routes";
 import { alertOnError } from "../lib/alerts";
 import type { ThreadItem, ThreadPageResult } from "../lib/boardThreads";
 import ThreadLink, { ThreadListHeader } from "../components/nav/ThreadLink";
-import ComposeForm from "../components/form/ComposeForm";
+import ComposeForm, { type PostDraft } from "../components/form/ComposeForm";
 import ListSkeleton from "../components/layout/ListSkeleton";
 import type { BoardLoaderData } from "../router/loaders";
 
@@ -76,23 +75,15 @@ export default function BoardPage() {
             !moderation.banRkeys[t.did] && !moderation.hideRkeys[t.uri],
         );
 
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
-
   usePageTitle(`${board.name} — ${bbs.site.name}`);
 
   const createThreadMutation = useMutation({
-    mutationFn: async (input: {
-      title: string;
-      body: string;
-      files: File[];
-    }) => {
+    mutationFn: async (input: PostDraft) => {
       if (!repo) throw new Error("Not signed in");
       const boardUri = makeAtUri(bbs.identity.did as Did, BOARD, board.slug);
       const attachments = await uploadAttachments(repo, input.files);
       const record = await createPost(repo, boardUri, input.body, {
-        title: input.title,
+        title: input.title ?? "",
         attachments,
       });
       return record;
@@ -106,7 +97,7 @@ export default function BoardPage() {
         did,
         rkey,
         handle: user.handle,
-        title: input.title,
+        title: input.title ?? "",
         body: input.body,
         createdAt: now,
         lastActivityAt: now,
@@ -136,23 +127,10 @@ export default function BoardPage() {
       );
       void refetchUntilIndexed(boardKey, record.uri);
       queryClient.invalidateQueries(myThreadsQuery(user.pdsUrl, user.did));
-      setTitle("");
-      setBody("");
-      setFiles([]);
       navigate(threadUrl(handle, did, rkey));
     },
     onError: alertOnError("post"),
   });
-
-  function onCreate(event: SyntheticEvent) {
-    event.preventDefault();
-    if (createThreadMutation.isPending) return;
-    createThreadMutation.mutate({
-      title: title.trim(),
-      body: body.trim(),
-      files,
-    });
-  }
 
   return (
     <>
@@ -168,17 +146,12 @@ export default function BoardPage() {
           </summary>
           <ComposeForm
             className="mt-4"
-            onSubmit={onCreate}
-            title={title}
-            onTitleChange={setTitle}
-            titlePlaceholder="Thread title"
-            titleMaxLength={limits.POST_TITLE}
-            body={body}
-            onBodyChange={setBody}
+            onSave={(draft) => createThreadMutation.mutateAsync(draft)}
+            title={{
+              placeholder: "Thread title",
+              maxLength: limits.POST_TITLE,
+            }}
             bodyMaxLength={limits.POST_BODY}
-            files={files}
-            onFilesChange={setFiles}
-            posting={createThreadMutation.isPending}
           />
         </details>
       )}

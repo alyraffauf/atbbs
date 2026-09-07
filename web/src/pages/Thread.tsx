@@ -1,4 +1,4 @@
-import { useState, type SyntheticEvent } from "react";
+import { useState } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
@@ -33,7 +33,7 @@ import type { BacklinkRef } from "../lib/atproto";
 import PageNav from "../components/nav/PageNav";
 import ReplyCard from "../components/post/ReplyCard";
 import type { Reply } from "../lib/replies";
-import ComposeForm from "../components/form/ComposeForm";
+import ComposeForm, { type PostDraft } from "../components/form/ComposeForm";
 import ThreadCard from "../components/post/ThreadCard";
 import type { ThreadLoaderData } from "../router/loaders";
 
@@ -69,8 +69,6 @@ export default function ThreadPage() {
           !moderation.hideRkeys[reply.uri],
       );
 
-  const [body, setBody] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
   const [replyingTo, setReplyingTo] = useState<{
     uri: string;
     handle: string;
@@ -81,11 +79,7 @@ export default function ThreadPage() {
   // --- Mutations ---
 
   const createReplyMutation = useMutation({
-    mutationFn: async (input: {
-      body: string;
-      parent: string | null;
-      files: File[];
-    }) => {
+    mutationFn: async (input: PostDraft & { parent: string | null }) => {
       if (!repo || !user) throw new Error("Not signed in");
       const boardUri = makeAtUri(
         bbs.identity.did as Did,
@@ -122,8 +116,6 @@ export default function ThreadPage() {
 
       const updatedRefs = appendRefAndReply(threadUri, newRef, newReply);
 
-      setBody("");
-      setFiles([]);
       setReplyingTo(null);
 
       const newLastPage = Math.max(
@@ -170,16 +162,6 @@ export default function ThreadPage() {
   const { ban, unban, hide, unhide } = useModerationMutations();
 
   // --- Handlers ---
-
-  function onReply(event: SyntheticEvent) {
-    event.preventDefault();
-    if (createReplyMutation.isPending) return;
-    createReplyMutation.mutate({
-      body: body.trim(),
-      parent: replyingTo?.uri ?? null,
-      files,
-    });
-  }
 
   function onDeleteThread() {
     if (!confirm("Delete this thread?")) return;
@@ -305,18 +287,18 @@ export default function ThreadPage() {
       {user && (
         <ComposeForm
           className="mt-6 border border-neutral-800 rounded p-4"
-          onSubmit={onReply}
-          body={body}
-          onBodyChange={setBody}
+          onSave={(draft) =>
+            createReplyMutation.mutateAsync({
+              ...draft,
+              parent: replyingTo?.uri ?? null,
+            })
+          }
           bodyPlaceholder="Write a reply..."
           bodyRows={3}
           bodyMaxLength={limits.POST_BODY}
-          files={files}
-          onFilesChange={setFiles}
           replyingTo={replyingTo}
           onClearReplyTo={() => setReplyingTo(null)}
           submitLabel="reply"
-          posting={createReplyMutation.isPending}
         />
       )}
     </>
