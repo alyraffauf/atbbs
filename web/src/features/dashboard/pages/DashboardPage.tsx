@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth, type AuthUser } from "../../auth/auth";
-import { deleteBBS } from "../../community/data/deletebbs";
 import { usePageTitle } from "../../../frontend/app/browser/usePageTitle";
 import {
   discoveryQuery,
@@ -34,7 +33,7 @@ interface DashboardPageProps {
 }
 
 export default function DashboardPage({ user }: DashboardPageProps) {
-  const { repo } = useAuth();
+  const { writer } = useAuth();
   const [tab, setTab] = useState<Tab>("inbox");
   usePageTitle("atbbs");
 
@@ -58,8 +57,8 @@ export default function DashboardPage({ user }: DashboardPageProps) {
 
   const deleteBBSMutation = useMutation({
     mutationFn: async () => {
-      if (!repo) throw new Error("Not signed in");
-      await deleteBBS(repo, user.did, user.pdsUrl);
+      if (!writer) throw new Error("Not signed in");
+      await writer.deleteCommunity();
     },
     onSuccess: () => {
       queryClient.invalidateQueries(homeSysopQuery(user.did));

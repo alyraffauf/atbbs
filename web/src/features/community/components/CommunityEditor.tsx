@@ -1,15 +1,9 @@
 import { useState, type SyntheticEvent } from "react";
 
 import * as limits from "../../../atbbs/schema/limits";
-import BoardEditorRow, { type BoardRow } from "./BoardEditorRow";
+import BoardEditorRow from "./BoardEditorRow";
 import { Button, Input, Textarea } from "../../../shared/ui/Form";
-
-export interface CommunityDraft {
-  name: string;
-  description: string;
-  intro: string;
-  boards: BoardRow[];
-}
+import type { CommunityDraft } from "../../../atbbs/writer";
 
 interface CommunityEditorProps {
   initialDraft: CommunityDraft;
@@ -17,6 +11,8 @@ interface CommunityEditorProps {
   failureMessage: string;
   onSave: (draft: CommunityDraft) => Promise<void>;
 }
+
+export type { CommunityDraft };
 
 function normalizeDraft(draft: CommunityDraft): CommunityDraft {
   return {

@@ -1,11 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import type { Did } from "@atcute/lexicons/syntax";
 import type { PostDraft } from "./components/PostComposer";
 import { alertOnError } from "../../frontend/app/browser/alerts";
 import { useAuth } from "../auth/auth";
 import type { Community } from "../../atbbs/community/read";
-import { BOARD, POST } from "../../atbbs/schema/collections";
+import { POST } from "../../atbbs/schema/collections";
 import { myThreadsQuery } from "../../frontend/features/dashboard/queries";
 import { queryClient } from "../../frontend/app/queryClient";
 import { REPLIES_PER_PAGE, type Reply } from "../../atbbs/discussion/replies";
@@ -18,14 +17,6 @@ import {
   removeRefAndReply,
   setRefs,
 } from "../../frontend/features/discussion/cache";
-import { nowIso } from "../../atbbs/support/time";
-import { makeAtUri, parseAtUri } from "../../atproto/uri";
-import { createPost } from "./data/discussionRecords";
-import { deleteRecord } from "../../atproto/repository";
-import {
-  prepareAttachmentViews,
-  uploadAttachments,
-} from "../../atbbs/discussion/attachments";
 import { pendingAttachmentsFromFiles } from "../../frontend/features/discussion/browser/pendingAttachment";
 import type { ReplyRef } from "../../atbbs/discussion/replies";
 
@@ -40,32 +31,26 @@ interface ThreadMutationOptions {
 
 export function useThreadMutations(options: ThreadMutationOptions) {
   const { bbs, thread, handle, page, setPage, onReplyCreated } = options;
-  const { user, repo } = useAuth();
+  const { user, writer } = useAuth();
   const navigate = useNavigate();
   const threadUri = thread.uri;
 
   const createReply = useMutation({
     mutationFn: async (input: PostDraft & { parent: string | null }) => {
-      if (!repo || !user) throw new Error("Not signed in");
-      const boardUri = makeAtUri(
-        bbs.identity.did as Did,
-        BOARD,
-        thread.boardSlug,
-      );
-      const attachments = await uploadAttachments(
-        repo,
-        pendingAttachmentsFromFiles(input.files),
-      );
-      const record = await createPost(repo, boardUri, input.body, {
-        root: threadUri,
+      if (!writer || !user) throw new Error("Not signed in");
+      const record = await writer.createReply({
+        communityDid: bbs.identity.did,
+        boardSlug: thread.boardSlug,
+        threadUri,
         parent: input.parent ?? undefined,
-        attachments,
+        body: input.body,
+        attachments: pendingAttachmentsFromFiles(input.files),
       });
-      return { record, input, attachments };
+      return { record, input };
     },
-    onSuccess: ({ record, input, attachments }) => {
+    onSuccess: ({ record, input }) => {
       if (!user) return;
-      const { did, rkey } = parseAtUri(record.uri);
+      const { did, rkey } = record;
       const ref: ReplyRef = { did, collection: POST, rkey };
       const reply: Reply = {
         uri: record.uri,
@@ -76,9 +61,9 @@ export function useThreadMutations(options: ThreadMutationOptions) {
         handle: user.handle,
         pds: user.pdsUrl,
         body: input.body,
-        createdAt: nowIso(),
+        createdAt: record.createdAt,
         parent: input.parent,
-        attachments: prepareAttachmentViews(attachments, did, user.pdsUrl),
+        attachments: record.attachments,
       };
       const refs = appendRefAndReply(threadUri, ref, reply);
       onReplyCreated();
@@ -90,8 +75,8 @@ export function useThreadMutations(options: ThreadMutationOptions) {
 
   const deleteReply = useMutation({
     mutationFn: async (reply: Reply) => {
-      if (!repo) throw new Error("Not signed in");
-      await deleteRecord(repo, POST, reply.rkey);
+      if (!writer) throw new Error("Not signed in");
+      await writer.deletePost(reply.rkey);
       return reply;
     },
     onMutate: async (reply) => {
@@ -108,8 +93,8 @@ export function useThreadMutations(options: ThreadMutationOptions) {
 
   const deleteThread = useMutation({
     mutationFn: async () => {
-      if (!repo) throw new Error("Not signed in");
-      await deleteRecord(repo, POST, thread.rkey);
+      if (!writer) throw new Error("Not signed in");
+      await writer.deletePost(thread.rkey);
     },
     onSuccess: () => {
       if (user) {

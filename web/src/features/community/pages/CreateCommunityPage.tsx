@@ -1,17 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/auth";
-import { createBoard, createSite } from "../data/communityRecords";
-import { deleteRecord } from "../../../atproto/repository";
-import { BOARD } from "../../../atbbs/schema/collections";
 import { DEFAULT_BOARD } from "../../../atbbs/community/config";
-import { nowIso } from "../../../atbbs/support/time";
-import { makeAtUri } from "../../../atproto/uri";
-import type { Did } from "@atcute/lexicons/syntax";
 import { usePageTitle } from "../../../frontend/app/browser/usePageTitle";
 import { bbsUrl } from "../../../frontend/app/router/urls";
 import CommunityEditor, {
   type CommunityDraft,
 } from "../components/CommunityEditor";
+import { invalidateAllCommunityCaches } from "../../../frontend/features/community/cache";
 
 const initialDraft: CommunityDraft = {
   name: "",
@@ -27,38 +22,18 @@ const initialDraft: CommunityDraft = {
 };
 
 export default function CreateCommunityPage() {
-  const { user, repo } = useAuth();
+  const { user, writer } = useAuth();
   const navigate = useNavigate();
 
   usePageTitle("Create community — atbbs");
 
   async function save(draft: CommunityDraft) {
-    if (!repo || !user) throw new Error("Not signed in");
-    const now = nowIso();
-    const createdSlugs: string[] = [];
+    if (!writer || !user) throw new Error("Not signed in");
     try {
-      for (const board of draft.boards) {
-        await createBoard(repo, board.slug, board.name, board.description, now);
-        createdSlugs.push(board.slug);
-      }
-      await createSite(repo, {
-        name: draft.name,
-        description: draft.description,
-        intro: draft.intro,
-        boards: draft.boards.map((board) =>
-          makeAtUri(user.did as Did, BOARD, board.slug),
-        ),
-        createdAt: now,
-      });
+      await writer.createCommunity(draft);
+      invalidateAllCommunityCaches();
       navigate(bbsUrl(user.handle));
     } catch {
-      for (const slug of [...createdSlugs].reverse()) {
-        try {
-          await deleteRecord(repo, BOARD, slug);
-        } catch {
-          // Preserve the original create failure; incomplete cleanup is retryable.
-        }
-      }
       throw new Error("Could not create community");
     }
   }

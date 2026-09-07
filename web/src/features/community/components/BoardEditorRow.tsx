@@ -1,11 +1,8 @@
 import { Input } from "../../../shared/ui/Form";
 import * as limits from "../../../atbbs/schema/limits";
+import type { BoardDraft } from "../../../atbbs/writer";
 
-export interface BoardRow {
-  slug: string;
-  name: string;
-  description: string;
-}
+export type BoardRow = BoardDraft;
 
 interface BoardEditorRowProps {
   boards: BoardRow[];

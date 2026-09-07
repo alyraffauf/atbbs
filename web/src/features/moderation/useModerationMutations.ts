@@ -1,27 +1,21 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "../auth/auth";
 import { resolveIdentity } from "../../atproto/identity";
-import {
-  createBan,
-  createHide,
-  deleteBan,
-  deleteHide,
-} from "../../atbbs/moderation/commands";
 import { alertOnError } from "../../frontend/app/browser/alerts";
 import { invalidateAllCommunityCaches } from "../../frontend/features/community/cache";
 
 // Shared ban/unban/hide/unhide mutations
 // `ban` accepts either a DID or a handle
 export function useModerationMutations() {
-  const { repo } = useAuth();
+  const { writer } = useAuth();
 
   const ban = useMutation({
     mutationFn: async (identifier: string) => {
-      if (!repo) throw new Error("Not signed in");
+      if (!writer) throw new Error("Not signed in");
       const did = identifier.startsWith("did:")
         ? identifier
         : (await resolveIdentity(identifier)).did;
-      await createBan(repo, did);
+      await writer.banActor(did);
     },
     onSuccess: invalidateAllCommunityCaches,
     onError: alertOnError("ban"),
@@ -29,8 +23,8 @@ export function useModerationMutations() {
 
   const unban = useMutation({
     mutationFn: async (rkeys: string[]) => {
-      if (!repo) throw new Error("Not signed in");
-      await Promise.all(rkeys.map((rkey) => deleteBan(repo, rkey)));
+      if (!writer) throw new Error("Not signed in");
+      await Promise.all(rkeys.map((rkey) => writer.unbanActor(rkey)));
     },
     onSuccess: invalidateAllCommunityCaches,
     onError: alertOnError("unban"),
@@ -38,8 +32,8 @@ export function useModerationMutations() {
 
   const hide = useMutation({
     mutationFn: async (uri: string) => {
-      if (!repo) throw new Error("Not signed in");
-      await createHide(repo, uri);
+      if (!writer) throw new Error("Not signed in");
+      await writer.hidePost(uri);
     },
     onSuccess: invalidateAllCommunityCaches,
     onError: alertOnError("hide"),
@@ -47,8 +41,8 @@ export function useModerationMutations() {
 
   const unhide = useMutation({
     mutationFn: async (rkeys: string[]) => {
-      if (!repo) throw new Error("Not signed in");
-      await Promise.all(rkeys.map((rkey) => deleteHide(repo, rkey)));
+      if (!writer) throw new Error("Not signed in");
+      await Promise.all(rkeys.map((rkey) => writer.unhidePost(rkey)));
     },
     onSuccess: invalidateAllCommunityCaches,
     onError: alertOnError("unhide"),

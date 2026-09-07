@@ -4,22 +4,16 @@ import {
   type QueryKey,
 } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import type { Did } from "@atcute/lexicons/syntax";
 import { useAuth } from "../auth/auth";
 import type { Board, Community } from "../../atbbs/community/read";
 import type {
   ThreadSummary,
   ThreadPageResult,
 } from "../../atbbs/discussion/threads";
-import { BOARD } from "../../atbbs/schema/collections";
 import { myThreadsQuery } from "../../frontend/features/dashboard/queries";
 import { boardThreadsInfiniteQuery } from "../../frontend/features/discussion/queries";
 import { queryClient } from "../../frontend/app/queryClient";
 import { threadUrl } from "../../frontend/app/router/urls";
-import { nowIso } from "../../atbbs/support/time";
-import { makeAtUri, parseAtUri } from "../../atproto/uri";
-import { createPost } from "./data/discussionRecords";
-import { uploadAttachments } from "../../atbbs/discussion/attachments";
 import { pendingAttachmentsFromFiles } from "../../frontend/features/discussion/browser/pendingAttachment";
 import { alertOnError } from "../../frontend/app/browser/alerts";
 import type { PostDraft } from "./components/PostComposer";
@@ -52,26 +46,23 @@ export function useBoardPosting(
   board: Board,
   handle: string,
 ) {
-  const { user, repo } = useAuth();
+  const { user, writer } = useAuth();
   const navigate = useNavigate();
 
   return useMutation({
     mutationFn: async (input: PostDraft) => {
-      if (!repo) throw new Error("Not signed in");
-      const boardUri = makeAtUri(bbs.identity.did as Did, BOARD, board.slug);
-      const attachments = await uploadAttachments(
-        repo,
-        pendingAttachmentsFromFiles(input.files),
-      );
-      return createPost(repo, boardUri, input.body, {
+      if (!writer) throw new Error("Not signed in");
+      return writer.createThread({
+        communityDid: bbs.identity.did,
+        boardSlug: board.slug,
         title: input.title ?? "",
-        attachments,
+        body: input.body,
+        attachments: pendingAttachmentsFromFiles(input.files),
       });
     },
     onSuccess: (record, input) => {
       if (!user) return;
-      const { did, rkey } = parseAtUri(record.uri);
-      const now = nowIso();
+      const { did, rkey, createdAt } = record;
       const newThread: ThreadSummary = {
         uri: record.uri,
         did,
@@ -79,8 +70,8 @@ export function useBoardPosting(
         handle: user.handle,
         title: input.title ?? "",
         body: input.body,
-        createdAt: now,
-        lastActivityAt: now,
+        createdAt,
+        lastActivityAt: createdAt,
         replyCount: 0,
         participants: [{ did, handle: user.handle }],
       };

@@ -1,7 +1,7 @@
-import type { XyzAtbbsProfile } from "../../../lexicons";
-import { PROFILE } from "../../../atbbs/schema/collections";
-import { nowIso } from "../../../atbbs/support/time";
-import { putRecord, type AuthenticatedRepo } from "../../../atproto/repository";
+import type { XyzAtbbsProfile } from "../../lexicons";
+import { PROFILE } from "../schema/collections";
+import { nowIso } from "../support/time";
+import { putRecord, type AuthenticatedRepo } from "../../atproto/repository";
 
 type ProfileValue = Omit<XyzAtbbsProfile.Main, "$type">;
 

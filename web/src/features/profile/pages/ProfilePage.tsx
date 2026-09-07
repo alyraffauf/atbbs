@@ -4,7 +4,6 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { MessageSquare } from "lucide-react";
 import { useAuth } from "../../auth/auth";
 import { usePageTitle } from "../../../frontend/app/browser/usePageTitle";
-import { putProfile } from "../data/profileRecords";
 import { myThreadsQuery } from "../../../frontend/features/dashboard/queries";
 import { profileQuery } from "../../../frontend/features/profile/queries";
 import { queryClient } from "../../../frontend/app/queryClient";
@@ -15,7 +14,7 @@ import ListSkeleton from "../../../app/layout/ListSkeleton";
 
 export default function ProfilePage() {
   const { handle } = useParams();
-  const { user, repo } = useAuth();
+  const { user, writer } = useAuth();
   const [editing, setEditing] = useState(false);
 
   const { data: profile } = useQuery(profileQuery(handle!));
@@ -34,8 +33,8 @@ export default function ProfilePage() {
       pronouns?: string;
       bio?: string;
     }) => {
-      if (!repo) throw new Error("Not signed in");
-      await putProfile(repo, input.name, input.pronouns, input.bio);
+      if (!writer) throw new Error("Not signed in");
+      await writer.saveProfile(input);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(profileQuery(handle!));

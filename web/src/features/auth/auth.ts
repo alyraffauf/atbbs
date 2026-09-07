@@ -15,6 +15,7 @@ import type { ActorResolver, ResolvedActor } from "@atcute/identity-resolver";
 import type { ActorIdentifier } from "@atcute/lexicons/syntax";
 import { resolveIdentity } from "../../atproto/identity";
 import type { AuthenticatedRepo } from "../../atproto/repository";
+import { createAtbbsWriter, type AtbbsWriter } from "../../atbbs/writer";
 
 // --- OAuth setup (deferred until config is available) ---
 
@@ -82,7 +83,8 @@ const POST_LOGIN_KEY = "atbbs:post-login-redirect";
 
 let status: Status = "loading";
 let currentUser: AuthUser | null = null;
-let currentRepo: AuthenticatedRepo | null = null;
+let currentWriter: AtbbsWriter | null = null;
+let currentRepository: AuthenticatedRepo | null = null;
 
 let initPromise: Promise<void> | null = null;
 let callbackPromise: Promise<void> | null = null;
@@ -127,7 +129,9 @@ async function setSignedIn(oauthAgent: OAuthUserAgent) {
     // Offline; the visibilitychange listener below will retry on next focus.
   }
 
-  currentRepo = { client: rpc, did: did as AuthenticatedRepo["did"] };
+  const repository = { client: rpc, did: did as AuthenticatedRepo["did"] };
+  currentRepository = repository;
+  currentWriter = createAtbbsWriter(repository, pdsUrl);
   currentUser = { did, handle, pdsUrl };
   status = "signedIn";
 
@@ -148,6 +152,9 @@ async function retryIdentityIfUnresolved() {
       handle: doc.handle,
       pdsUrl: doc.pds ?? currentUser.pdsUrl,
     };
+    if (currentRepository) {
+      currentWriter = createAtbbsWriter(currentRepository, currentUser.pdsUrl);
+    }
     localStorage.setItem(
       IDENTITY_KEY,
       JSON.stringify({ version: 1, ...currentUser }),
@@ -166,7 +173,8 @@ if (typeof document !== "undefined") {
 
 function setSignedOut() {
   currentUser = null;
-  currentRepo = null;
+  currentWriter = null;
+  currentRepository = null;
   status = "signedOut";
 }
 
@@ -297,7 +305,7 @@ async function logout(): Promise<void> {
 interface AuthSnapshot {
   status: Status;
   user: AuthUser | null;
-  repo: AuthenticatedRepo | null;
+  writer: AtbbsWriter | null;
 }
 
 // useSyncExternalStore compares snapshots with Object.is, so we must
@@ -306,19 +314,19 @@ interface AuthSnapshot {
 let cachedSnapshot: AuthSnapshot = {
   status,
   user: currentUser,
-  repo: currentRepo,
+  writer: currentWriter,
 };
 
 function getSnapshot(): AuthSnapshot {
   if (
     cachedSnapshot.status !== status ||
     cachedSnapshot.user !== currentUser ||
-    cachedSnapshot.repo !== currentRepo
+    cachedSnapshot.writer !== currentWriter
   ) {
     cachedSnapshot = {
       status,
       user: currentUser,
-      repo: currentRepo,
+      writer: currentWriter,
     };
   }
   return cachedSnapshot;

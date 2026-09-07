@@ -1,8 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../auth/auth";
-import { PIN } from "../../../atbbs/schema/collections";
-import { createPin } from "../data/pinRecords";
-import { deleteRecord } from "../../../atproto/repository";
 import { findPinRkey } from "../../../atbbs/community/pins";
 import { pinsQuery } from "../../../frontend/features/community/queries";
 import { ActionButton } from "../../../shared/ui/ActionButton";
@@ -13,7 +10,7 @@ interface PinButtonProps {
 }
 
 export default function PinButton({ bbsDid }: PinButtonProps) {
-  const { user, repo } = useAuth();
+  const { user, writer } = useAuth();
   const queryClient = useQueryClient();
   const pinsOptions = pinsQuery(user?.pdsUrl ?? "", user?.did ?? "");
   const pins = useQuery({ ...pinsOptions, enabled: !!user });
@@ -21,9 +18,9 @@ export default function PinButton({ bbsDid }: PinButtonProps) {
 
   const togglePin = useMutation({
     mutationFn: async () => {
-      if (!repo) throw new Error("Not signed in");
-      if (pinRkey) return deleteRecord(repo, PIN, pinRkey);
-      return createPin(repo, bbsDid);
+      if (!writer) throw new Error("Not signed in");
+      if (pinRkey) return writer.unpinCommunity(pinRkey);
+      return writer.pinCommunity(bbsDid);
     },
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: pinsOptions.queryKey }),

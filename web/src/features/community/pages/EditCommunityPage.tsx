@@ -1,20 +1,15 @@
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/auth";
-import { putBoard, putSite } from "../data/communityRecords";
-import { deleteRecord } from "../../../atproto/repository";
-import { BOARD } from "../../../atbbs/schema/collections";
-import { nowIso } from "../../../atbbs/support/time";
-import { makeAtUri } from "../../../atproto/uri";
-import type { Did } from "@atcute/lexicons/syntax";
 import { usePageTitle } from "../../../frontend/app/browser/usePageTitle";
 import { bbsUrl } from "../../../frontend/app/router/urls";
 import CommunityEditor, {
   type CommunityDraft,
 } from "../components/CommunityEditor";
 import type { SysopBBSLoaderData } from "../../../app/router/loaders";
+import { invalidateAllCommunityCaches } from "../../../frontend/features/community/cache";
 
 export default function EditCommunityPage() {
-  const { repo } = useAuth();
+  const { writer } = useAuth();
   const navigate = useNavigate();
   const { user, bbs } = useLoaderData() as SysopBBSLoaderData;
 
@@ -32,27 +27,9 @@ export default function EditCommunityPage() {
   usePageTitle("Edit community — atbbs");
 
   async function save(draft: CommunityDraft) {
-    if (!repo) throw new Error("Not signed in");
-    const now = nowIso();
-    for (const board of draft.boards) {
-      await putBoard(repo, board.slug, board.name, board.description, now);
-    }
-    await putSite(repo, {
-      name: draft.name,
-      description: draft.description,
-      intro: draft.intro,
-      boards: draft.boards.map((board) =>
-        makeAtUri(user.did as Did, BOARD, board.slug),
-      ),
-      createdAt: bbs.site.createdAt || now,
-      updatedAt: now,
-    });
-    const currentSlugs = new Set(draft.boards.map((board) => board.slug));
-    for (const board of bbs.site.boards) {
-      if (!currentSlugs.has(board.slug)) {
-        await deleteRecord(repo, BOARD, board.slug);
-      }
-    }
+    if (!writer) throw new Error("Not signed in");
+    await writer.updateCommunity(draft);
+    invalidateAllCommunityCaches();
     navigate(bbsUrl(user.handle));
   }
 
