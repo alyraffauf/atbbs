@@ -2,7 +2,7 @@
 
 import { resolveIdentity } from "../../atproto/identity";
 import { getRecord } from "../../atproto/records";
-import { getAvatar } from "../../atbbs/support/identities";
+import { getAvatar } from "../../atbbs/identity/service";
 import { SITE } from "../../atbbs/schema/collections";
 import { bbsUrl } from "../../frontend/app/router/urls";
 import type { Suggestion } from "./data/suggestions";

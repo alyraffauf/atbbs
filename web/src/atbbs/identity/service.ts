@@ -1,8 +1,8 @@
-import { CDN } from "../../atproto/config";
 import { resolveIdentity, type ResolvedIdentity } from "../../atproto/identity";
 import { getRecord } from "../../atproto/records";
 import { FetchError } from "../../atproto/transport";
-import { allSettledBounded, reportPartialFailures } from "./batch";
+import { allSettledBounded, reportPartialFailures } from "../support/batch";
+import { avatarUrl } from "../media/urls";
 
 const BSKY_PROFILE = "app.bsky.actor.profile";
 
@@ -21,7 +21,7 @@ export async function getAvatar(did: string): Promise<string | null> {
     const record = await getRecord(did, BSKY_PROFILE, "self");
     const avatar = record.value.avatar as { ref?: { $link?: string } } | undefined;
     const cid = avatar?.ref?.$link;
-    return cid ? `${CDN.url}/img/avatar/plain/${did}/${cid}` : null;
+    return cid ? avatarUrl(did, cid) : null;
   } catch (error) {
     if (error instanceof FetchError && error.kind === "not-found") return null;
     throw error;

@@ -4,7 +4,7 @@ import type { BacklinkRef } from "../../../atproto/backlinks";
 import type { ATRecord } from "../../../atproto/records";
 import { makeAtUri, parseAtUri } from "../../../atproto/uri";
 import type { Did, Nsid } from "@atcute/lexicons/syntax";
-import { isPostRecord } from "../../../shared/protocol/recordGuards";
+import { isPostRecord } from "../../../atbbs/schema/records";
 export interface Reply {
   uri: string;
   did: string;

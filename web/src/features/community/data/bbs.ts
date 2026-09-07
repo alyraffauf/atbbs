@@ -7,7 +7,7 @@ import { FetchError } from "../../../atproto/transport";
 import { queryClient } from "../../../app/queryClient";
 import { SITE } from "../../../atbbs/schema/collections";
 import { parseAtUri } from "../../../atproto/uri";
-import { isBoardRecord, isSiteRecord } from "../../../shared/protocol/recordGuards";
+import { isBoardRecord, isSiteRecord } from "../../../atbbs/schema/records";
 import { MAX_BOARDS } from "../../../atbbs/schema/limits";
 
 export class BBSNotFoundError extends Error {}

@@ -4,7 +4,7 @@
 import { listRecords, requireComplete } from "../../../atproto/records";
 import { BAN, HIDE } from "../../../atbbs/schema/collections";
 import { parseAtUri } from "../../../atproto/uri";
-import { isBanRecord, isHideRecord } from "../../../shared/protocol/recordGuards";
+import { isBanRecord, isHideRecord } from "../../../atbbs/schema/records";
 
 // Fields must be JSON-safe — this shape is persisted via localStorage.
 export interface BBSModeration {

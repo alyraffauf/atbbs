@@ -3,8 +3,8 @@ import {
   getBacklinks,
 } from "../../atproto/backlinks";
 import { parseAtUri } from "../../atproto/uri";
-import { resolveIdentitiesBatch } from "./identities";
-import { getRecordsBatch, type RecordHydrationOptions } from "./records";
+import { resolveIdentitiesBatch } from "../identity/service";
+import { getRecordsBatch, type RecordHydrationOptions } from "../support/records";
 
 export async function getBacklinkCountsBatch(subjects: string[], source: string) {
   const unique = [...new Set(subjects)];

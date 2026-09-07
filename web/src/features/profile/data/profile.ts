@@ -2,9 +2,9 @@
 
 import { resolveIdentity } from "../../../atproto/identity";
 import { getRecord } from "../../../atproto/records";
-import { getAvatar } from "../../../atbbs/support/identities";
+import { getAvatar } from "../../../atbbs/identity/service";
 import { PROFILE, SITE } from "../../../atbbs/schema/collections";
-import { isProfileRecord, isSiteRecord } from "../../../shared/protocol/recordGuards";
+import { isProfileRecord, isSiteRecord } from "../../../atbbs/schema/records";
 
 export interface Profile {
   did: string;

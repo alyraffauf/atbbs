@@ -5,7 +5,7 @@ import { getRecordsBatch } from "../../../atbbs/support/records";
 import { POST, SITE } from "../../../atbbs/schema/collections";
 import { makeAtUri, parseAtUri } from "../../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
-import { isPostRecord } from "../../../shared/protocol/recordGuards";
+import { isPostRecord } from "../../../atbbs/schema/records";
 import type { NewsPost } from "../../community/data/bbs";
 
 export async function fetchNews(bbsDid: string): Promise<NewsPost[]> {

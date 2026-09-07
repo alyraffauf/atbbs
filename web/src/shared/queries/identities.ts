@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { resolveIdentity } from "../../atproto/identity";
 import { getBacklinkCount } from "../../atproto/backlinks";
-import { getAvatar } from "../../atbbs/support/identities";
+import { getAvatar } from "../../atbbs/identity/service";
 import { slowQueryOptions } from "./options";
 
 export const identityQuery = (identifier: string) =>

@@ -6,10 +6,4 @@ export interface Services {
   lightrail: string;
 }
 
-export interface Cdn {
-  url: string;
-  image_format: string;
-}
-
 export const SERVICES = shared.services as Services;
-export const CDN = shared.cdn as Cdn;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isSiteRecord } from "../../shared/protocol/recordGuards";
+import { isSiteRecord } from "../../atbbs/schema/records";
 import { MAX_BOARDS } from "./limits";
 
 function siteRecord(boardCount: number) {

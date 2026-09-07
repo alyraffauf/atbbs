@@ -6,13 +6,13 @@
  *  most recent activity — giving us bump order naturally. */
 
 import { getBacklinks } from "../../../atproto/backlinks";
-import { getAvatars, resolveIdentitiesBatch } from "../../../atbbs/support/identities";
-import { getBacklinkCountsBatch } from "../../../atbbs/support/backlinks";
+import { getAvatars, resolveIdentitiesBatch } from "../../../atbbs/identity/service";
+import { getBacklinkCountsBatch } from "../../../atbbs/discussion/hydration";
 import { getRecordsBatch, getRecordsByUri } from "../../../atbbs/support/records";
 import { POST, BOARD } from "../../../atbbs/schema/collections";
 import { makeAtUri, parseAtUri } from "../../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
-import { isPostRecord } from "../../../shared/protocol/recordGuards";
+import { isPostRecord } from "../../../atbbs/schema/records";
 
 export interface Participant {
   did: string;

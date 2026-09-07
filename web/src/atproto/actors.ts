@@ -2,16 +2,16 @@
 
 const BSKY_PUBLIC = "https://public.api.bsky.app";
 
-export interface HandleMatch {
+export interface RawActor {
   handle: string;
-  displayName: string;
+  displayName?: string;
   avatar?: string;
 }
 
-export async function searchHandles(
+export async function searchActors(
   query: string,
   limit = 5,
-): Promise<HandleMatch[]> {
+): Promise<RawActor[]> {
   const url =
     `${BSKY_PUBLIC}/xrpc/app.bsky.actor.searchActorsTypeahead` +
     `?q=${encodeURIComponent(query)}&limit=${limit}`;
@@ -31,9 +31,5 @@ export async function searchHandles(
   ) {
     return [];
   }
-  return data.actors.map((actor) => ({
-    handle: actor.handle,
-    displayName: actor.displayName ?? actor.handle,
-    avatar: actor.avatar,
-  }));
+  return data.actors;
 }

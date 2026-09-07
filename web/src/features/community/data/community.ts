@@ -4,7 +4,7 @@ import { resolveBBS } from "./bbs";
 import { fetchPins } from "./pins";
 import { fetchDiscovery } from "./discovery";
 import { fetchHomeSysopInfo } from "./home";
-import { getBacklinkCountsBatch } from "../../../atbbs/support/backlinks";
+import { getBacklinkCountsBatch } from "../../../atbbs/discussion/hydration";
 import { slowQueryOptions } from "../../../shared/queries/options";
 
 export const bbsQuery = (handle: string) =>

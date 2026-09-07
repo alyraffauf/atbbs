@@ -1,10 +1,10 @@
 /** Activity data — replies to your posts from other users. */
 
-import { fetchAndHydrate } from "../../../atbbs/support/backlinks";
-import { resolveIdentitiesBatch } from "../../../atbbs/support/identities";
+import { fetchAndHydrate } from "../../../atbbs/discussion/hydration";
+import { resolveIdentitiesBatch } from "../../../atbbs/identity/service";
 import { listRecords } from "../../../atproto/records";
 import { POST } from "../../../atbbs/schema/collections";
-import { isPostRecord } from "../../../shared/protocol/recordGuards";
+import { isPostRecord } from "../../../atbbs/schema/records";
 import { parseAtUri } from "../../../atproto/uri";
 
 export interface ActivityItem {

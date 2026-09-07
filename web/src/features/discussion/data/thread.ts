@@ -4,12 +4,12 @@
 import { getBacklinks, type BacklinkRef } from "../../../atproto/backlinks";
 import { resolveIdentity } from "../../../atproto/identity";
 import { getRecord } from "../../../atproto/records";
-import { resolveIdentitiesBatch } from "../../../atbbs/support/identities";
+import { resolveIdentitiesBatch } from "../../../atbbs/identity/service";
 import { getRecordsBatch } from "../../../atbbs/support/records";
 import { POST } from "../../../atbbs/schema/collections";
 import { parseAtUri } from "../../../atproto/uri";
 import { recordToReply } from "./replies";
-import { isPostRecord } from "../../../shared/protocol/recordGuards";
+import { isPostRecord } from "../../../atbbs/schema/records";
 import type { Reply } from "./replies";
 
 export interface ThreadRoot {
