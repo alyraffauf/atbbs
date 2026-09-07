@@ -13,10 +13,6 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
-# Runtime config — don't cache.
-/config.json
-  Cache-Control: no-cache
-
 # OAuth client metadata is fetched cross-origin by atproto auth servers.
 /client-metadata.json
   Access-Control-Allow-Origin: *

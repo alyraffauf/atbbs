@@ -1,15 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import shared from "../data/shared.json" with { type: "json" };
+import { OAUTH_SCOPE } from "./src/config.ts";
 
 const SERVER_HOST = "127.0.0.1";
 const SERVER_PORT = 5173;
-
-const SCOPE = [
-  ...shared.oauth_base_scopes,
-  ...Object.values(shared.lexicon_collections).map((nsid) => `repo:${nsid}`),
-].join(" ");
 
 // Placeholder the Docker entrypoint replaces at runtime with PUBLIC_URL.
 const PUBLIC_URL_TOKEN = "__PUBLIC_URL__";
@@ -27,14 +22,17 @@ interface ClientMetadata {
   dpop_bound_access_tokens: true;
 }
 
-function buildMetadata(publicUrl: string): ClientMetadata {
+function buildMetadata(
+  publicUrl: string,
+  clientId = `${publicUrl.replace(/\/$/, "")}/client-metadata.json`,
+): ClientMetadata {
   const u = publicUrl.replace(/\/$/, "");
   return {
-    client_id: `${u}/client-metadata.json`,
+    client_id: clientId,
     client_name: "atbbs",
     client_uri: u,
     redirect_uris: [`${u}/oauth/callback`],
-    scope: SCOPE,
+    scope: OAUTH_SCOPE,
     grant_types: ["authorization_code", "refresh_token"],
     response_types: ["code"],
     token_endpoint_auth_method: "none",
@@ -43,21 +41,11 @@ function buildMetadata(publicUrl: string): ClientMetadata {
   };
 }
 
-function buildConfig(publicUrl: string) {
-  const u = publicUrl.replace(/\/$/, "");
-  return {
-    client_id: `${u}/client-metadata.json`,
-    redirect_uri: `${u}/oauth/callback`,
-    scope: SCOPE,
-  };
-}
-
 /**
  * Dev: synthesizes a loopback client_id (atproto OAuth forbids `localhost`,
  * so the redirect goes to 127.0.0.1).
  *
- * Build with VITE_PUBLIC_URL: emits config.json + client-metadata.json for
- * static deploys (Cloudflare Pages, etc.).
+ * Build with VITE_PUBLIC_URL: emits client-metadata.json for static deploys.
  *
  * Build without VITE_PUBLIC_URL: emits *.template.json files with a
  * __PUBLIC_URL__ token. The Docker entrypoint substitutes at runtime from
@@ -66,16 +54,11 @@ function buildConfig(publicUrl: string) {
 export default defineConfig(({ command }) => {
   const isBuild = command === "build";
   const publicUrl = process.env.VITE_PUBLIC_URL?.trim();
-
-  if (!isBuild) {
-    // Dev: set env vars for the loopback OAuth flow.
-    const redirectUri = `http://${SERVER_HOST}:${SERVER_PORT}/oauth/callback`;
-    process.env.VITE_OAUTH_CLIENT_ID =
-      `http://localhost?redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&scope=${encodeURIComponent(SCOPE)}`;
-    process.env.VITE_OAUTH_REDIRECT_URI = redirectUri;
-    process.env.VITE_OAUTH_SCOPE = SCOPE;
-  }
+  const devOrigin = `http://${SERVER_HOST}:${SERVER_PORT}`;
+  const devRedirectUri = `${devOrigin}/oauth/callback`;
+  const devClientId =
+    `http://localhost?redirect_uri=${encodeURIComponent(devRedirectUri)}` +
+    `&scope=${encodeURIComponent(OAUTH_SCOPE)}`;
 
   const staticFiles: Array<{ fileName: string; source: string }> = [];
   if (isBuild) {
@@ -96,28 +79,15 @@ export default defineConfig(({ command }) => {
           `VITE_PUBLIC_URL must be a bare HTTPS origin (got ${publicUrl}).`,
         );
       }
-      staticFiles.push(
-        {
-          fileName: "client-metadata.json",
-          source: JSON.stringify(buildMetadata(publicUrl), null, 2) + "\n",
-        },
-        {
-          fileName: "config.json",
-          source: JSON.stringify(buildConfig(publicUrl), null, 2) + "\n",
-        },
-      );
+      staticFiles.push({
+        fileName: "client-metadata.json",
+        source: JSON.stringify(buildMetadata(publicUrl), null, 2) + "\n",
+      });
     } else {
-      staticFiles.push(
-        {
-          fileName: "client-metadata.template.json",
-          source:
-            JSON.stringify(buildMetadata(PUBLIC_URL_TOKEN), null, 2) + "\n",
-        },
-        {
-          fileName: "config.template.json",
-          source: JSON.stringify(buildConfig(PUBLIC_URL_TOKEN), null, 2) + "\n",
-        },
-      );
+      staticFiles.push({
+        fileName: "client-metadata.template.json",
+        source: JSON.stringify(buildMetadata(PUBLIC_URL_TOKEN), null, 2) + "\n",
+      });
     }
   }
 
@@ -127,6 +97,20 @@ export default defineConfig(({ command }) => {
       tailwindcss(),
       {
         name: "atbbs-emit-static-config",
+        configureServer(server) {
+          server.middlewares.use((request, response, next) => {
+            if (request.url?.split("?", 1)[0] !== "/client-metadata.json") {
+              next();
+              return;
+            }
+            response.setHeader("Content-Type", "application/json");
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.end(
+              JSON.stringify(buildMetadata(devOrigin, devClientId), null, 2) +
+                "\n",
+            );
+          });
+        },
         generateBundle() {
           for (const f of staticFiles) {
             this.emitFile({ type: "asset", ...f });

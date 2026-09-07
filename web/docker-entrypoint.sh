@@ -12,9 +12,6 @@ HTML=/usr/share/nginx/html
 
 jq --arg origin "$PUBLIC_URL" \
   'walk(if type == "string" then gsub("__PUBLIC_URL__"; $origin) else . end)' \
-  "${HTML}/config.template.json" > "${HTML}/config.json"
-jq --arg origin "$PUBLIC_URL" \
-  'walk(if type == "string" then gsub("__PUBLIC_URL__"; $origin) else . end)' \
   "${HTML}/client-metadata.template.json" > "${HTML}/client-metadata.json"
 
 exec "$@"

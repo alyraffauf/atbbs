@@ -1,4 +1,4 @@
-import shared from "../../data/shared.json";
+import shared from "../../data/shared.json" with { type: "json" };
 
 export interface AtprotoApp {
   name: string;

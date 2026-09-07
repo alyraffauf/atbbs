@@ -28,7 +28,7 @@ Deploy `dist/`. The `_redirects` file handles SPA routing on Cloudflare Pages.
 docker run -d -p 8080:80 -e PUBLIC_URL=https://your-domain.com ghcr.io/alyraffauf/atbbs:latest
 ```
 
-The entrypoint generates `config.json` and `client-metadata.json` at runtime from `PUBLIC_URL`.
+The entrypoint generates `client-metadata.json` at runtime from `PUBLIC_URL`.
 
 ### OAuth
 
