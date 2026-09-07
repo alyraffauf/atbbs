@@ -3,9 +3,7 @@
 import type { Client } from "@atcute/client";
 import { SITE, BOARD, POST, BAN, HIDE, PIN, PROFILE } from "./lexicon";
 import { invalidateAllBBSCaches } from "./bbs";
-import { queryClient } from "./queryClient";
-import type { ATRecord } from "./atproto";
-import { nowIso, parseAtUri } from "./util";
+import { nowIso } from "./util";
 import type { AuthenticatedRepo } from "./repository";
 import { MAX_ATTACHMENT_BYTES, MAX_IMAGE_PIXELS } from "./limits";
 import type {
@@ -54,22 +52,6 @@ function assertOk(
   }
 }
 
-// Sync the per-record cache so re-reads via getRecord return the new value.
-function syncRecordCache<V extends object>(
-  did: string,
-  collection: string,
-  rkey: string,
-  value: V,
-  uri: string,
-  cid: string,
-) {
-  queryClient.setQueryData<ATRecord>(["record", did, collection, rkey], {
-    uri,
-    cid,
-    value: { $type: collection, ...value },
-  });
-}
-
 async function createRecord<V extends object>(
   repo: AuthenticatedRepo,
   collection: string,
@@ -87,15 +69,6 @@ async function createRecord<V extends object>(
     },
   });
   assertOk(resp, "createRecord");
-  const createdRkey = parseAtUri(resp.data.uri).rkey;
-  syncRecordCache(
-    did,
-    collection,
-    createdRkey,
-    value,
-    resp.data.uri,
-    resp.data.cid,
-  );
   return resp;
 }
 
@@ -116,7 +89,6 @@ async function putRecord<V extends object>(
     },
   });
   assertOk(resp, "putRecord");
-  syncRecordCache(did, collection, rkey, value, resp.data.uri, resp.data.cid);
   return resp;
 }
 
@@ -135,10 +107,6 @@ export async function deleteRecord(
     },
   });
   assertOk(resp, "deleteRecord");
-  queryClient.removeQueries({
-    queryKey: ["record", did, collection, rkey],
-    exact: true,
-  });
   return resp;
 }
 
