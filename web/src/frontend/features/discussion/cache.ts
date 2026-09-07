@@ -2,10 +2,10 @@ import { queryClient } from "../../app/queryClient";
 import { threadPageQuery, threadRefsQuery } from "./queries";
 import {
   REPLIES_PER_PAGE,
-  refToUri,
   type Reply,
+  type ReplyRef,
 } from "../../../atbbs/discussion/replies";
-import type { BacklinkRef } from "../../../atproto/backlinks";
+import { refToUri } from "./pagination";
 import type { ReplyPage } from "../../../atbbs/discussion/thread";
 import type { BoundedResult } from "../../../atproto/records";
 
@@ -15,13 +15,13 @@ export async function cancelRefsRefetch(threadUri: string) {
   });
 }
 
-export function getRefs(threadUri: string): BacklinkRef[] {
+export function getRefs(threadUri: string): ReplyRef[] {
   const key = threadRefsQuery(threadUri).queryKey;
-  return queryClient.getQueryData<BoundedResult<BacklinkRef>>(key)?.items ?? [];
+  return queryClient.getQueryData<BoundedResult<ReplyRef>>(key)?.items ?? [];
 }
 
-export function setRefs(threadUri: string, refs: BacklinkRef[]) {
-  queryClient.setQueryData<BoundedResult<BacklinkRef>>(
+export function setRefs(threadUri: string, refs: ReplyRef[]) {
+  queryClient.setQueryData<BoundedResult<ReplyRef>>(
     threadRefsQuery(threadUri).queryKey,
     (current) => ({
       items: refs,
@@ -31,7 +31,7 @@ export function setRefs(threadUri: string, refs: BacklinkRef[]) {
   );
 }
 
-function pageSlice(refs: BacklinkRef[], page: number): BacklinkRef[] {
+function pageSlice(refs: ReplyRef[], page: number): ReplyRef[] {
   const start = (page - 1) * REPLIES_PER_PAGE;
   return refs.slice(start, start + REPLIES_PER_PAGE);
 }
@@ -40,9 +40,9 @@ function pageSlice(refs: BacklinkRef[], page: number): BacklinkRef[] {
 // add/delete — seed the new key from the old one rather than using `prev`.
 export function appendRefAndReply(
   threadUri: string,
-  newRef: BacklinkRef,
+  newRef: ReplyRef,
   newReply: Reply,
-): BacklinkRef[] {
+): ReplyRef[] {
   const previousRefs = getRefs(threadUri);
   const updatedRefs = [...previousRefs, newRef].slice(-2_000);
 

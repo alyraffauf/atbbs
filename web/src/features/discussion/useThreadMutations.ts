@@ -22,9 +22,12 @@ import { nowIso } from "../../atbbs/support/time";
 import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import { createPost } from "./data/discussionRecords";
 import { deleteRecord } from "../../atproto/repository";
-import { uploadAttachments } from "../../atbbs/discussion/attachments";
+import {
+  prepareAttachmentViews,
+  uploadAttachments,
+} from "../../atbbs/discussion/attachments";
 import { pendingAttachmentsFromFiles } from "../../frontend/features/discussion/browser/pendingAttachment";
-import type { BacklinkRef } from "../../atproto/backlinks";
+import type { ReplyRef } from "../../atbbs/discussion/replies";
 
 interface ThreadMutationOptions {
   bbs: Community;
@@ -63,17 +66,19 @@ export function useThreadMutations(options: ThreadMutationOptions) {
     onSuccess: ({ record, input, attachments }) => {
       if (!user) return;
       const { did, rkey } = parseAtUri(record.uri);
-      const ref: BacklinkRef = { did, collection: POST, rkey };
+      const ref: ReplyRef = { did, collection: POST, rkey };
       const reply: Reply = {
         uri: record.uri,
         did,
         rkey,
+        authorDid: did,
+        replyRkey: rkey,
         handle: user.handle,
         pds: user.pdsUrl,
         body: input.body,
         createdAt: nowIso(),
         parent: input.parent,
-        attachments: attachments as Reply["attachments"],
+        attachments: prepareAttachmentViews(attachments, did, user.pdsUrl),
       };
       const refs = appendRefAndReply(threadUri, ref, reply);
       onReplyCreated();

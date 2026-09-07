@@ -2,9 +2,41 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createPost } from "./discussionRecords";
 import type { AuthenticatedRepo } from "../../../atproto/repository";
-import { uploadAttachments } from "../../../atbbs/discussion/attachments";
+import {
+  prepareAttachmentViews,
+  uploadAttachments,
+} from "../../../atbbs/discussion/attachments";
 
 describe("authenticated writes", () => {
+  it("prepares JSON-safe attachment URLs without exposing blob references", () => {
+    const views = prepareAttachmentViews(
+      [
+        {
+          name: "photo.jpg",
+          file: {
+            $type: "blob",
+            ref: { $link: "blob-cid" },
+            mimeType: "image/jpeg",
+            size: 12,
+          },
+        },
+      ],
+      "did:plc:author",
+      "https://pds.example",
+    );
+
+    expect(views).toEqual([
+      {
+        name: "photo.jpg",
+        downloadUrl:
+          "https://pds.example/xrpc/com.atproto.sync.getBlob?did=did:plc:author&cid=blob-cid",
+        imageUrl:
+          "https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:author/blob-cid@webp",
+      },
+    ]);
+    expect(JSON.stringify(views)).not.toContain("$link");
+  });
+
   it("throws when the PDS rejects a write", async () => {
     const repo = {
       did: "did:plc:test",

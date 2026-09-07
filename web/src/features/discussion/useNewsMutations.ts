@@ -4,7 +4,9 @@ import type { Did } from "@atcute/lexicons/syntax";
 import type { PostDraft } from "./components/PostComposer";
 import { alertOnError } from "../../frontend/app/browser/alerts";
 import { useAuth } from "../auth/auth";
-import type { Community, NewsPost } from "../../atbbs/community/read";
+import type { Community } from "../../atbbs/community/read";
+import type { NewsPost } from "../../atbbs/discussion/news";
+import { prepareAttachmentViews } from "../../atbbs/discussion/attachments";
 import { POST, SITE } from "../../atbbs/schema/collections";
 import { newsQuery } from "../../frontend/features/discussion/queries";
 import { queryClient } from "../../frontend/app/queryClient";
@@ -33,15 +35,19 @@ export function usePostNews(bbs: Community) {
       return { record, attachments };
     },
     onSuccess: ({ record, attachments }, input) => {
+      const attachmentViews = prepareAttachmentViews(
+        attachments,
+        bbs.identity.did,
+        bbs.identity.pds ?? "",
+      );
       const item: NewsPost = {
         uri: record.uri,
         rkey: parseAtUri(record.uri).rkey,
+        authorDid: bbs.identity.did,
         title: input.title ?? "",
         body: input.body,
         createdAt: nowIso(),
-        attachments: attachments.length
-          ? (attachments as NewsPost["attachments"])
-          : undefined,
+        attachments: attachmentViews.length ? attachmentViews : undefined,
       };
       queryClient.setQueryData<NewsPost[]>(
         newsQuery(bbs.identity.did).queryKey,

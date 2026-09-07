@@ -10,13 +10,13 @@ import {
 } from "../../frontend/features/discussion/queries";
 import { parseAtUri } from "../../atproto/uri";
 import {
-  REPLIES_PER_PAGE,
   clampPage,
   parsePageParam,
   pageForRkey,
   pageForReply,
   rkeyFromHash,
-} from "../../atbbs/discussion/replies";
+} from "../../frontend/features/discussion/pagination";
+import { REPLIES_PER_PAGE } from "../../atbbs/discussion/replies";
 
 export function useThreadReplies(threadUri: string) {
   const [params, setParams] = useSearchParams();

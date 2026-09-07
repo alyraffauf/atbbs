@@ -2,7 +2,7 @@ import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persist
 import { defaultShouldDehydrateQuery } from "@tanstack/react-query";
 import { version } from "../../../package.json";
 
-const CACHE_SCHEMA_VERSION = 2;
+export const CACHE_SCHEMA_VERSION = 3;
 const BUSTER = `${version}:${CACHE_SCHEMA_VERSION}`;
 const MAX_AGE = 24 * 60 * 60 * 1000;
 

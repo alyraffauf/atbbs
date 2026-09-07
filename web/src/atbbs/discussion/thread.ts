@@ -11,18 +11,25 @@ import { parseAtUri } from "../../atproto/uri";
 import { recordToReply } from "./replies";
 import { isPostRecord } from "../schema/records";
 import type { Reply } from "./replies";
+import {
+  prepareAttachmentViews,
+  type AttachmentView,
+} from "./attachments";
 
 export interface Thread {
   uri: string;
   did: string;
   rkey: string;
+  authorDid: string;
+  threadDid: string;
+  threadRkey: string;
   authorHandle: string;
   authorPds: string;
   title: string;
   body: string;
   createdAt: string;
   boardSlug: string;
-  attachments?: { file: { ref: { $link: string } }; name: string }[];
+  attachments?: AttachmentView[];
 }
 
 const MAX_REF_PAGES = 20;
@@ -85,13 +92,20 @@ export async function fetchThreadRoot(
     uri: threadRecord.uri,
     did,
     rkey: tid,
+    authorDid: did,
+    threadDid: did,
+    threadRkey: tid,
     authorHandle: author.handle,
     authorPds: author.pds ?? "",
     title: postValue.title ?? "",
     body: postValue.body,
     createdAt: postValue.createdAt,
     boardSlug,
-    attachments: postValue.attachments as Thread["attachments"],
+    attachments: prepareAttachmentViews(
+      postValue.attachments,
+      did,
+      author.pds ?? "",
+    ),
   };
 }
 

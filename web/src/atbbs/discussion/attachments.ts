@@ -1,6 +1,14 @@
 import type { XyzAtbbsPost } from "../../lexicons";
 import { uploadBlob, type AuthenticatedRepo } from "../../atproto/repository";
 import { MAX_ATTACHMENT_BYTES } from "../schema/limits";
+import { blobUrl } from "../../atproto/blobUrls";
+import { cdnImageUrl } from "../media/urls";
+
+export interface AttachmentView {
+  name: string;
+  downloadUrl: string;
+  imageUrl?: string;
+}
 
 export interface PendingAttachment {
   name: string;
@@ -10,6 +18,22 @@ export interface PendingAttachment {
 }
 
 type Attachment = Omit<XyzAtbbsPost.Attachment, "$type">;
+
+export function prepareAttachmentViews(
+  attachments: Attachment[] | undefined,
+  did: string,
+  pdsUrl: string,
+): AttachmentView[] {
+  return (attachments ?? []).flatMap((attachment) => {
+    const cid = (attachment.file as { ref?: { $link?: string } }).ref?.$link;
+    if (!cid) return [];
+    return [{
+      name: attachment.name,
+      downloadUrl: blobUrl(pdsUrl, did, cid),
+      imageUrl: cdnImageUrl(did, cid),
+    }];
+  });
+}
 
 export async function uploadAttachments(
   repo: AuthenticatedRepo,

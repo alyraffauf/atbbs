@@ -1,4 +1,4 @@
-import type { NewsPost } from "../../../atbbs/community/read";
+import type { NewsPost } from "../../../atbbs/discussion/news";
 import PostActions from "./PostActions";
 import PostContent from "./PostContent";
 import PostMeta from "./PostMeta";
@@ -6,8 +6,6 @@ import PostMeta from "./PostMeta";
 interface NewsPostCardProps {
   news: NewsPost;
   handle: string;
-  pds: string;
-  did: string;
   isSysop: boolean;
   onDelete: () => void;
 }
@@ -15,8 +13,6 @@ interface NewsPostCardProps {
 export default function NewsPostCard({
   news,
   handle,
-  pds,
-  did,
   isSysop,
   onDelete,
 }: NewsPostCardProps) {
@@ -32,8 +28,6 @@ export default function NewsPostCard({
       <PostContent
         body={news.body}
         attachments={news.attachments}
-        pds={pds}
-        did={did}
         attachmentListClassName="mt-3 space-y-1"
       />
     </article>

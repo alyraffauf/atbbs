@@ -1,15 +1,11 @@
 import Markdown, { defaultUrlTransform } from "react-markdown";
 import type { Components } from "react-markdown";
 import AttachmentLink from "./AttachmentLink";
-import { blobUrl } from "../../../atproto/blobUrls";
-import { cdnImageUrl } from "../../../atbbs/media/urls";
-import type { PostAttachment } from "../../../atbbs/community/read";
+import type { AttachmentView } from "../../../atbbs/discussion/attachments";
 
 interface PostBodyProps {
   children: string;
-  attachments?: PostAttachment[];
-  pds?: string;
-  did?: string;
+  attachments?: AttachmentView[];
 }
 
 const ATTACHMENT_PREFIX = "attachment:";
@@ -52,8 +48,8 @@ function ImageEmbed({
 
 function findAttachment(
   url: string | undefined,
-  attachments: PostAttachment[],
-): { name: string; attachment: PostAttachment | undefined } | null {
+  attachments: AttachmentView[],
+): { name: string; attachment: AttachmentView | undefined } | null {
   if (typeof url !== "string" || !url.startsWith(ATTACHMENT_PREFIX))
     return null;
   const name = decodeName(url.slice(ATTACHMENT_PREFIX.length));
@@ -64,20 +60,17 @@ const passAttachmentUrls = (url: string) =>
   url.startsWith(ATTACHMENT_PREFIX) ? url : defaultUrlTransform(url);
 
 function attachmentMarkdownComponents(
-  attachments: PostAttachment[],
-  pds: string,
-  did: string,
+  attachments: AttachmentView[],
 ): Components {
   return {
     img({ src, alt }) {
       const ref = findAttachment(src, attachments);
       if (!ref) return <img src={src} alt={alt} />;
       if (!ref.attachment) return <MissingAttachment name={ref.name} />;
-      const cid = ref.attachment.file.ref.$link;
       return (
         <ImageEmbed
-          imageUrl={cdnImageUrl(did, cid)}
-          linkUrl={blobUrl(pds, did, cid)}
+          imageUrl={ref.attachment.imageUrl ?? ref.attachment.downloadUrl}
+          linkUrl={ref.attachment.downloadUrl}
           alt={alt ?? ref.name}
         />
       );
@@ -94,9 +87,7 @@ function attachmentMarkdownComponents(
       if (!ref.attachment) return <MissingAttachment name={ref.name} />;
       return (
         <AttachmentLink
-          pds={pds}
-          did={did}
-          cid={ref.attachment.file.ref.$link}
+          downloadUrl={ref.attachment.downloadUrl}
           name={ref.attachment.name}
         />
       );
@@ -107,14 +98,12 @@ function attachmentMarkdownComponents(
 export default function PostBody({
   children,
   attachments,
-  pds,
-  did,
 }: PostBodyProps) {
   const resolver =
-    attachments && pds && did
+    attachments
       ? {
           urlTransform: passAttachmentUrls,
-          components: attachmentMarkdownComponents(attachments, pds, did),
+          components: attachmentMarkdownComponents(attachments),
         }
       : {};
 

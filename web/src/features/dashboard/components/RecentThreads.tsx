@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatFullDate, relativeDate } from "../../../frontend/ui/dates";
-import { parseAtUri } from "../../../atproto/uri";
 import { threadUrl } from "../../../frontend/app/router/urls";
 import type { OwnedThread } from "../../../atbbs/dashboard/ownedThreads";
 
@@ -21,8 +20,11 @@ export default function RecentThreads({ threads }: RecentThreadsProps) {
   return (
     <div>
       {threads.slice(0, shown).map((thread) => {
-        const { did, rkey } = parseAtUri(thread.uri);
-        const url = threadUrl(thread.bbsHandle, did, rkey);
+        const url = threadUrl(
+          thread.bbsHandle,
+          thread.threadDid,
+          thread.threadRkey,
+        );
         return (
           <Link
             key={thread.uri}

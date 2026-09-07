@@ -84,8 +84,6 @@ export default function ReplyPostCard({
       <PostContent
         body={reply.body}
         attachments={reply.attachments}
-        pds={reply.pds}
-        did={reply.did}
       />
     </div>
   );

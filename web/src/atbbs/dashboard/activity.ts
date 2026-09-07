@@ -11,8 +11,12 @@ export interface ActivityItem {
   type: "reply" | "parent_reply";
   threadTitle: string;
   threadUri: string;
+  threadDid: string;
+  threadRkey: string;
   bbsHandle: string;
   replyUri: string;
+  replyRkey: string;
+  authorDid: string;
   handle: string;
   body: string;
   createdAt: string;
@@ -33,12 +37,17 @@ async function fetchBacklinkItems(
       excludeDid,
       failureMode: "best-effort",
     });
+    const threadAddress = parseAtUri(threadUri);
     return records.map((record) => ({
       type,
       threadTitle,
       threadUri,
+      threadDid: threadAddress.did,
+      threadRkey: threadAddress.rkey,
       bbsHandle,
       replyUri: record.uri,
+      replyRkey: record.rkey,
+      authorDid: record.did,
       handle: record.handle,
       body: ((record.value.body as string) ?? "").substring(0, 200),
       createdAt: (record.value.createdAt as string) ?? "",

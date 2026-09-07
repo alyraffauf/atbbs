@@ -19,8 +19,6 @@ export default function NewsPage() {
     <NewsPostCard
       news={item}
       handle={handle}
-      pds={bbs.identity.pds ?? ""}
-      did={bbs.identity.did}
       isSysop={isSysop}
       onDelete={() => {
         if (!confirm("Delete this news post?")) return;

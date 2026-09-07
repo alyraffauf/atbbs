@@ -62,8 +62,6 @@ export default function ThreadPostCard({
       <PostContent
         body={thread.body}
         attachments={thread.attachments}
-        pds={thread.authorPds}
-        did={thread.did}
         attachmentListClassName="mt-3 space-y-1"
       />
     </article>

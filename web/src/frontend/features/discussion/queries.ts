@@ -6,7 +6,7 @@ import {
   hydrateReplyPage,
 } from "../../../atbbs/discussion/thread";
 import { fetchNews } from "../../../atbbs/discussion/news";
-import type { BacklinkRef } from "../../../atproto/backlinks";
+import type { ReplyRef } from "../../../atbbs/discussion/replies";
 
 export const boardThreadsInfiniteQuery = (bbsDid: string, slug: string) =>
   infiniteQueryOptions({
@@ -39,7 +39,7 @@ export const threadRootQuery = (bbsDid: string, did: string, tid: string) =>
 export const threadPageQuery = (
   threadUri: string,
   page: number,
-  pageRefs: BacklinkRef[],
+  pageRefs: ReplyRef[],
 ) =>
   queryOptions({
     queryKey: [

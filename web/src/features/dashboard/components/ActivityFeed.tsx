@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
-import { parseAtUri } from "../../../atproto/uri";
 import { threadUrl } from "../../../frontend/app/router/urls";
 import PostBody from "../../discussion/components/PostBody";
 import PostMeta from "../../discussion/components/PostMeta";
@@ -22,9 +21,7 @@ export default function ActivityFeed({ items }: ActivityFeedProps) {
   return (
     <div>
       {items.slice(0, shown).map((item) => {
-        const { did: threadDid, rkey: threadRkey } = parseAtUri(item.threadUri);
-        const { rkey: replyRkey } = parseAtUri(item.replyUri);
-        const url = `${threadUrl(item.bbsHandle, threadDid, threadRkey)}#reply-${replyRkey}`;
+        const url = `${threadUrl(item.bbsHandle, item.threadDid, item.threadRkey)}#reply-${item.replyRkey}`;
         return (
           <Link
             key={item.replyUri}

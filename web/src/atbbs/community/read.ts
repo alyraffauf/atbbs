@@ -21,20 +21,6 @@ export interface Board {
   updatedAt?: string;
 }
 
-export interface PostAttachment {
-  file: { ref: { $link: string } };
-  name: string;
-}
-
-export interface NewsPost {
-  uri: string;
-  rkey: string;
-  title: string;
-  body: string;
-  createdAt: string;
-  attachments?: PostAttachment[];
-}
-
 export interface Site {
   name: string;
   description: string;
