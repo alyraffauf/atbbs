@@ -1,35 +1,40 @@
-import { useCallback, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
 import { PIN } from "../lib/lexicon";
-import { parseAtUri } from "../lib/util";
 import { createPin, deleteRecord } from "../lib/writes";
+import { findPinRkey } from "../lib/pins";
+import { pinsQuery } from "../lib/queries";
 import { ActionButton } from "./nav/ActionButton";
 import { Pin, PinOff } from "lucide-react";
 
 interface PinButtonProps {
   bbsDid: string;
-  initialRkey: string | null;
 }
 
-export default function PinButton({ bbsDid, initialRkey }: PinButtonProps) {
+export default function PinButton({ bbsDid }: PinButtonProps) {
   const { user, repo } = useAuth();
-  const [pinRkey, setPinRkey] = useState(initialRkey);
+  const queryClient = useQueryClient();
+  const pinsOptions = pinsQuery(user?.pdsUrl ?? "", user?.did ?? "");
+  const pins = useQuery({ ...pinsOptions, enabled: !!user });
+  const pinRkey = pins.data ? findPinRkey(pins.data, bbsDid) : null;
 
-  const handleTogglePin = useCallback(async () => {
-    if (!repo) return;
-    if (pinRkey) {
-      await deleteRecord(repo, PIN, pinRkey);
-      setPinRkey(null);
-    } else {
-      const record = await createPin(repo, bbsDid);
-      setPinRkey(parseAtUri(record.uri).rkey);
-    }
-  }, [repo, bbsDid, pinRkey]);
+  const togglePin = useMutation({
+    mutationFn: async () => {
+      if (!repo) throw new Error("Not signed in");
+      if (pinRkey) return deleteRecord(repo, PIN, pinRkey);
+      return createPin(repo, bbsDid);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: pinsOptions.queryKey }),
+  });
 
   if (!user) return null;
 
   return (
-    <ActionButton onClick={handleTogglePin} icon={pinRkey ? PinOff : Pin}>
+    <ActionButton
+      onClick={() => togglePin.mutate()}
+      icon={pinRkey ? PinOff : Pin}
+      disabled={pins.isPending || togglePin.isPending}
+    >
       {pinRkey ? "unpin" : "pin"}
     </ActionButton>
   );

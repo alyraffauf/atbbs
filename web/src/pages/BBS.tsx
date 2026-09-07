@@ -14,12 +14,11 @@ import { useAuth } from "../lib/auth";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { createPost, uploadAttachments } from "../lib/writes";
-import { findPinRkey } from "../lib/pins";
 import { SITE } from "../lib/lexicon";
 import { makeAtUri, nowIso, parseAtUri, truncate } from "../lib/util";
 import type { Did } from "@atcute/lexicons/syntax";
 import * as limits from "../lib/limits";
-import { bbsQuery, newsQuery, pinsQuery } from "../lib/queries";
+import { bbsQuery, newsQuery } from "../lib/queries";
 import { bbsUrl, boardUrl, newsUrl, profileUrl } from "../lib/routes";
 import { queryClient } from "../lib/queryClient";
 import { alertOnError } from "../lib/alerts";
@@ -44,11 +43,6 @@ export default function BBSPage() {
 
   const { data: bbs } = useSuspenseQuery(bbsQuery(handle!));
   const { data: news } = useQuery(newsQuery(bbs.identity.did));
-  const { data: pins } = useQuery({
-    ...pinsQuery(user?.pdsUrl ?? "", user?.did ?? ""),
-    enabled: !!user,
-  });
-  const pinRkey = user && pins ? findPinRkey(pins, bbs.identity.did) : null;
 
   useBreadcrumb(
     [{ label: bbs.site.name, to: bbsUrl(handle!) }],
@@ -118,11 +112,7 @@ export default function BBSPage() {
         <h1 className="text-lg text-neutral-200 mb-1">{bbs.site.name}</h1>
         <p className="text-neutral-400 mb-3">{bbs.site.description}</p>
         <ActionBar>
-          <PinButton
-            key={bbs.identity.did}
-            bbsDid={bbs.identity.did}
-            initialRkey={pinRkey}
-          />
+          <PinButton bbsDid={bbs.identity.did} />
           <ActionLink to={profileUrl(handle!)} icon={UserCog}>
             admin
           </ActionLink>

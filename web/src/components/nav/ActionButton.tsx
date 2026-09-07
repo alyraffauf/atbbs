@@ -9,6 +9,7 @@ interface ActionButtonProps {
   children: React.ReactNode;
   icon?: LucideIcon;
   className?: string;
+  disabled?: boolean;
 }
 
 interface ActionLinkProps {
@@ -23,9 +24,14 @@ export function ActionButton({
   children,
   icon: Icon,
   className,
+  disabled,
 }: ActionButtonProps) {
   return (
-    <button onClick={onClick} className={`${actionStyle} ${className ?? ""}`}>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`${actionStyle} disabled:cursor-not-allowed disabled:opacity-50 ${className ?? ""}`}
+    >
       {Icon && <Icon size={14} />}
       {children}
     </button>
