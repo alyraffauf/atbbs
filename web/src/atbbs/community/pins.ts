@@ -11,7 +11,7 @@ import { isPinRecord, isSiteRecord } from "../schema/records";
 import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 
-export interface PinnedBBS {
+export interface PinnedCommunity {
   did: string;
   rkey: string;
   handle: string;
@@ -23,7 +23,7 @@ export interface PinnedBBS {
 export async function fetchPins(
   pdsUrl: string,
   did: string,
-): Promise<PinnedBBS[]> {
+): Promise<PinnedCommunity[]> {
   const records = requireComplete(await listRecords(pdsUrl, did, PIN));
   const pinRecords = records.filter(isPinRecord);
 
@@ -45,7 +45,7 @@ export async function fetchPins(
     siteNames[parseAtUri(record.uri).did] = record.value.name;
   });
 
-  const results: PinnedBBS[] = [];
+  const results: PinnedCommunity[] = [];
   for (const record of pinRecords) {
     const identity = identities[record.value.did];
     if (!identity) continue;
@@ -63,7 +63,7 @@ export async function fetchPins(
 }
 
 export function findPinRkey(
-  pins: PinnedBBS[],
+  pins: PinnedCommunity[],
   targetDid: string,
 ): string | null {
   const match = pins.find((entry) => entry.did === targetDid);

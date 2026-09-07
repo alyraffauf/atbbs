@@ -1,12 +1,12 @@
 /** Fetch the list of news posts a sysop has published to their site. */
 
-import { getBacklinks } from "../../../atproto/backlinks";
-import { getRecordsBatch } from "../../../atbbs/support/records";
-import { POST, SITE } from "../../../atbbs/schema/collections";
-import { makeAtUri, parseAtUri } from "../../../atproto/uri";
+import { getBacklinks } from "../../atproto/backlinks";
+import { getRecordsBatch } from "../support/records";
+import { POST, SITE } from "../schema/collections";
+import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
-import { isPostRecord } from "../../../atbbs/schema/records";
-import type { NewsPost } from "../../../atbbs/community/read";
+import { isPostRecord } from "../schema/records";
+import type { NewsPost } from "../community/read";
 
 export async function fetchNews(bbsDid: string): Promise<NewsPost[]> {
   const siteUri = makeAtUri(bbsDid as Did, SITE, "self");

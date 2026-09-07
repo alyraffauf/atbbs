@@ -6,7 +6,7 @@ import ThreadPresentation from "../components/ThreadPresentation";
 import { useAuth } from "../../auth/auth";
 import * as limits from "../../../atbbs/schema/limits";
 import { bbsModerationQuery } from "../../../frontend/features/moderation/queries";
-import type { Reply } from "../data/replies";
+import type { Reply } from "../../../atbbs/discussion/replies";
 import { useModerationMutations } from "../../moderation/useModerationMutations";
 import { usePageTitle } from "../../../frontend/app/browser/usePageTitle";
 import { useThreadMutations } from "../useThreadMutations";

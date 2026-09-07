@@ -4,12 +4,12 @@ import { Link } from "react-router-dom";
 import { formatFullDate, relativeDate } from "../../../frontend/ui/dates";
 import { parseAtUri } from "../../../atproto/uri";
 import { threadUrl } from "../../../frontend/app/router/urls";
-import type { MyThread } from "../data/mythreads";
+import type { OwnedThread } from "../../../atbbs/dashboard/ownedThreads";
 
 const PAGE_SIZE = 10;
 
 interface RecentThreadsProps {
-  threads: MyThread[];
+  threads: OwnedThread[];
 }
 
 export default function RecentThreads({ threads }: RecentThreadsProps) {

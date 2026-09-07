@@ -1,18 +1,18 @@
 /** Thread detail fetchers: root post, reply refs, and the hydrated
  *  reply records for one page of the thread. */
 
-import { getBacklinks, type BacklinkRef } from "../../../atproto/backlinks";
-import { resolveIdentity } from "../../../atproto/identity";
-import { getRecord } from "../../../atproto/records";
-import { resolveIdentitiesBatch } from "../../../atbbs/identity/service";
-import { getRecordsBatch } from "../../../atbbs/support/records";
-import { POST } from "../../../atbbs/schema/collections";
-import { parseAtUri } from "../../../atproto/uri";
+import { getBacklinks, type BacklinkRef } from "../../atproto/backlinks";
+import { resolveIdentity } from "../../atproto/identity";
+import { getRecord } from "../../atproto/records";
+import { resolveIdentitiesBatch } from "../identity/service";
+import { getRecordsBatch } from "../support/records";
+import { POST } from "../schema/collections";
+import { parseAtUri } from "../../atproto/uri";
 import { recordToReply } from "./replies";
-import { isPostRecord } from "../../../atbbs/schema/records";
+import { isPostRecord } from "../schema/records";
 import type { Reply } from "./replies";
 
-export interface ThreadRoot {
+export interface Thread {
   uri: string;
   did: string;
   rkey: string;
@@ -64,7 +64,7 @@ export async function fetchThreadRoot(
   bbsDid: string,
   did: string,
   tid: string,
-): Promise<ThreadRoot> {
+): Promise<Thread> {
   const threadRecord = await getRecord(did, POST, tid);
   if (!isPostRecord(threadRecord)) {
     throw new Error("Invalid post record");
@@ -91,7 +91,7 @@ export async function fetchThreadRoot(
     body: postValue.body,
     createdAt: postValue.createdAt,
     boardSlug,
-    attachments: postValue.attachments as ThreadRoot["attachments"],
+    attachments: postValue.attachments as Thread["attachments"],
   };
 }
 

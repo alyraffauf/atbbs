@@ -5,14 +5,14 @@
  *  returns newest posts first, the first time a thread URI appears is its
  *  most recent activity — giving us bump order naturally. */
 
-import { getBacklinks } from "../../../atproto/backlinks";
-import { getAvatars, resolveIdentitiesBatch } from "../../../atbbs/identity/service";
-import { getBacklinkCountsBatch } from "../../../atbbs/discussion/hydration";
-import { getRecordsBatch, getRecordsByUri } from "../../../atbbs/support/records";
-import { POST, BOARD } from "../../../atbbs/schema/collections";
-import { makeAtUri, parseAtUri } from "../../../atproto/uri";
+import { getBacklinks } from "../../atproto/backlinks";
+import { getAvatars, resolveIdentitiesBatch } from "../identity/service";
+import { getBacklinkCountsBatch } from "../discussion/hydration";
+import { getRecordsBatch, getRecordsByUri } from "../support/records";
+import { POST, BOARD } from "../schema/collections";
+import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
-import { isPostRecord } from "../../../atbbs/schema/records";
+import { isPostRecord } from "../schema/records";
 
 export interface Participant {
   did: string;
@@ -20,7 +20,7 @@ export interface Participant {
   avatar?: string;
 }
 
-export interface ThreadItem {
+export interface ThreadSummary {
   uri: string;
   did: string;
   rkey: string;
@@ -34,7 +34,7 @@ export interface ThreadItem {
 }
 
 export interface ThreadPageResult {
-  threads: ThreadItem[];
+  threads: ThreadSummary[];
   cursor: string | null;
 }
 
@@ -120,7 +120,7 @@ export async function hydrateThreadPage(
     getAvatars([...allDids]),
   ]);
 
-  const threads: ThreadItem[] = validRoots
+  const threads: ThreadSummary[] = validRoots
     .filter((record) => parseAtUri(record.uri).did in identities)
     .map((record) => {
       const { did, rkey } = parseAtUri(record.uri);

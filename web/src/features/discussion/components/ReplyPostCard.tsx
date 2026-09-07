@@ -4,7 +4,7 @@ import PostActions, { type PostAction } from "./PostActions";
 import PostBody from "./PostBody";
 import PostContent from "./PostContent";
 import PostMeta from "./PostMeta";
-import type { Reply } from "../data/replies";
+import type { Reply } from "../../../atbbs/discussion/replies";
 
 interface ReplyPostCardProps {
   reply: Reply;

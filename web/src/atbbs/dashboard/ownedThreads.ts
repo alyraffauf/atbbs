@@ -1,12 +1,12 @@
 /** Fetch the user's own root posts (threads) across all BBSes. */
 
-import { resolveIdentitiesBatch } from "../../../atbbs/identity/service";
-import { listRecords, requireComplete } from "../../../atproto/records";
-import { POST } from "../../../atbbs/schema/collections";
-import { parseAtUri } from "../../../atproto/uri";
-import { isPostRecord } from "../../../atbbs/schema/records";
+import { resolveIdentitiesBatch } from "../identity/service";
+import { listRecords, requireComplete } from "../../atproto/records";
+import { POST } from "../schema/collections";
+import { parseAtUri } from "../../atproto/uri";
+import { isPostRecord } from "../schema/records";
 
-export interface MyThread {
+export interface OwnedThread {
   uri: string;
   rkey: string;
   title: string;
@@ -19,7 +19,7 @@ export interface MyThread {
 export async function fetchMyThreads(
   pdsUrl: string,
   did: string,
-): Promise<MyThread[]> {
+): Promise<OwnedThread[]> {
   const records = requireComplete(await listRecords(pdsUrl, did, POST));
   const rootPosts = records
     .filter(isPostRecord)
@@ -31,7 +31,7 @@ export async function fetchMyThreads(
   );
   const identities = await resolveIdentitiesBatch([...bbsDids]);
 
-  const results: MyThread[] = [];
+  const results: OwnedThread[] = [];
   for (const record of rootPosts) {
     const bbsDid = parseAtUri(record.value.scope).did;
     const identity = identities[bbsDid];

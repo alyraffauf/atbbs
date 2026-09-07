@@ -5,7 +5,7 @@ import { parseAtUri } from "../../../atproto/uri";
 import { threadUrl } from "../../../frontend/app/router/urls";
 import PostBody from "../../discussion/components/PostBody";
 import PostMeta from "../../discussion/components/PostMeta";
-import type { ActivityItem } from "../data/activity";
+import type { ActivityItem } from "../../../atbbs/dashboard/activity";
 
 const PAGE_SIZE = 10;
 

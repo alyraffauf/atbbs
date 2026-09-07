@@ -4,9 +4,9 @@ import {
   REPLIES_PER_PAGE,
   refToUri,
   type Reply,
-} from "../../../features/discussion/data/replies";
+} from "../../../atbbs/discussion/replies";
 import type { BacklinkRef } from "../../../atproto/backlinks";
-import type { ReplyPage } from "../../../features/discussion/data/thread";
+import type { ReplyPage } from "../../../atbbs/discussion/thread";
 import type { BoundedResult } from "../../../atproto/records";
 
 export async function cancelRefsRefetch(threadUri: string) {

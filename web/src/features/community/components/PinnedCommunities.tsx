@@ -2,12 +2,12 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import DirectoryEntryLink from "./DirectoryEntryLink";
 import { bbsUrl } from "../../../frontend/app/router/urls";
-import type { PinnedBBS } from "../../../atbbs/community/pins";
+import type { PinnedCommunity } from "../../../atbbs/community/pins";
 
 const PAGE_SIZE = 5;
 
 interface PinnedCommunitiesProps {
-  pins: PinnedBBS[];
+  pins: PinnedCommunity[];
 }
 
 export default function PinnedCommunities({ pins }: PinnedCommunitiesProps) {

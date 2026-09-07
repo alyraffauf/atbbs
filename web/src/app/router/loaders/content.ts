@@ -4,7 +4,7 @@ import type {
   Community,
   NewsPost,
 } from "../../../atbbs/community/read";
-import type { ThreadRoot } from "../../../features/discussion/data/thread";
+import type { Thread } from "../../../atbbs/discussion/thread";
 import { bbsQuery } from "../../../frontend/features/community/queries";
 import {
   newsQuery,
@@ -49,7 +49,7 @@ export async function boardLoader({ params }: LoaderFunctionArgs) {
 }
 
 export interface ThreadLoaderData extends CommunityLoaderData {
-  thread: ThreadRoot;
+  thread: Thread;
 }
 
 export async function threadLoader({ params }: LoaderFunctionArgs) {

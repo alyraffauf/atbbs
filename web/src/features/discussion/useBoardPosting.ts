@@ -7,7 +7,10 @@ import { useNavigate } from "react-router-dom";
 import type { Did } from "@atcute/lexicons/syntax";
 import { useAuth } from "../auth/auth";
 import type { Board, Community } from "../../atbbs/community/read";
-import type { ThreadItem, ThreadPageResult } from "./data/boardThreads";
+import type {
+  ThreadSummary,
+  ThreadPageResult,
+} from "../../atbbs/discussion/threads";
 import { BOARD } from "../../atbbs/schema/collections";
 import { myThreadsQuery } from "../../frontend/features/dashboard/queries";
 import { boardThreadsInfiniteQuery } from "../../frontend/features/discussion/queries";
@@ -69,7 +72,7 @@ export function useBoardPosting(
       if (!user) return;
       const { did, rkey } = parseAtUri(record.uri);
       const now = nowIso();
-      const newThread: ThreadItem = {
+      const newThread: ThreadSummary = {
         uri: record.uri,
         did,
         rkey,

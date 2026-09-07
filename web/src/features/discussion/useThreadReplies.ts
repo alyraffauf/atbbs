@@ -16,7 +16,7 @@ import {
   pageForRkey,
   pageForReply,
   rkeyFromHash,
-} from "./data/replies";
+} from "../../atbbs/discussion/replies";
 
 export function useThreadReplies(threadUri: string) {
   const [params, setParams] = useSearchParams();

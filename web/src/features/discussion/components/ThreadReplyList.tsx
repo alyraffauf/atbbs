@@ -1,5 +1,5 @@
 import type { BBSModeration } from "../../moderation/data/bbsModeration";
-import type { Reply } from "../data/replies";
+import type { Reply } from "../../../atbbs/discussion/replies";
 import ReplyPostCard from "./ReplyPostCard";
 
 interface ThreadReplyListProps {

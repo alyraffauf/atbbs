@@ -1,11 +1,11 @@
-import type { ThreadRoot } from "../data/thread";
+import type { Thread } from "../../../atbbs/discussion/thread";
 import ModerationBadge from "./ModerationBadge";
 import PostActions, { type PostAction } from "./PostActions";
 import PostContent from "./PostContent";
 import PostMeta from "./PostMeta";
 
 interface ThreadPostCardProps {
-  thread: ThreadRoot;
+  thread: Thread;
   userDid?: string;
   sysopDid: string;
   banRkey?: string | null;

@@ -8,9 +8,9 @@ import type { Community } from "../../atbbs/community/read";
 import { BOARD, POST } from "../../atbbs/schema/collections";
 import { myThreadsQuery } from "../../frontend/features/dashboard/queries";
 import { queryClient } from "../../frontend/app/queryClient";
-import { REPLIES_PER_PAGE, type Reply } from "./data/replies";
+import { REPLIES_PER_PAGE, type Reply } from "../../atbbs/discussion/replies";
 import { bbsUrl } from "../../frontend/app/router/urls";
-import type { ThreadRoot } from "./data/thread";
+import type { Thread } from "../../atbbs/discussion/thread";
 import {
   appendRefAndReply,
   cancelRefsRefetch,
@@ -28,7 +28,7 @@ import type { BacklinkRef } from "../../atproto/backlinks";
 
 interface ThreadMutationOptions {
   bbs: Community;
-  thread: ThreadRoot;
+  thread: Thread;
   handle: string;
   page: number;
   setPage: (page: number) => void;

@@ -1,13 +1,13 @@
 import type { BBSModeration } from "../../moderation/data/bbsModeration";
-import type { Reply } from "../data/replies";
-import type { ThreadRoot } from "../data/thread";
+import type { Reply } from "../../../atbbs/discussion/replies";
+import type { Thread } from "../../../atbbs/discussion/thread";
 import type { ReactNode } from "react";
 import PageNav from "../../../shared/ui/PageNav";
 import ThreadPostCard from "./ThreadPostCard";
 import ThreadReplyList from "./ThreadReplyList";
 
 interface ThreadPresentationProps {
-  thread: ThreadRoot;
+  thread: Thread;
   replies: Reply[];
   parentReplies: Record<string, Reply>;
   moderation: BBSModeration;

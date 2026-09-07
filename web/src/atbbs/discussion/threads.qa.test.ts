@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { hydrateThreadPage } from "./boardThreads";
+import { hydrateThreadPage } from "./threads";
 
 afterEach(() => vi.unstubAllGlobals());
 

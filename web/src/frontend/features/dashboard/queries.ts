@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
-import { fetchActivity } from "../../../features/dashboard/data/activity";
-import { fetchMyThreads } from "../../../features/dashboard/data/mythreads";
+import { fetchActivity } from "../../../atbbs/dashboard/activity";
+import { fetchMyThreads } from "../../../atbbs/dashboard/ownedThreads";
 
 export const myThreadsQuery = (pdsUrl: string, did: string) =>
   queryOptions({
