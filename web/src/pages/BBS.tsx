@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useRouteLoaderData } from "react-router-dom";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   UserCog,
   Pencil,
@@ -12,17 +12,11 @@ import {
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { usePageTitle } from "../hooks/usePageTitle";
-import { createPost, uploadAttachments } from "../lib/writes";
-import { SITE } from "../lib/lexicon";
-import { makeAtUri, nowIso, parseAtUri, truncate } from "../lib/util";
-import type { Did } from "@atcute/lexicons/syntax";
+import { truncate } from "../lib/util";
 import * as limits from "../lib/limits";
 import { newsQuery } from "../lib/queries";
 import { boardUrl, newsUrl, profileUrl } from "../lib/routes";
-import { queryClient } from "../lib/queryClient";
-import { alertOnError } from "../lib/alerts";
-import type { NewsPost } from "../lib/bbs";
-import ComposeForm, { type PostDraft } from "../components/form/ComposeForm";
+import ComposeForm from "../components/form/ComposeForm";
 import Localtime from "../components/Localtime";
 import ListLink from "../components/nav/ListLink";
 import ActionBar from "../components/nav/ActionBar";
@@ -30,6 +24,7 @@ import { ActionLink } from "../components/nav/ActionButton";
 import PinButton from "../components/PinButton";
 import ListSkeleton from "../components/layout/ListSkeleton";
 import type { CommunityLoaderData } from "../router/loaders";
+import { usePostNews } from "../hooks/useNewsMutations";
 
 const INITIAL_NEWS_COUNT = 3;
 
@@ -37,7 +32,7 @@ export default function BBSPage() {
   const { handle, bbs } = useRouteLoaderData(
     "community",
   ) as CommunityLoaderData;
-  const { user, repo } = useAuth();
+  const { user } = useAuth();
   const [showAllNews, setShowAllNews] = useState(false);
 
   const { data: news } = useQuery(newsQuery(bbs.identity.did));
@@ -45,36 +40,7 @@ export default function BBSPage() {
 
   const isSysop = user && user.did === bbs.identity.did;
 
-  const postNewsMutation = useMutation({
-    mutationFn: async (input: PostDraft) => {
-      if (!repo) throw new Error("Not signed in");
-      const siteUri = makeAtUri(bbs.identity.did as Did, SITE, "self");
-      const attachments = await uploadAttachments(repo, input.files);
-      const record = await createPost(repo, siteUri, input.body, {
-        title: input.title ?? "",
-        attachments,
-      });
-      return { record, attachments };
-    },
-    onSuccess: ({ record, attachments }, input) => {
-      const rkey = parseAtUri(record.uri).rkey;
-      const newItem: NewsPost = {
-        uri: record.uri,
-        rkey,
-        title: input.title ?? "",
-        body: input.body,
-        createdAt: nowIso(),
-        attachments: attachments.length
-          ? (attachments as NewsPost["attachments"])
-          : undefined,
-      };
-      queryClient.setQueryData<NewsPost[]>(
-        newsQuery(bbs.identity.did).queryKey,
-        (prev) => [newItem, ...(prev ?? [])],
-      );
-    },
-    onError: alertOnError("post"),
-  });
+  const postNews = usePostNews(bbs);
 
   const visibleNews = news
     ? showAllNews
@@ -139,7 +105,7 @@ export default function BBSPage() {
             </summary>
             <ComposeForm
               className="mt-4"
-              onSave={(draft) => postNewsMutation.mutateAsync(draft)}
+              onSave={(draft) => postNews.mutateAsync(draft)}
               title={{
                 placeholder: "Headline",
                 maxLength: limits.POST_TITLE,

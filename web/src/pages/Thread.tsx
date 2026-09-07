@@ -1,47 +1,24 @@
 import { useState } from "react";
-import { useLoaderData, useNavigate } from "react-router-dom";
-import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
+import { useLoaderData } from "react-router-dom";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { useThreadReplies } from "../hooks/useThreadReplies";
-import { BOARD, POST } from "../lib/lexicon";
-import { makeAtUri, nowIso, parseAtUri } from "../lib/util";
-import type { Did } from "@atcute/lexicons/syntax";
 import * as limits from "../lib/limits";
-import {
-  createPost,
-  deleteRecord,
-  uploadAttachments,
-} from "../lib/writes";
 import { useModerationMutations } from "../hooks/useModerationMutations";
-import {
-  bbsModerationQuery,
-  myThreadsQuery,
-} from "../lib/queries";
-import { queryClient } from "../lib/queryClient";
-import { bbsUrl } from "../lib/routes";
-import { REPLIES_PER_PAGE } from "../lib/replies";
-import {
-  appendRefAndReply,
-  cancelRefsRefetch,
-  getRefs,
-  removeRefAndReply,
-  setRefs,
-} from "../lib/threadCache";
-import { alertOnError } from "../lib/alerts";
-import type { BacklinkRef } from "../lib/atproto";
+import { bbsModerationQuery } from "../lib/queries";
 import PageNav from "../components/nav/PageNav";
 import ReplyCard from "../components/post/ReplyCard";
 import type { Reply } from "../lib/replies";
-import ComposeForm, { type PostDraft } from "../components/form/ComposeForm";
+import ComposeForm from "../components/form/ComposeForm";
 import ThreadCard from "../components/post/ThreadCard";
 import type { ThreadLoaderData } from "../router/loaders";
+import { useThreadMutations } from "../hooks/useThreadMutations";
 
 export default function ThreadPage() {
   const { handle, bbs, thread } = useLoaderData() as ThreadLoaderData;
   const threadUri = thread.uri;
-  const { user, repo } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { data: moderation, isError: moderationIsStale } = useSuspenseQuery(
     bbsModerationQuery(bbs.identity.pds ?? "", bbs.identity.did),
@@ -59,14 +36,12 @@ export default function ThreadPage() {
   const isSysop = !!(user && user.did === bbs.identity.did);
   const threadHidden =
     !isSysop &&
-    (!!moderation.banRkeys[thread.did] ||
-      !!moderation.hideRkeys[thread.uri]);
+    (!!moderation.banRkeys[thread.did] || !!moderation.hideRkeys[thread.uri]);
   const visibleReplies = isSysop
     ? replies
     : replies.filter(
         (reply) =>
-          !moderation.banRkeys[reply.did] &&
-          !moderation.hideRkeys[reply.uri],
+          !moderation.banRkeys[reply.did] && !moderation.hideRkeys[reply.uri],
       );
 
   const [replyingTo, setReplyingTo] = useState<{
@@ -76,87 +51,13 @@ export default function ThreadPage() {
 
   usePageTitle(`${thread.title} — ${bbs.site.name}`);
 
-  // --- Mutations ---
-
-  const createReplyMutation = useMutation({
-    mutationFn: async (input: PostDraft & { parent: string | null }) => {
-      if (!repo || !user) throw new Error("Not signed in");
-      const boardUri = makeAtUri(
-        bbs.identity.did as Did,
-        BOARD,
-        thread.boardSlug,
-      );
-      const attachments = await uploadAttachments(repo, input.files);
-      const record = await createPost(repo, boardUri, input.body, {
-        root: threadUri,
-        parent: input.parent ?? undefined,
-        attachments,
-      });
-      return { record, input, attachments };
-    },
-    onSuccess: ({ record, input, attachments }) => {
-      if (!user) return;
-      const { did: newDid, rkey: newRkey } = parseAtUri(record.uri);
-      const newRef: BacklinkRef = {
-        did: newDid,
-        collection: POST,
-        rkey: newRkey,
-      };
-      const newReply: Reply = {
-        uri: record.uri,
-        did: newDid,
-        rkey: newRkey,
-        handle: user.handle,
-        pds: user.pdsUrl,
-        body: input.body,
-        createdAt: nowIso(),
-        parent: input.parent,
-        attachments: attachments as Reply["attachments"],
-      };
-
-      const updatedRefs = appendRefAndReply(threadUri, newRef, newReply);
-
-      setReplyingTo(null);
-
-      const newLastPage = Math.max(
-        1,
-        Math.ceil(updatedRefs.length / REPLIES_PER_PAGE),
-      );
-      if (page !== newLastPage) setPage(newLastPage);
-    },
-    onError: alertOnError("post reply"),
-  });
-
-  const deleteReplyMutation = useMutation({
-    mutationFn: async (reply: Reply) => {
-      if (!repo) throw new Error("Not signed in");
-      await deleteRecord(repo, POST, reply.rkey);
-      return reply;
-    },
-    onMutate: async (reply) => {
-      await cancelRefsRefetch(threadUri);
-      const previousRefs = getRefs(threadUri);
-      removeRefAndReply(threadUri, reply.uri);
-      return { previousRefs };
-    },
-    onError: (err, _reply, context) => {
-      if (context) setRefs(threadUri, context.previousRefs);
-      alertOnError("delete")(err);
-    },
-  });
-
-  const deleteThreadMutation = useMutation({
-    mutationFn: async () => {
-      if (!repo) throw new Error("Not signed in");
-      await deleteRecord(repo, POST, thread.rkey);
-    },
-    onSuccess: () => {
-      if (user) {
-        queryClient.invalidateQueries(myThreadsQuery(user.pdsUrl, user.did));
-      }
-      navigate(bbsUrl(handle));
-    },
-    onError: alertOnError("delete"),
+  const { createReply, deleteReply, deleteThread } = useThreadMutations({
+    bbs,
+    thread,
+    handle,
+    page,
+    setPage,
+    onReplyCreated: () => setReplyingTo(null),
   });
 
   const { ban, unban, hide, unhide } = useModerationMutations();
@@ -165,12 +66,12 @@ export default function ThreadPage() {
 
   function onDeleteThread() {
     if (!confirm("Delete this thread?")) return;
-    deleteThreadMutation.mutate();
+    deleteThread.mutate();
   }
 
   function onDeleteReply(reply: Reply) {
     if (!confirm("Delete this reply?")) return;
-    deleteReplyMutation.mutate(reply);
+    deleteReply.mutate(reply);
   }
 
   function onBan(banDid: string) {
@@ -288,7 +189,7 @@ export default function ThreadPage() {
         <ComposeForm
           className="mt-6 border border-neutral-800 rounded p-4"
           onSave={(draft) =>
-            createReplyMutation.mutateAsync({
+            createReply.mutateAsync({
               ...draft,
               parent: replyingTo?.uri ?? null,
             })

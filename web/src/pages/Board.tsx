@@ -1,59 +1,21 @@
 import { PenLine } from "lucide-react";
-import { useLoaderData, useNavigate } from "react-router-dom";
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  type InfiniteData,
-  type QueryKey,
-} from "@tanstack/react-query";
+import { useLoaderData } from "react-router-dom";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
 import { usePageTitle } from "../hooks/usePageTitle";
-import { makeAtUri, nowIso, parseAtUri, relativeDate } from "../lib/util";
-import type { Did } from "@atcute/lexicons/syntax";
-import { BOARD } from "../lib/lexicon";
-import { createPost, uploadAttachments } from "../lib/writes";
+import { relativeDate } from "../lib/util";
 import * as limits from "../lib/limits";
-import {
-  bbsModerationQuery,
-  boardThreadsInfiniteQuery,
-  myThreadsQuery,
-} from "../lib/queries";
-import { queryClient } from "../lib/queryClient";
+import { bbsModerationQuery, boardThreadsInfiniteQuery } from "../lib/queries";
 import { threadUrl } from "../lib/routes";
-import { alertOnError } from "../lib/alerts";
-import type { ThreadItem, ThreadPageResult } from "../lib/boardThreads";
 import ThreadLink, { ThreadListHeader } from "../components/nav/ThreadLink";
-import ComposeForm, { type PostDraft } from "../components/form/ComposeForm";
+import ComposeForm from "../components/form/ComposeForm";
 import ListSkeleton from "../components/layout/ListSkeleton";
 import type { BoardLoaderData } from "../router/loaders";
-
-// Constellation indexes PDS writes asynchronously — usually within a second,
-// occasionally longer. After creating a thread we refetch with backoff until
-// the board's server data includes the new URI, so the optimistic prepend is
-// replaced by authoritative data rather than being wiped by a premature
-// refetch-on-mount returning stale results.
-async function refetchUntilIndexed(boardKey: QueryKey, threadUri: string) {
-  const delays = [500, 800, 1300, 2100, 3400];
-  for (const delay of delays) {
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    try {
-      await queryClient.refetchQueries({ queryKey: boardKey });
-    } catch {
-      continue;
-    }
-    const data =
-      queryClient.getQueryData<InfiniteData<ThreadPageResult>>(boardKey);
-    if (data?.pages.some((p) => p.threads.some((t) => t.uri === threadUri))) {
-      return;
-    }
-  }
-}
+import { useBoardPosting } from "../hooks/useBoardPosting";
 
 export default function BoardPage() {
   const { handle, bbs, board } = useLoaderData() as BoardLoaderData;
-  const { user, repo } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const {
     data: threadPages,
@@ -71,66 +33,12 @@ export default function BoardPage() {
     isSysop || !moderation
       ? allThreads
       : allThreads.filter(
-          (t) =>
-            !moderation.banRkeys[t.did] && !moderation.hideRkeys[t.uri],
+          (t) => !moderation.banRkeys[t.did] && !moderation.hideRkeys[t.uri],
         );
 
   usePageTitle(`${board.name} — ${bbs.site.name}`);
 
-  const createThreadMutation = useMutation({
-    mutationFn: async (input: PostDraft) => {
-      if (!repo) throw new Error("Not signed in");
-      const boardUri = makeAtUri(bbs.identity.did as Did, BOARD, board.slug);
-      const attachments = await uploadAttachments(repo, input.files);
-      const record = await createPost(repo, boardUri, input.body, {
-        title: input.title ?? "",
-        attachments,
-      });
-      return record;
-    },
-    onSuccess: (record, input) => {
-      if (!user) return;
-      const { did, rkey } = parseAtUri(record.uri);
-      const now = nowIso();
-      const newThread: ThreadItem = {
-        uri: record.uri,
-        did,
-        rkey,
-        handle: user.handle,
-        title: input.title ?? "",
-        body: input.body,
-        createdAt: now,
-        lastActivityAt: now,
-        replyCount: 0,
-        participants: [{ did, handle: user.handle }],
-      };
-      const boardKey = boardThreadsInfiniteQuery(
-        bbs.identity.did,
-        board.slug,
-      ).queryKey;
-      queryClient.setQueryData<InfiniteData<ThreadPageResult>>(
-        boardKey,
-        (prev) => {
-          if (!prev || !prev.pages.length) return prev;
-          const [firstPage, ...rest] = prev.pages;
-          return {
-            ...prev,
-            pages: [
-              {
-                ...firstPage,
-                threads: [newThread, ...firstPage.threads],
-              },
-              ...rest,
-            ],
-          };
-        },
-      );
-      void refetchUntilIndexed(boardKey, record.uri);
-      queryClient.invalidateQueries(myThreadsQuery(user.pdsUrl, user.did));
-      navigate(threadUrl(handle, did, rkey));
-    },
-    onError: alertOnError("post"),
-  });
+  const createThread = useBoardPosting(bbs, board, handle);
 
   return (
     <>
@@ -146,7 +54,7 @@ export default function BoardPage() {
           </summary>
           <ComposeForm
             className="mt-4"
-            onSave={(draft) => createThreadMutation.mutateAsync(draft)}
+            onSave={(draft) => createThread.mutateAsync(draft)}
             title={{
               placeholder: "Thread title",
               maxLength: limits.POST_TITLE,
@@ -159,7 +67,8 @@ export default function BoardPage() {
       <div>
         {moderationIsStale && moderation && (
           <p className="text-xs text-amber-500 mb-3">
-            Moderation data could not be refreshed. Showing verified cached data.
+            Moderation data could not be refreshed. Showing verified cached
+            data.
           </p>
         )}
         {!ready ? (
