@@ -20,6 +20,12 @@ export type { BacklinkRef };
 
 export const REPLIES_PER_PAGE = 10;
 
+export function parsePageParam(value: string | null): number {
+  if (!value || !/^\d+$/.test(value)) return 1;
+  const page = Number(value);
+  return Number.isSafeInteger(page) && page > 0 ? page : 1;
+}
+
 export function refToUri(ref: BacklinkRef): string {
   return makeAtUri(ref.did as Did, ref.collection as Nsid, ref.rkey);
 }

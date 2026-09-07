@@ -2,7 +2,6 @@
  *  plus pagination + scroll-to-reply helpers. Optimistic mutations are in
  *  Thread.tsx and update the same query caches via setQueryData. */
 
-import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { threadPageQuery, threadRefsQuery } from "../lib/queries";
@@ -10,6 +9,7 @@ import { parseAtUri } from "../lib/util";
 import {
   REPLIES_PER_PAGE,
   clampPage,
+  parsePageParam,
   pageForRkey,
   pageForReply,
   rkeyFromHash,
@@ -24,7 +24,7 @@ export function useThreadReplies(threadUri: string) {
 
   // --- Page derived from URL, clamped to the available range ---
 
-  const requestedPage = parseInt(params.get("page") ?? "1", 10);
+  const requestedPage = parsePageParam(params.get("page"));
   const replyParam = params.get("reply");
   const hashRkey = rkeyFromHash();
   const initialPage =
@@ -40,15 +40,6 @@ export function useThreadReplies(threadUri: string) {
     threadPageQuery(threadUri, page, pageRefs),
   );
   const { replies, parentReplies } = pageData;
-
-  // --- Keep URL in sync when the derived page differs from what's in it ---
-
-  useEffect(() => {
-    const fromUrl = parseInt(params.get("page") ?? "1", 10);
-    if (fromUrl === page) return;
-    setParams((prev) => writePageParam(prev, page), { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- params identity churns
-  }, [page]);
 
   // --- Navigation helpers ---
 
