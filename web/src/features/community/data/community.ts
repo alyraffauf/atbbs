@@ -1,24 +1,17 @@
 import { queryOptions } from "@tanstack/react-query";
 import { PIN } from "../../../shared/config/lexicon";
 import { resolveBBS } from "./bbs";
-import { fetchNews } from "../../../lib/news";
 import { fetchPins } from "./pins";
 import { fetchDiscovery } from "./discovery";
 import { fetchHomeSysopInfo } from "./home";
 import { getBacklinkCountsBatch } from "../../../shared/protocol/backlinks";
-import { slowQueryOptions } from "../../../lib/queries/options";
+import { slowQueryOptions } from "../../../shared/queries/options";
 
 export const bbsQuery = (handle: string) =>
   queryOptions({
     ...slowQueryOptions,
     queryKey: ["bbs", handle] as const,
     queryFn: () => resolveBBS(handle),
-  });
-
-export const newsQuery = (bbsDid: string) =>
-  queryOptions({
-    queryKey: ["news", bbsDid] as const,
-    queryFn: () => fetchNews(bbsDid),
   });
 
 export const pinsQuery = (pdsUrl: string, did: string) =>

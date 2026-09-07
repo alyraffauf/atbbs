@@ -5,12 +5,12 @@ import { MessageSquare } from "lucide-react";
 import { useAuth } from "../../auth/auth";
 import { usePageTitle } from "../../../shared/hooks/usePageTitle";
 import { putProfile } from "../data/profileRecords";
-import { myThreadsQuery } from "../../../lib/queries/dashboard";
+import { myThreadsQuery } from "../../dashboard/data/dashboardQueries";
 import { profileQuery } from "../data/profileQueries";
 import { queryClient } from "../../../app/queryClient";
 import ProfileView from "../components/ProfileView";
 import ProfileEditor from "../components/ProfileEditor";
-import MyThreadList from "../../../components/dashboard/MyThreadList";
+import RecentThreads from "../../dashboard/components/RecentThreads";
 import ListSkeleton from "../../../app/layout/ListSkeleton";
 
 export default function ProfilePage() {
@@ -70,7 +70,7 @@ export default function ProfilePage() {
           <MessageSquare size={12} /> Recent Threads
         </p>
         {threads ? (
-          <MyThreadList threads={threads.slice(0, 5)} />
+          <RecentThreads threads={threads.slice(0, 5)} />
         ) : (
           <ListSkeleton />
         )}

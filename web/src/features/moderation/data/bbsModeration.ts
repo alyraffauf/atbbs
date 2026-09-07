@@ -4,7 +4,7 @@
 import { listRecords, requireComplete } from "../../../shared/protocol/records";
 import { BAN, HIDE } from "../../../shared/config/lexicon";
 import { parseAtUri } from "../../../shared/protocol/uri";
-import { isBanRecord, isHideRecord } from "../../../lib/recordGuards";
+import { isBanRecord, isHideRecord } from "../../../shared/protocol/recordGuards";
 
 // Fields must be JSON-safe — this shape is persisted via localStorage.
 export interface BBSModeration {

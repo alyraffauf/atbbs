@@ -7,7 +7,7 @@ import {
   requireComplete,
 } from "../../../shared/protocol/records";
 import { PIN, SITE } from "../../../shared/config/lexicon";
-import { isPinRecord, isSiteRecord } from "../../../lib/recordGuards";
+import { isPinRecord, isSiteRecord } from "../../../shared/protocol/recordGuards";
 import { makeAtUri, parseAtUri } from "../../../shared/protocol/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 

@@ -6,7 +6,7 @@ import { FetchError } from "../../../shared/protocol/transport";
 import { queryClient } from "../../../app/queryClient";
 import { SITE } from "../../../shared/config/lexicon";
 import { parseAtUri } from "../../../shared/protocol/uri";
-import { isBoardRecord, isSiteRecord } from "../../../lib/recordGuards";
+import { isBoardRecord, isSiteRecord } from "../../../shared/protocol/recordGuards";
 import { MAX_BOARDS } from "../../../shared/config/limits";
 
 export class BBSNotFoundError extends Error {}

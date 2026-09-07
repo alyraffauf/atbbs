@@ -1,0 +1,110 @@
+/** Activity data — replies to your posts from other users. */
+
+import { fetchAndHydrate } from "../../../shared/protocol/backlinks";
+import { resolveIdentitiesBatch } from "../../../shared/protocol/identities";
+import { listRecords } from "../../../shared/protocol/records";
+import { POST } from "../../../shared/config/lexicon";
+import { isPostRecord } from "../../../shared/protocol/recordGuards";
+import { parseAtUri } from "../../../shared/protocol/uri";
+
+export interface ActivityItem {
+  type: "reply" | "parent_reply";
+  threadTitle: string;
+  threadUri: string;
+  bbsHandle: string;
+  replyUri: string;
+  handle: string;
+  body: string;
+  createdAt: string;
+}
+
+async function fetchBacklinkItems(
+  sourceUri: string,
+  backlinkSource: string,
+  excludeDid: string,
+  type: ActivityItem["type"],
+  threadTitle: string,
+  threadUri: string,
+  bbsHandle: string,
+): Promise<ActivityItem[]> {
+  try {
+    const { records } = await fetchAndHydrate(sourceUri, backlinkSource, {
+      limit: 50,
+      excludeDid,
+      failureMode: "best-effort",
+    });
+    return records.map((record) => ({
+      type,
+      threadTitle,
+      threadUri,
+      bbsHandle,
+      replyUri: record.uri,
+      handle: record.handle,
+      body: ((record.value.body as string) ?? "").substring(0, 200),
+      createdAt: (record.value.createdAt as string) ?? "",
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchActivity(
+  did: string,
+  pdsUrl: string,
+  maxItems = 50,
+): Promise<ActivityItem[]> {
+  const SCAN_LIMIT = 50;
+  const allPosts = (
+    await listRecords(pdsUrl, did, POST, SCAN_LIMIT, SCAN_LIMIT, 100, true)
+  ).items;
+  const validPosts = allPosts.filter(isPostRecord);
+
+  const rootPosts = validPosts.filter((record) => !record.value.root);
+  const replyPosts = validPosts.filter((record) => !!record.value.root);
+
+  const bbsDids = new Set(
+    validPosts.map((record) => parseAtUri(record.value.scope).did),
+  );
+  const bbsIdentities = await resolveIdentitiesBatch([...bbsDids]);
+
+  const results = await Promise.all([
+    ...rootPosts.map((post) => {
+      const bbsDid = parseAtUri(post.value.scope).did;
+      const bbsHandle = bbsIdentities[bbsDid]?.handle;
+      if (!bbsHandle) return Promise.resolve([] as ActivityItem[]);
+      return fetchBacklinkItems(
+        post.uri,
+        `${POST}:root`,
+        did,
+        "reply",
+        post.value.title ?? "",
+        post.uri,
+        bbsHandle,
+      );
+    }),
+    ...replyPosts.map((reply) => {
+      const bbsDid = parseAtUri(reply.value.scope).did;
+      const bbsHandle = bbsIdentities[bbsDid]?.handle;
+      if (!bbsHandle) return Promise.resolve([] as ActivityItem[]);
+      return fetchBacklinkItems(
+        reply.uri,
+        `${POST}:parent`,
+        did,
+        "parent_reply",
+        "",
+        reply.value.root ?? "",
+        bbsHandle,
+      );
+    }),
+  ]);
+
+  // Deduplicate — prefer "parent-reply" type when the same reply appears as both.
+  const seen = new Map<string, ActivityItem>();
+  for (const item of results.flat()) {
+    const key = item.replyUri;
+    if (!seen.has(key) || item.type === "parent_reply") seen.set(key, item);
+  }
+  return [...seen.values()]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, maxItems);
+}

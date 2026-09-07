@@ -14,9 +14,9 @@ import { useAuth } from "../../auth/auth";
 import { usePageTitle } from "../../../shared/hooks/usePageTitle";
 import { truncate } from "../../../shared/config/util";
 import * as limits from "../../../shared/config/limits";
-import { newsQuery } from "../data/community";
+import { newsQuery } from "../../discussion/data/discussionQueries";
 import { boardUrl, newsUrl, profileUrl } from "../../../shared/config/routes";
-import ComposeForm from "../../../components/form/ComposeForm";
+import PostComposer from "../../discussion/components/PostComposer";
 import Localtime from "../../../shared/ui/Localtime";
 import DirectoryEntryLink from "../components/DirectoryEntryLink";
 import ActionBar from "../../../shared/ui/ActionBar";
@@ -24,7 +24,7 @@ import { ActionLink } from "../../../shared/ui/ActionButton";
 import PinButton from "../components/PinButton";
 import ListSkeleton from "../../../app/layout/ListSkeleton";
 import type { CommunityLoaderData } from "../../../app/router/loaders";
-import { usePostNews } from "../../../hooks/useNewsMutations";
+import { usePostNews } from "../../discussion/useNewsMutations";
 
 const INITIAL_NEWS_COUNT = 3;
 
@@ -103,7 +103,7 @@ export default function CommunityPage() {
             <summary className="text-neutral-300 cursor-pointer inline-flex items-center gap-1.5">
               <Megaphone size={14} /> post news
             </summary>
-            <ComposeForm
+            <PostComposer
               className="mt-4"
               onSave={(draft) => postNews.mutateAsync(draft)}
               title={{

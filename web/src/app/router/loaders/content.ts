@@ -1,8 +1,11 @@
 import type { LoaderFunctionArgs } from "react-router-dom";
 import type { BBS, Board, NewsPost } from "../../../features/community/data/bbs";
-import type { ThreadRoot } from "../../../lib/thread";
-import { bbsQuery, newsQuery } from "../../../features/community/data/community";
-import { threadRootQuery } from "../../../lib/queries/discussion";
+import type { ThreadRoot } from "../../../features/discussion/data/thread";
+import { bbsQuery } from "../../../features/community/data/community";
+import {
+  newsQuery,
+  threadRootQuery,
+} from "../../../features/discussion/data/discussionQueries";
 import { queryClient } from "../../queryClient";
 
 function requiredParam(

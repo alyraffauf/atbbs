@@ -3,7 +3,7 @@
 import { getAvatar, resolveIdentity } from "../../../shared/protocol/identities";
 import { getRecord } from "../../../shared/protocol/records";
 import { PROFILE, SITE } from "../../../shared/config/lexicon";
-import { isProfileRecord, isSiteRecord } from "../../../lib/recordGuards";
+import { isProfileRecord, isSiteRecord } from "../../../shared/protocol/recordGuards";
 
 export interface Profile {
   did: string;

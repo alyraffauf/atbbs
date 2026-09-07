@@ -3,16 +3,16 @@ import { createBrowserRouter, Outlet, redirect } from "react-router-dom";
 import Layout from "../layout/Layout";
 import RouteErrorPage from "../layout/RouteErrorPage";
 
-import Home from "../../pages/Home";
+import HomePage from "../../features/dashboard/pages/HomePage";
 import ProfilePage from "../../features/profile/pages/ProfilePage";
 import CommunityPage from "../../features/community/pages/CommunityPage";
-import Board from "../../pages/Board";
-import Thread from "../../pages/Thread";
+import BoardPage from "../../features/discussion/pages/BoardPage";
+import ThreadPage from "../../features/discussion/pages/ThreadPage";
 import CreateCommunityPage from "../../features/community/pages/CreateCommunityPage";
 import EditCommunityPage from "../../features/community/pages/EditCommunityPage";
 import ModerationPage from "../../features/moderation/pages/ModerationPage";
-import News from "../../pages/News";
-import NotFound from "../../pages/NotFound";
+import NewsPage from "../../features/discussion/pages/NewsPage";
+import NotFoundPage from "../layout/NotFoundPage";
 
 import {
   boardLoader,
@@ -36,7 +36,7 @@ export const router = createBrowserRouter([
     element: <Layout />,
     errorElement: <RouteErrorPage />,
     children: [
-      { path: "/", element: <Home /> },
+      { path: "/", element: <HomePage /> },
       { path: "/oauth/callback", loader: oauthCallbackLoader },
       { path: "/account", loader: () => redirect("/") },
       {
@@ -75,7 +75,7 @@ export const router = createBrowserRouter([
           {
             path: "board/:slug",
             loader: boardLoader,
-            element: <Board />,
+            element: <BoardPage />,
             handle: breadcrumbHandle<BoardLoaderData>(({ handle, board }) => [
               { label: board.name, to: boardUrl(handle, board.slug) },
             ]),
@@ -83,7 +83,7 @@ export const router = createBrowserRouter([
           {
             path: "thread/:did/:tid",
             loader: threadLoader,
-            element: <Thread />,
+            element: <ThreadPage />,
             handle: breadcrumbHandle<ThreadLoaderData>(
               ({ handle, bbs, thread }) => {
                 const board = bbs.site.boards.find(
@@ -106,7 +106,7 @@ export const router = createBrowserRouter([
           {
             path: "news/:tid",
             loader: newsLoader,
-            element: <News />,
+            element: <NewsPage />,
             handle: breadcrumbHandle<NewsLoaderData>(({ item }) => [
               { label: item.title },
             ]),
@@ -114,7 +114,7 @@ export const router = createBrowserRouter([
         ],
       },
       { path: "/profile/:handle", element: <ProfilePage /> },
-      { path: "*", element: <NotFound /> },
+      { path: "*", element: <NotFoundPage /> },
     ],
   },
 ]);

@@ -1,5 +1,5 @@
 import IdentityRow from "./IdentityRow";
-import type { HandleMatch } from "../../lib/bsky";
+import type { HandleMatch } from "../protocol/bsky";
 
 interface HandleSuggestionsProps {
   suggestions: HandleMatch[];
