@@ -1,5 +1,5 @@
 import type { XyzAtbbsProfile } from "../../lexicons";
-import { PROFILE } from "../schema/collections";
+import { PROFILE } from "../../config";
 import { nowIso } from "../support/time";
 import { putRecord, type AuthenticatedRepo } from "../../atproto/repository";
 
@@ -17,5 +17,5 @@ export function putProfile(
     ...(bio ? { bio } : {}),
     createdAt: nowIso() as ProfileValue["createdAt"],
   };
-  return putRecord(repo, PROFILE, "self", value);
+  return putRecord(repo, { collection: PROFILE, rkey: "self", value });
 }

@@ -8,8 +8,6 @@ export interface Reply {
   uri: string;
   did: string;
   rkey: string;
-  authorDid: string;
-  replyRkey: string;
   handle: string;
   pds: string;
   body: string;
@@ -38,8 +36,6 @@ export function recordToReply(
     uri: record.uri,
     did,
     rkey,
-    authorDid: did,
-    replyRkey: rkey,
     handle: authors[did].handle,
     pds: authors[did].pds ?? "",
     body: record.value.body,

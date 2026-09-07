@@ -2,7 +2,7 @@
 
 import { getBacklinks } from "../../atproto/backlinks";
 import { getRecordsBatch } from "../support/records";
-import { POST, SITE } from "../schema/collections";
+import { POST, SITE } from "../../config";
 import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "../schema/records";
@@ -12,7 +12,6 @@ import { prepareAttachmentViews, type AttachmentView } from "./attachments";
 export interface NewsPost {
   uri: string;
   rkey: string;
-  authorDid: string;
   title: string;
   body: string;
   createdAt: string;
@@ -22,13 +21,10 @@ export interface NewsPost {
 export async function fetchNews(bbsDid: string): Promise<NewsPost[]> {
   const identity = await resolveIdentity(bbsDid);
   const siteUri = makeAtUri(bbsDid as Did, SITE, "self");
-  const backlinks = await getBacklinks(
-    siteUri,
-    `${POST}:scope`,
-    50,
-    undefined,
-    bbsDid,
-  );
+  const backlinks = await getBacklinks(siteUri, `${POST}:scope`, {
+    limit: 50,
+    did: bbsDid,
+  });
 
   const records = await getRecordsBatch(backlinks.records);
 
@@ -38,7 +34,6 @@ export async function fetchNews(bbsDid: string): Promise<NewsPost[]> {
     .map((record) => ({
       uri: record.uri,
       rkey: parseAtUri(record.uri).rkey,
-      authorDid: bbsDid,
       title: record.value.title ?? "",
       body: record.value.body,
       createdAt: record.value.createdAt,

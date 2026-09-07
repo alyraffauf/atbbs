@@ -1,5 +1,5 @@
 import type { XyzAtbbsBoard, XyzAtbbsSite } from "../../lexicons";
-import { BOARD, SITE } from "../schema/collections";
+import { BOARD, SITE } from "../../config";
 import {
   createRecord,
   putRecord,
@@ -9,59 +9,57 @@ import {
 type SiteValue = Omit<XyzAtbbsSite.Main, "$type">;
 type BoardValue = Omit<XyzAtbbsBoard.Main, "$type">;
 
+interface BoardWrite {
+  slug: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export async function createSite(repo: AuthenticatedRepo, site: SiteValue) {
-  const response = await createRecord(repo, SITE, site, "self");
+  const response = await createRecord(repo, {
+    collection: SITE,
+    value: site,
+    rkey: "self",
+  });
   return response;
 }
 
 export async function putSite(repo: AuthenticatedRepo, site: SiteValue) {
-  const response = await putRecord(repo, SITE, "self", site);
+  const response = await putRecord(repo, {
+    collection: SITE,
+    rkey: "self",
+    value: site,
+  });
   return response;
 }
 
-function boardValue(
-  name: string,
-  description: string,
-  createdAt: string,
-  updatedAt?: string,
-): BoardValue {
+function boardValue(board: BoardWrite): BoardValue {
   return {
-    name,
-    description,
-    createdAt: createdAt as BoardValue["createdAt"],
-    ...(updatedAt ? { updatedAt: updatedAt as BoardValue["updatedAt"] } : {}),
+    name: board.name,
+    description: board.description,
+    createdAt: board.createdAt as BoardValue["createdAt"],
+    ...(board.updatedAt
+      ? { updatedAt: board.updatedAt as BoardValue["updatedAt"] }
+      : {}),
   };
 }
 
-export async function putBoard(
-  repo: AuthenticatedRepo,
-  slug: string,
-  name: string,
-  description: string,
-  createdAt: string,
-  updatedAt: string,
-) {
-  const response = await putRecord(
-    repo,
-    BOARD,
-    slug,
-    boardValue(name, description, createdAt, updatedAt),
-  );
+export async function putBoard(repo: AuthenticatedRepo, board: BoardWrite) {
+  const response = await putRecord(repo, {
+    collection: BOARD,
+    rkey: board.slug,
+    value: boardValue(board),
+  });
   return response;
 }
 
-export async function createBoard(
-  repo: AuthenticatedRepo,
-  slug: string,
-  name: string,
-  description: string,
-  createdAt: string,
-) {
-  const response = await createRecord(
-    repo,
-    BOARD,
-    boardValue(name, description, createdAt),
-    slug,
-  );
+export async function createBoard(repo: AuthenticatedRepo, board: BoardWrite) {
+  const response = await createRecord(repo, {
+    collection: BOARD,
+    value: boardValue(board),
+    rkey: board.slug,
+  });
   return response;
 }

@@ -1,5 +1,5 @@
 import type { XyzAtbbsPin } from "../../lexicons";
-import { PIN } from "../schema/collections";
+import { PIN } from "../../config";
 import { nowIso } from "../support/time";
 import { createRecord, type AuthenticatedRepo } from "../../atproto/repository";
 
@@ -10,5 +10,5 @@ export function createPin(repo: AuthenticatedRepo, did: string) {
     did: did as PinValue["did"],
     createdAt: nowIso(),
   };
-  return createRecord(repo, PIN, value, did);
+  return createRecord(repo, { collection: PIN, value, rkey: did });
 }

@@ -1,7 +1,7 @@
 import { resolveIdentity } from "../../atproto/identity";
 import { getRecord } from "../../atproto/records";
 import { getAvatar } from "../identity/service";
-import { SITE } from "../schema/collections";
+import { SITE } from "../../config";
 import { isSiteRecord } from "../schema/records";
 import { malformed } from "../../atproto/transport";
 

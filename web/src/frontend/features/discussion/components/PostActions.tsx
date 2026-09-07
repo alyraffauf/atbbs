@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef } from "react";
 import { Reply, MoreHorizontal, Trash2, Ban, EyeOff, Eye } from "lucide-react";
 
 export type PostAction =
@@ -23,24 +23,12 @@ const actionDetails = {
 } as const;
 
 export default function PostActions({ actions }: PostActionsProps) {
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
-  }, [open]);
+  const disclosureRef = useRef<HTMLDetailsElement>(null);
 
   if (!actions.length) return null;
 
   function select(action: () => void) {
-    setOpen(false);
+    disclosureRef.current?.removeAttribute("open");
     action();
   }
 
@@ -49,36 +37,34 @@ export default function PostActions({ actions }: PostActionsProps) {
   const dangerItem = menuItem + " hover:text-red-400";
 
   return (
-    <div className="relative post-actions" ref={menuRef}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="text-neutral-400 hover:text-neutral-300"
+    <details className="relative post-actions" ref={disclosureRef}>
+      <summary
+        aria-label="Post actions"
+        className="text-neutral-400 hover:text-neutral-300 cursor-pointer list-none [&::-webkit-details-marker]:hidden"
       >
         <MoreHorizontal size={16} />
-      </button>
+      </summary>
 
-      {open && (
-        <div className="absolute right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded shadow-lg z-10 py-1 min-w-28">
-          {actions.map((action, index) => {
-            const details = actionDetails[action.kind];
-            const Icon = details.icon;
-            const followsReply = index === 1 && actions[0]?.kind === "reply";
-            return (
-              <div key={action.kind}>
-                {followsReply && (
-                  <div className="border-t border-neutral-800 my-1" />
-                )}
-                <button
-                  onClick={() => select(action.onSelect)}
-                  className={details.destructive ? dangerItem : menuItem}
-                >
-                  <Icon size={12} /> {details.label}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
+      <div className="absolute right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded shadow-lg z-10 py-1 min-w-28">
+        {actions.map((action, index) => {
+          const details = actionDetails[action.kind];
+          const Icon = details.icon;
+          const followsReply = index === 1 && actions[0]?.kind === "reply";
+          return (
+            <div key={action.kind}>
+              {followsReply && (
+                <div className="border-t border-neutral-800 my-1" />
+              )}
+              <button
+                onClick={() => select(action.onSelect)}
+                className={details.destructive ? dangerItem : menuItem}
+              >
+                <Icon size={12} /> {details.label}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </details>
   );
 }

@@ -4,7 +4,7 @@ import { resolveIdentity } from "../../atproto/identity";
 import { getRecord, type ATRecord } from "../../atproto/records";
 import { getRecordsByUri } from "../support/records";
 import { FetchError, malformed } from "../../atproto/transport";
-import { BOARD, SITE } from "../schema/collections";
+import { BOARD, SITE } from "../../config";
 import { parseAtUri } from "../../atproto/uri";
 import { isBoardRecord, isSiteRecord } from "../schema/records";
 import { MAX_BOARDS } from "../schema/limits";

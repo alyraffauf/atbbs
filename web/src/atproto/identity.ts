@@ -1,4 +1,4 @@
-import { SERVICES } from "./config";
+import { SERVICES } from "../config";
 import { fetchJson, malformed } from "./transport";
 
 const SLINGSHOT = SERVICES.slingshot;

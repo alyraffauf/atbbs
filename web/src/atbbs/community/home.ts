@@ -2,7 +2,7 @@
  *  what's it called? A full BBS fetch only happens on the BBS page itself. */
 
 import { getRecord } from "../../atproto/records";
-import { SITE } from "../schema/collections";
+import { SITE } from "../../config";
 import { isSiteRecord } from "../schema/records";
 import { FetchError, malformed } from "../../atproto/transport";
 

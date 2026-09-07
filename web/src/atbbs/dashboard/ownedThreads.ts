@@ -2,16 +2,14 @@
 
 import { resolveIdentitiesBatch } from "../identity/service";
 import { listRecords, requireComplete } from "../../atproto/records";
-import { POST } from "../schema/collections";
+import { POST } from "../../config";
 import { parseAtUri } from "../../atproto/uri";
 import { isPostRecord } from "../schema/records";
 
 export interface OwnedThread {
   uri: string;
+  did: string;
   rkey: string;
-  threadDid: string;
-  threadRkey: string;
-  authorDid: string;
   title: string;
   body: string;
   createdAt: string;
@@ -41,10 +39,8 @@ export async function fetchMyThreads(
     if (!identity) continue;
     results.push({
       uri: record.uri,
+      did,
       rkey: parseAtUri(record.uri).rkey,
-      threadDid: did,
-      threadRkey: parseAtUri(record.uri).rkey,
-      authorDid: did,
       title: record.value.title ?? "",
       body: record.value.body,
       createdAt: record.value.createdAt,

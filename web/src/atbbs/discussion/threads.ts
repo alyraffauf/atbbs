@@ -9,7 +9,7 @@ import { getBacklinks } from "../../atproto/backlinks";
 import { getAvatars, resolveIdentitiesBatch } from "../identity/service";
 import { getBacklinkCountsBatch } from "../discussion/hydration";
 import { getRecordsBatch, getRecordsByUri } from "../support/records";
-import { POST, BOARD } from "../schema/collections";
+import { BOARD, POST } from "../../config";
 import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "../schema/records";
@@ -56,12 +56,10 @@ export async function hydrateThreadPage(
   for (let scan = 0; scan < MAX_SCANS; scan++) {
     if (lastActivity.size >= PAGE_SIZE) break;
 
-    const backlinks = await getBacklinks(
-      boardUri,
-      `${POST}:scope`,
-      PAGE_SIZE - lastActivity.size,
-      scanCursor,
-    );
+    const backlinks = await getBacklinks(boardUri, `${POST}:scope`, {
+      limit: PAGE_SIZE - lastActivity.size,
+      cursor: scanCursor,
+    });
     if (!backlinks.records.length) break;
 
     const remaining = PAGE_SIZE - lastActivity.size;

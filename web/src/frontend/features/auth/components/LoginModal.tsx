@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useLoginModal } from "../loginModal";
-import { pickRandomApps } from "../config";
+import { ATPROTO_APPS } from "../../../../config";
 import LoginForm from "./LoginForm";
 import AtprotoAppsCard from "./AtprotoAppsCard";
 
 export default function LoginModal() {
   const { open, closeLogin } = useLoginModal();
-  const [apps] = useState(() => pickRandomApps(3));
+  const [apps] = useState(() =>
+    [...ATPROTO_APPS].sort(() => Math.random() - 0.5).slice(0, 3),
+  );
 
   useEffect(() => {
     if (!open) return;

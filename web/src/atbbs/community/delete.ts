@@ -3,7 +3,7 @@
 import type { AuthenticatedRepo } from "../../atproto/repository";
 import { getBacklinks } from "../../atproto/backlinks";
 import { getRecord, listRecords, requireComplete } from "../../atproto/records";
-import { BAN, BOARD, HIDE, POST, SITE } from "../schema/collections";
+import { BAN, BOARD, HIDE, POST, SITE } from "../../config";
 import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { deleteRecord } from "../../atproto/repository";
@@ -45,13 +45,11 @@ export async function deleteBBS(
     const seenCursors = new Set<string>();
     const newsRefs = [];
     for (let page = 0; page < 100; page++) {
-      const backlinks = await getBacklinks(
-        siteUri,
-        `${POST}:scope`,
-        100,
+      const backlinks = await getBacklinks(siteUri, `${POST}:scope`, {
+        limit: 100,
         cursor,
         did,
-      );
+      });
       newsRefs.push(...backlinks.records);
       cursor = backlinks.cursor ?? undefined;
       if (!cursor) break;

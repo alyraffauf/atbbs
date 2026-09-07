@@ -3,7 +3,7 @@
 import { getAvatars, resolveIdentitiesBatch } from "../identity/service";
 import { listRecords, requireComplete } from "../../atproto/records";
 import { getRecordsByUri } from "../support/records";
-import { PIN, SITE } from "../schema/collections";
+import { PIN, SITE } from "../../config";
 import { isPinRecord, isSiteRecord } from "../schema/records";
 import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";

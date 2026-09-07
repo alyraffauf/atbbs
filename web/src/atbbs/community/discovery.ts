@@ -1,8 +1,7 @@
 /** Fetch a random list of BBSes from the Lightrail API, with avatars. */
 
 import { getAvatars, resolveIdentitiesBatch } from "../identity/service";
-import { SITE } from "../schema/collections";
-import { SERVICES } from "../../atproto/config";
+import { SERVICES, SITE } from "../../config";
 import { isSiteRecord, type SiteRecord } from "../schema/records";
 import { fetchJson, malformed } from "../../atproto/transport";
 import { getRecordsByUri } from "../support/records";

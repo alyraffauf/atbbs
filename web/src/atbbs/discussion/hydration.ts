@@ -38,12 +38,10 @@ export async function fetchAndHydrate(
     failureMode?: RecordHydrationOptions["failureMode"];
   },
 ): Promise<{ records: HydratedRecord[]; cursor: string | null }> {
-  const backlinks = await getBacklinks(
-    subject,
-    source,
-    options?.limit ?? 50,
-    options?.cursor,
-  );
+  const backlinks = await getBacklinks(subject, source, {
+    limit: options?.limit,
+    cursor: options?.cursor,
+  });
   if (!backlinks.records.length) return { records: [], cursor: null };
   const records = await getRecordsBatch(backlinks.records, {
     failureMode: options?.failureMode,

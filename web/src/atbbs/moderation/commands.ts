@@ -1,5 +1,5 @@
 import type { XyzAtbbsBan, XyzAtbbsHide } from "../../lexicons";
-import { BAN, HIDE } from "../schema/collections";
+import { BAN, HIDE } from "../../config";
 import { nowIso } from "../support/time";
 import {
   createRecord,
@@ -26,12 +26,11 @@ export async function createBan(repo: AuthenticatedRepo, did: string) {
     did: did as BanValue["did"],
     createdAt: nowIso(),
   };
-  const response = await createRecord(
-    repo,
-    BAN,
+  const response = await createRecord(repo, {
+    collection: BAN,
     value,
-    await deterministicRkey(did),
-  );
+    rkey: await deterministicRkey(did),
+  });
   return response;
 }
 
@@ -40,12 +39,11 @@ export async function createHide(repo: AuthenticatedRepo, uri: string) {
     uri: uri as HideValue["uri"],
     createdAt: nowIso(),
   };
-  const response = await createRecord(
-    repo,
-    HIDE,
+  const response = await createRecord(repo, {
+    collection: HIDE,
     value,
-    await deterministicRkey(uri),
-  );
+    rkey: await deterministicRkey(uri),
+  });
   return response;
 }
 

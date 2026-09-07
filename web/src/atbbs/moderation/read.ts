@@ -2,7 +2,7 @@
  *  are hidden, and the rkeys of those records (so the sysop can undo). */
 
 import { listRecords, requireComplete } from "../../atproto/records";
-import { BAN, HIDE } from "../schema/collections";
+import { BAN, HIDE } from "../../config";
 import { parseAtUri } from "../../atproto/uri";
 import { isBanRecord, isHideRecord } from "../schema/records";
 import { malformed } from "../../atproto/transport";

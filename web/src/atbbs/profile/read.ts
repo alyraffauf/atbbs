@@ -3,7 +3,7 @@
 import { resolveIdentity } from "../../atproto/identity";
 import { getRecord } from "../../atproto/records";
 import { getAvatar } from "../identity/service";
-import { PROFILE, SITE } from "../schema/collections";
+import { PROFILE, SITE } from "../../config";
 import { isProfileRecord, isSiteRecord } from "../schema/records";
 import { FetchError, malformed } from "../../atproto/transport";
 

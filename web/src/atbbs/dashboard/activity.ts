@@ -3,58 +3,52 @@
 import { fetchAndHydrate } from "../discussion/hydration";
 import { resolveIdentitiesBatch } from "../identity/service";
 import { listRecords } from "../../atproto/records";
-import { POST } from "../schema/collections";
+import { POST } from "../../config";
 import { isPostRecord } from "../schema/records";
 import { parseAtUri } from "../../atproto/uri";
+import { allSettledBounded, reportPartialFailures } from "../support/batch";
+
+const ACTIVITY_CONCURRENCY = 5;
 
 export interface ActivityItem {
   type: "reply" | "parent_reply";
   threadTitle: string;
   threadUri: string;
-  threadDid: string;
-  threadRkey: string;
   bbsHandle: string;
   replyUri: string;
-  replyRkey: string;
-  authorDid: string;
   handle: string;
   body: string;
   createdAt: string;
 }
 
+interface ActivityTarget {
+  sourceUri: string;
+  backlinkSource: string;
+  type: ActivityItem["type"];
+  threadTitle: string;
+  threadUri: string;
+  bbsHandle: string;
+}
+
 async function fetchBacklinkItems(
-  sourceUri: string,
-  backlinkSource: string,
+  target: ActivityTarget,
   excludeDid: string,
-  type: ActivityItem["type"],
-  threadTitle: string,
-  threadUri: string,
-  bbsHandle: string,
 ): Promise<ActivityItem[]> {
-  try {
-    const { records } = await fetchAndHydrate(sourceUri, backlinkSource, {
-      limit: 50,
-      excludeDid,
-      failureMode: "best-effort",
-    });
-    const threadAddress = parseAtUri(threadUri);
-    return records.map((record) => ({
-      type,
-      threadTitle,
-      threadUri,
-      threadDid: threadAddress.did,
-      threadRkey: threadAddress.rkey,
-      bbsHandle,
-      replyUri: record.uri,
-      replyRkey: record.rkey,
-      authorDid: record.did,
-      handle: record.handle,
-      body: ((record.value.body as string) ?? "").substring(0, 200),
-      createdAt: (record.value.createdAt as string) ?? "",
-    }));
-  } catch {
-    return [];
-  }
+  const { records } = await fetchAndHydrate(
+    target.sourceUri,
+    target.backlinkSource,
+    { limit: 50, excludeDid, failureMode: "best-effort" },
+  );
+  return records.map((record) => ({
+    type: target.type,
+    threadTitle: target.threadTitle,
+    threadUri: target.threadUri,
+    bbsHandle: target.bbsHandle,
+    replyUri: record.uri,
+    handle: record.handle,
+    body: ((record.value.body as string) ?? "").substring(0, 200),
+    createdAt: (record.value.createdAt as string) ?? "",
+  }));
 }
 
 export async function fetchActivity(
@@ -64,7 +58,12 @@ export async function fetchActivity(
 ): Promise<ActivityItem[]> {
   const SCAN_LIMIT = 50;
   const allPosts = (
-    await listRecords(pdsUrl, did, POST, SCAN_LIMIT, SCAN_LIMIT, 100, true)
+    await listRecords(pdsUrl, did, POST, {
+      pageSize: SCAN_LIMIT,
+      maxRecords: SCAN_LIMIT,
+      maxPages: 100,
+      reverse: true,
+    })
   ).items;
   const validPosts = allPosts.filter(isPostRecord);
 
@@ -76,40 +75,52 @@ export async function fetchActivity(
   );
   const bbsIdentities = await resolveIdentitiesBatch([...bbsDids]);
 
-  const results = await Promise.all([
-    ...rootPosts.map((post) => {
+  const targets: ActivityTarget[] = [
+    ...rootPosts.flatMap((post): ActivityTarget[] => {
       const bbsDid = parseAtUri(post.value.scope).did;
       const bbsHandle = bbsIdentities[bbsDid]?.handle;
-      if (!bbsHandle) return Promise.resolve([] as ActivityItem[]);
-      return fetchBacklinkItems(
-        post.uri,
-        `${POST}:root`,
-        did,
-        "reply",
-        post.value.title ?? "",
-        post.uri,
-        bbsHandle,
-      );
+      return bbsHandle
+        ? [
+            {
+              sourceUri: post.uri,
+              backlinkSource: `${POST}:root`,
+              type: "reply",
+              threadTitle: post.value.title ?? "",
+              threadUri: post.uri,
+              bbsHandle,
+            },
+          ]
+        : [];
     }),
-    ...replyPosts.map((reply) => {
+    ...replyPosts.flatMap((reply): ActivityTarget[] => {
       const bbsDid = parseAtUri(reply.value.scope).did;
       const bbsHandle = bbsIdentities[bbsDid]?.handle;
-      if (!bbsHandle) return Promise.resolve([] as ActivityItem[]);
-      return fetchBacklinkItems(
-        reply.uri,
-        `${POST}:parent`,
-        did,
-        "parent_reply",
-        "",
-        reply.value.root ?? "",
-        bbsHandle,
-      );
+      return bbsHandle
+        ? [
+            {
+              sourceUri: reply.uri,
+              backlinkSource: `${POST}:parent`,
+              type: "parent_reply",
+              threadTitle: "",
+              threadUri: reply.value.root ?? "",
+              bbsHandle,
+            },
+          ]
+        : [];
     }),
-  ]);
+  ];
+  const results = await allSettledBounded(
+    targets,
+    (target) => fetchBacklinkItems(target, did),
+    ACTIVITY_CONCURRENCY,
+  );
+  reportPartialFailures("Activity lookup", results);
 
-  // Deduplicate — prefer "parent-reply" type when the same reply appears as both.
   const seen = new Map<string, ActivityItem>();
-  for (const item of results.flat()) {
+  const items = results.flatMap((result) =>
+    result.status === "fulfilled" ? result.value : [],
+  );
+  for (const item of items) {
     const key = item.replyUri;
     if (!seen.has(key) || item.type === "parent_reply") seen.set(key, item);
   }

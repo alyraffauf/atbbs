@@ -20,11 +20,7 @@ export default function RecentThreads({ threads }: RecentThreadsProps) {
   return (
     <div>
       {threads.slice(0, shown).map((thread) => {
-        const url = threadUrl(
-          thread.bbsHandle,
-          thread.threadDid,
-          thread.threadRkey,
-        );
+        const url = threadUrl(thread.bbsHandle, thread.did, thread.rkey);
         return (
           <Link
             key={thread.uri}

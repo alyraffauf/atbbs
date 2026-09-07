@@ -6,7 +6,7 @@ import { resolveIdentity } from "../../atproto/identity";
 import { getRecord } from "../../atproto/records";
 import { resolveIdentitiesBatch } from "../identity/service";
 import { getRecordsBatch } from "../support/records";
-import { POST } from "../schema/collections";
+import { POST } from "../../config";
 import { parseAtUri } from "../../atproto/uri";
 import { recordToReply } from "./replies";
 import { isPostRecord } from "../schema/records";
@@ -17,9 +17,6 @@ export interface Thread {
   uri: string;
   did: string;
   rkey: string;
-  authorDid: string;
-  threadDid: string;
-  threadRkey: string;
   authorHandle: string;
   authorPds: string;
   title: string;
@@ -47,12 +44,10 @@ export async function fetchThreadRefs(
   const seenCursors = new Set<string>();
   let truncated = false;
   for (let i = 0; i < MAX_REF_PAGES; i++) {
-    const page = await getBacklinks(
-      threadUri,
-      `${POST}:root`,
-      REF_PAGE_SIZE,
+    const page = await getBacklinks(threadUri, `${POST}:root`, {
+      limit: REF_PAGE_SIZE,
       cursor,
-    );
+    });
     collected.push(...page.records.slice(0, 2_000 - collected.length));
     if (!page.cursor) break;
     if (seenCursors.has(page.cursor) || collected.length >= 2_000) {
@@ -91,9 +86,6 @@ export async function fetchThreadRoot(
     uri: threadRecord.uri,
     did,
     rkey: tid,
-    authorDid: did,
-    threadDid: did,
-    threadRkey: tid,
     authorHandle: author.handle,
     authorPds: author.pds ?? "",
     title: postValue.title ?? "",

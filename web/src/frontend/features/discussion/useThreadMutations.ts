@@ -4,7 +4,7 @@ import type { PostDraft } from "./components/PostComposer";
 import { alertOnError } from "../../app/browser/alerts";
 import { useAuth } from "../auth/auth";
 import type { Community } from "../../../atbbs/community/read";
-import { POST } from "../../../atbbs/schema/collections";
+import { POST } from "../../../config";
 import { myThreadsQuery } from "../../features/dashboard/queries";
 import { queryClient } from "../../app/queryClient";
 import {
@@ -61,8 +61,6 @@ export function useThreadMutations(options: ThreadMutationOptions) {
         uri: record.uri,
         did,
         rkey,
-        authorDid: did,
-        replyRkey: rkey,
         handle: user.handle,
         pds: user.pdsUrl,
         body: input.body,

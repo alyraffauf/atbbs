@@ -96,7 +96,7 @@ export default function ThreadPage() {
           setReplyingTo({
             uri: reply.uri,
             handle: reply.handle,
-            replyRkey: reply.replyRkey,
+            replyRkey: reply.rkey,
           })
         }
         onParentClick={scrollToReply}

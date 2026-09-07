@@ -1,4 +1,4 @@
-import { SERVICES } from "./config";
+import { SERVICES } from "../config";
 import { parseAtUri } from "./uri";
 import { fetchJson, malformed } from "./transport";
 
@@ -14,6 +14,13 @@ export interface BoundedResult<T> {
   items: T[];
   truncated: boolean;
   nextCursor: string | null;
+}
+
+export interface ListRecordsOptions {
+  pageSize?: number;
+  maxRecords?: number;
+  maxPages?: number;
+  reverse?: boolean;
 }
 
 function isRecord(value: unknown): value is ATRecord {
@@ -50,10 +57,12 @@ export async function listRecords(
   pdsUrl: string,
   did: string,
   collection: string,
-  pageSize = 100,
-  maxRecords = 10_000,
-  maxPages = 100,
-  reverse = false,
+  {
+    pageSize = 100,
+    maxRecords = 10_000,
+    maxPages = 100,
+    reverse = false,
+  }: ListRecordsOptions = {},
 ): Promise<BoundedResult<ATRecord>> {
   const records: ATRecord[] = [];
   let cursor: string | undefined;

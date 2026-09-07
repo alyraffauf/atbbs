@@ -26,7 +26,6 @@ export function usePostNews(bbs: Community) {
       const item: NewsPost = {
         uri: record.uri,
         rkey: record.rkey,
-        authorDid: bbs.identity.did,
         title: input.title ?? "",
         body: input.body,
         createdAt: record.createdAt,

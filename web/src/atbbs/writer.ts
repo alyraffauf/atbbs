@@ -13,7 +13,6 @@ import {
 } from "./community/records";
 import { deleteBBS } from "./community/delete";
 import { createPin } from "./community/pinCommands";
-import type { Board, Community } from "./community/read";
 import {
   createNews,
   createReply,
@@ -31,7 +30,7 @@ import {
   deleteHide,
 } from "./moderation/commands";
 import { putProfile } from "./profile/commands";
-import { BOARD, PIN } from "./schema/collections";
+import { BOARD, PIN } from "../config";
 import { isBoardRecord, isSiteRecord } from "./schema/records";
 import { nowIso } from "./support/time";
 
@@ -55,8 +54,8 @@ export interface ProfileDraft {
 }
 
 export interface AtbbsWriter {
-  createCommunity(input: CommunityDraft): Promise<Community>;
-  updateCommunity(input: CommunityDraft): Promise<Community>;
+  createCommunity(input: CommunityDraft): Promise<void>;
+  updateCommunity(input: CommunityDraft): Promise<void>;
   deleteCommunity(): Promise<void>;
   pinCommunity(did: string): Promise<void>;
   unpinCommunity(rkey: string): Promise<void>;
@@ -71,27 +70,6 @@ export interface AtbbsWriter {
   saveProfile(input: ProfileDraft): Promise<void>;
 }
 
-function communityFromDraft(
-  repo: AuthenticatedRepo,
-  draft: CommunityDraft,
-  createdAt: string,
-): Community {
-  const boards: Board[] = draft.boards.map((board) => ({
-    ...board,
-    createdAt,
-  }));
-  return {
-    identity: { did: repo.did, handle: repo.did },
-    site: {
-      name: draft.name,
-      description: draft.description,
-      intro: draft.intro,
-      boards,
-      createdAt,
-    },
-  };
-}
-
 export function createAtbbsWriter(
   repo: AuthenticatedRepo,
   pdsUrl: string,
@@ -102,13 +80,7 @@ export function createAtbbsWriter(
       const createdSlugs: string[] = [];
       try {
         for (const board of draft.boards) {
-          await createBoard(
-            repo,
-            board.slug,
-            board.name,
-            board.description,
-            createdAt,
-          );
+          await createBoard(repo, { ...board, createdAt });
           createdSlugs.push(board.slug);
         }
         await createSite(repo, {
@@ -130,7 +102,6 @@ export function createAtbbsWriter(
         }
         throw error;
       }
-      return communityFromDraft(repo, draft, createdAt);
     },
 
     async updateCommunity(draft) {
@@ -167,14 +138,11 @@ export function createAtbbsWriter(
       );
 
       for (const board of draft.boards) {
-        await putBoard(
-          repo,
-          board.slug,
-          board.name,
-          board.description,
-          boardCreatedAt.get(board.slug) ?? updatedAt,
+        await putBoard(repo, {
+          ...board,
+          createdAt: boardCreatedAt.get(board.slug) ?? updatedAt,
           updatedAt,
-        );
+        });
       }
       await putSite(repo, {
         name: draft.name,
@@ -193,7 +161,6 @@ export function createAtbbsWriter(
           await deleteRecord(repo, "xyz.atbbs.board", rkey);
         }
       }
-      return communityFromDraft(repo, draft, existingSite.createdAt);
     },
 
     deleteCommunity: () => deleteBBS(repo, repo.did, pdsUrl),

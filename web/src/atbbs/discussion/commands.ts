@@ -5,7 +5,7 @@ import {
   deleteRecord,
   type AuthenticatedRepo,
 } from "../../atproto/repository";
-import { BOARD, POST, SITE } from "../schema/collections";
+import { BOARD, POST, SITE } from "../../config";
 import { nowIso } from "../support/time";
 import {
   prepareAttachmentViews,
@@ -71,7 +71,7 @@ async function createPost(
     ...(input.parent ? { parent: input.parent as PostValue["parent"] } : {}),
     ...(attachments.length ? { attachments } : {}),
   };
-  const record = await createRecord(repo, POST, value);
+  const record = await createRecord(repo, { collection: POST, value });
   const { did, rkey } = parseAtUri(record.uri);
   return {
     uri: record.uri,

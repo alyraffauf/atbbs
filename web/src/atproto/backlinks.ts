@@ -1,4 +1,4 @@
-import { SERVICES } from "./config";
+import { SERVICES } from "../config";
 import { fetchJson, malformed } from "./transport";
 
 const CONSTELLATION = SERVICES.constellation;
@@ -15,12 +15,16 @@ export interface BacklinkPage {
   cursor?: string | null;
 }
 
+export interface BacklinkOptions {
+  limit?: number;
+  cursor?: string;
+  did?: string;
+}
+
 export async function getBacklinks(
   subject: string,
   source: string,
-  limit = 50,
-  cursor?: string,
-  did?: string,
+  { limit = 50, cursor, did }: BacklinkOptions = {},
 ): Promise<BacklinkPage> {
   let url = `${CONSTELLATION}/blue.microcosm.links.getBacklinks?subject=${encodeURIComponent(subject)}&source=${encodeURIComponent(source)}&limit=${limit}`;
   if (cursor) url += `&cursor=${encodeURIComponent(cursor)}`;

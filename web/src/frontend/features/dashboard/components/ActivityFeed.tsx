@@ -5,6 +5,7 @@ import { threadUrl } from "../../../app/router/urls";
 import PostBody from "../../discussion/components/PostBody";
 import PostMeta from "../../discussion/components/PostMeta";
 import type { ActivityItem } from "../../../../atbbs/dashboard/activity";
+import { parseAtUri } from "../../../../atproto/uri";
 
 const PAGE_SIZE = 10;
 
@@ -21,7 +22,9 @@ export default function ActivityFeed({ items }: ActivityFeedProps) {
   return (
     <div>
       {items.slice(0, shown).map((item) => {
-        const url = `${threadUrl(item.bbsHandle, item.threadDid, item.threadRkey)}#reply-${item.replyRkey}`;
+        const thread = parseAtUri(item.threadUri);
+        const reply = parseAtUri(item.replyUri);
+        const url = `${threadUrl(item.bbsHandle, thread.did, thread.rkey)}#reply-${reply.rkey}`;
         return (
           <Link
             key={item.replyUri}

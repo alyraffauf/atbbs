@@ -1,4 +1,4 @@
-import { CDN } from "./config";
+import { CDN } from "../../config";
 
 export function avatarUrl(did: string, cid: string): string {
   return `${CDN.url}/img/avatar/plain/${did}/${cid}`;
