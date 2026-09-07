@@ -140,5 +140,19 @@ export default defineConfig(({ command }) => {
       // Allow importing ../../data/shared.json (shared with the Python TUI).
       fs: { allow: [".."] },
     },
+    build: {
+      rolldownOptions: {
+        output: {
+          codeSplitting: {
+            groups: [
+              {
+                name: "vendor",
+                test: /node_modules/,
+              },
+            ],
+          },
+        },
+      },
+    },
   };
 });
