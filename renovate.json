@@ -2,6 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:best-practices"],
   "timezone": "America/New_York",
+  "platformAutomerge": true,
   "schedule": ["before 6am on monday"],
   "prConcurrentLimit": 5,
   "prHourlyLimit": 2,
@@ -9,7 +10,8 @@
   "rangeStrategy": "bump",
   "lockFileMaintenance": {
     "enabled": true,
-    "schedule": ["before 6am on monday"]
+    "schedule": ["before 6am on monday"],
+    "automerge": true
   },
   "customManagers": [
     {
@@ -24,9 +26,15 @@
   ],
   "packageRules": [
     {
-      "description": "Require approval before opening major upgrade PRs",
+      "description": "Automerge routine updates after checks pass",
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "automerge": true
+    },
+    {
+      "description": "Keep major upgrades manual",
       "matchUpdateTypes": ["major"],
-      "dependencyDashboardApproval": true
+      "dependencyDashboardApproval": true,
+      "automerge": false
     },
     {
       "description": "Group compatible Python updates",
@@ -54,5 +62,9 @@
       "matchUpdateTypes": ["minor", "patch", "digest"],
       "groupName": "GitHub Actions"
     }
-  ]
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security"]
+  }
 }
