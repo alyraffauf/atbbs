@@ -1,4 +1,3 @@
-import { useState, type SyntheticEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
@@ -6,15 +5,13 @@ import { deleteRecord, putBoard, putSite } from "../lib/writes";
 import { BOARD } from "../lib/lexicon";
 import { makeAtUri, nowIso } from "../lib/util";
 import type { Did } from "@atcute/lexicons/syntax";
-import * as limits from "../lib/limits";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { bbsQuery } from "../lib/queries";
 import { bbsUrl } from "../lib/routes";
-import { Input, Textarea, Button } from "../components/form/Form";
-import BoardRowEditor, {
-  type BoardRow,
-} from "../components/form/BoardRowEditor";
+import CommunityForm, {
+  type CommunityDraft,
+} from "../components/form/CommunityForm";
 
 export default function SysopEdit() {
   const { user, repo } = useAuth();
@@ -24,118 +21,58 @@ export default function SysopEdit() {
   // `user` is non-null at render time.
   const { data: bbs } = useSuspenseQuery(bbsQuery(user!.handle));
 
-  const [name, setName] = useState(bbs.site.name);
-  const [description, setDescription] = useState(bbs.site.description);
-  const [intro, setIntro] = useState(bbs.site.intro);
-  const [boards, setBoards] = useState<BoardRow[]>(
-    bbs.site.boards.map((board) => ({
+  const initialDraft: CommunityDraft = {
+    name: bbs.site.name,
+    description: bbs.site.description,
+    intro: bbs.site.intro,
+    boards: bbs.site.boards.map((board) => ({
       slug: board.slug,
       name: board.name,
       description: board.description,
     })),
-  );
-  const [error, setError] = useState<string | null>(null);
+  };
 
   usePageTitle("Edit community — atbbs");
   useBreadcrumb(
-    [
-      { label: bbs.site.name, to: bbsUrl(user!.handle) },
-      { label: "Edit" },
-    ],
+    [{ label: bbs.site.name, to: bbsUrl(user!.handle) }, { label: "Edit" }],
     [bbs, user!.handle],
   );
 
-  async function onSubmit(e: SyntheticEvent) {
-    e.preventDefault();
-    if (!repo || !user || !name.trim()) return;
-    const cleanBoards = boards
-      .map((board) => ({
-        slug: board.slug.trim(),
-        name: board.name.trim(),
-        description: board.description.trim(),
-      }))
-      .filter((board) => board.slug);
-    if (cleanBoards.length > limits.MAX_BOARDS) {
-      setError(`A community can have at most ${limits.MAX_BOARDS} boards.`);
-      return;
-    }
+  async function save(draft: CommunityDraft) {
+    if (!repo || !user) throw new Error("Not signed in");
     const now = nowIso();
-    try {
-      for (const board of cleanBoards) {
-        await putBoard(
-          repo,
-          board.slug,
-          board.name || board.slug,
-          board.description,
-          now,
-        );
-      }
-      await putSite(repo, {
-        name: name.trim(),
-        description: description.trim(),
-        intro,
-        boards: cleanBoards.map((board) =>
-          makeAtUri(user.did as Did, BOARD, board.slug),
-        ),
-        createdAt: bbs.site.createdAt || now,
-        updatedAt: now,
-      });
-      const currentSlugs = new Set(cleanBoards.map((board) => board.slug));
-      for (const board of bbs.site.boards) {
-        if (!currentSlugs.has(board.slug)) {
-          await deleteRecord(repo, BOARD, board.slug);
-        }
-      }
-      navigate(bbsUrl(user.handle));
-    } catch {
-      setError("Could not update community.");
+    for (const board of draft.boards) {
+      await putBoard(repo, board.slug, board.name, board.description, now);
     }
+    await putSite(repo, {
+      name: draft.name,
+      description: draft.description,
+      intro: draft.intro,
+      boards: draft.boards.map((board) =>
+        makeAtUri(user.did as Did, BOARD, board.slug),
+      ),
+      createdAt: bbs.site.createdAt || now,
+      updatedAt: now,
+    });
+    const currentSlugs = new Set(draft.boards.map((board) => board.slug));
+    for (const board of bbs.site.boards) {
+      if (!currentSlugs.has(board.slug)) {
+        await deleteRecord(repo, BOARD, board.slug);
+      }
+    }
+    navigate(bbsUrl(user.handle));
   }
 
   return (
     <>
       <h1 className="text-lg text-neutral-200 mb-1">Edit community</h1>
       <p className="text-neutral-400 mb-6">Update your community.</p>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      <form onSubmit={onSubmit} className="space-y-6">
-        <div>
-          <label className="text-xs text-neutral-400 uppercase tracking-wide">
-            Community Name
-          </label>
-          <Input
-            name="name"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={limits.SITE_NAME}
-          />
-        </div>
-        <div>
-          <label className="text-xs text-neutral-400 uppercase tracking-wide">
-            Description
-          </label>
-          <Input
-            name="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            maxLength={limits.SITE_DESCRIPTION}
-          />
-        </div>
-        <div>
-          <label className="text-xs text-neutral-400 uppercase tracking-wide">
-            Welcome Message
-          </label>
-          <Textarea
-            name="intro"
-            rows={6}
-            value={intro}
-            onChange={(e) => setIntro(e.target.value)}
-            maxLength={limits.SITE_INTRO}
-          />
-        </div>
-        <BoardRowEditor boards={boards} onChange={setBoards} />
-        <Button type="submit">save</Button>
-      </form>
+      <CommunityForm
+        initialDraft={initialDraft}
+        submitLabel="save"
+        failureMessage="Could not update community."
+        onSave={save}
+      />
     </>
   );
 }
