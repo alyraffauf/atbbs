@@ -38,55 +38,33 @@ class SlingshotActorResolver implements ActorResolver {
 let oauthConfigured = false;
 let oauthScope = "";
 
-interface ClientMetadata {
-  client_id: string;
-  client_name: string;
-  client_uri: string;
-  redirect_uris: string[];
-  scope: string;
-  grant_types: string[];
-  response_types: string[];
-  token_endpoint_auth_method: string;
-  application_type: string;
-  dpop_bound_access_tokens: boolean;
-}
-
-export function parseClientMetadata(value: unknown) {
+function parseClientMetadata(value: unknown) {
   if (!value || typeof value !== "object") {
     throw new Error("OAuth client metadata must be an object.");
   }
-  const metadata = value as Partial<ClientMetadata>;
-  const isValid =
-    typeof metadata.client_id === "string" &&
-    typeof metadata.client_name === "string" &&
-    typeof metadata.client_uri === "string" &&
-    Array.isArray(metadata.redirect_uris) &&
-    metadata.redirect_uris.length === 1 &&
-    typeof metadata.redirect_uris[0] === "string" &&
-    typeof metadata.scope === "string" &&
-    metadata.scope.length > 0 &&
-    Array.isArray(metadata.grant_types) &&
-    metadata.grant_types.includes("authorization_code") &&
-    metadata.grant_types.includes("refresh_token") &&
-    Array.isArray(metadata.response_types) &&
-    metadata.response_types.includes("code") &&
-    metadata.token_endpoint_auth_method === "none" &&
-    metadata.application_type === "web" &&
-    metadata.dpop_bound_access_tokens === true;
-  if (!isValid) throw new Error("OAuth client metadata is invalid.");
-  const validMetadata = metadata as ClientMetadata;
+  const metadata = value as Record<string, unknown>;
+  const redirectUri = Array.isArray(metadata.redirect_uris)
+    ? metadata.redirect_uris[0]
+    : undefined;
+  if (
+    typeof metadata.client_id !== "string" ||
+    typeof redirectUri !== "string" ||
+    typeof metadata.scope !== "string" ||
+    !metadata.scope
+  ) {
+    throw new Error("OAuth client metadata is invalid.");
+  }
 
   try {
-    new URL(validMetadata.client_id);
-    new URL(validMetadata.client_uri);
-    new URL(validMetadata.redirect_uris[0]);
+    new URL(metadata.client_id);
+    new URL(redirectUri);
   } catch {
     throw new Error("OAuth client metadata contains an invalid URL.");
   }
   return {
-    clientId: validMetadata.client_id,
-    redirectUri: validMetadata.redirect_uris[0],
-    scope: validMetadata.scope,
+    clientId: metadata.client_id,
+    redirectUri,
+    scope: metadata.scope,
   };
 }
 

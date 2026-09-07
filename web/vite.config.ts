@@ -9,29 +9,15 @@ const SERVER_PORT = 5173;
 // Placeholder the Docker entrypoint replaces at runtime with PUBLIC_URL.
 const PUBLIC_URL_TOKEN = "__PUBLIC_URL__";
 
-interface ClientMetadata {
-  client_id: string;
-  client_name: string;
-  client_uri: string;
-  redirect_uris: [string];
-  scope: string;
-  grant_types: ["authorization_code", "refresh_token"];
-  response_types: ["code"];
-  token_endpoint_auth_method: "none";
-  application_type: "web";
-  dpop_bound_access_tokens: true;
-}
-
 function buildMetadata(
   publicUrl: string,
-  clientId = `${publicUrl.replace(/\/$/, "")}/client-metadata.json`,
-): ClientMetadata {
-  const u = publicUrl.replace(/\/$/, "");
+  clientId = `${publicUrl}/client-metadata.json`,
+) {
   return {
     client_id: clientId,
     client_name: "atbbs",
-    client_uri: u,
-    redirect_uris: [`${u}/oauth/callback`],
+    client_uri: publicUrl,
+    redirect_uris: [`${publicUrl}/oauth/callback`],
     scope: OAUTH_SCOPE,
     grant_types: ["authorization_code", "refresh_token"],
     response_types: ["code"],
@@ -60,7 +46,7 @@ export default defineConfig(({ command }) => {
     `http://localhost?redirect_uri=${encodeURIComponent(devRedirectUri)}` +
     `&scope=${encodeURIComponent(OAUTH_SCOPE)}`;
 
-  const staticFiles: Array<{ fileName: string; source: string }> = [];
+  let staticFile: { fileName: string; source: string } | undefined;
   if (isBuild) {
     if (publicUrl) {
       let parsedPublicUrl: URL;
@@ -79,15 +65,15 @@ export default defineConfig(({ command }) => {
           `VITE_PUBLIC_URL must be a bare HTTPS origin (got ${publicUrl}).`,
         );
       }
-      staticFiles.push({
+      staticFile = {
         fileName: "client-metadata.json",
         source: JSON.stringify(buildMetadata(publicUrl), null, 2) + "\n",
-      });
+      };
     } else {
-      staticFiles.push({
+      staticFile = {
         fileName: "client-metadata.template.json",
         source: JSON.stringify(buildMetadata(PUBLIC_URL_TOKEN), null, 2) + "\n",
-      });
+      };
     }
   }
 
@@ -112,9 +98,7 @@ export default defineConfig(({ command }) => {
           });
         },
         generateBundle() {
-          for (const f of staticFiles) {
-            this.emitFile({ type: "asset", ...f });
-          }
+          if (staticFile) this.emitFile({ type: "asset", ...staticFile });
         },
       },
     ],
