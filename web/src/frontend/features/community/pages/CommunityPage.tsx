@@ -23,7 +23,7 @@ import ActionBar from "../../../ui/ActionBar";
 import { ActionLink } from "../../../app/ActionButton";
 import PinButton from "../components/PinButton";
 import ListSkeleton from "../../../app/layout/ListSkeleton";
-import type { CommunityLoaderData } from "../../../app/router/loaders";
+import type { CommunityLoaderData } from "../../../app/router/loaders/content";
 import { usePostNews } from "../../discussion/useNewsMutations";
 
 const INITIAL_NEWS_COUNT = 3;

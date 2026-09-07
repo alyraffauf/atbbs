@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createThread } from "../../../../atbbs/discussion/commands";
-import type { AuthenticatedRepo } from "../../../../atproto/repository";
+import { createThread } from "./commands";
+import type { AuthenticatedRepo } from "../../atproto/repository";
 import {
   prepareAttachmentViews,
   uploadAttachments,
-} from "../../../../atbbs/discussion/attachments";
+} from "./attachments";
 
 describe("authenticated writes", () => {
   it("prepares JSON-safe attachment URLs without exposing blob references", () => {

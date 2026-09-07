@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { isCanonicalResourceUri } from "@atcute/lexicons/syntax";
+import { isValidPostUri } from "../../../../atbbs/moderation/validation";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useLoaderData } from "react-router-dom";
 import { sysopModerationQuery } from "../../../features/moderation/queries";
@@ -7,7 +7,7 @@ import HandleInput from "../../identity/components/HandleInput";
 import { Button } from "../../../ui/Form";
 import { usePageTitle } from "../../../app/browser/usePageTitle";
 import { useModerationMutations } from "../useModerationMutations";
-import type { SysopBBSLoaderData } from "../../../app/router/loaders";
+import type { SysopBBSLoaderData } from "../../../app/router/loaders/account";
 
 interface ModerationListItemProps {
   label: string;
@@ -76,7 +76,7 @@ export default function ModerationPage() {
 
   function onHide() {
     const uri = hideUri.trim();
-    if (!isCanonicalResourceUri(uri)) {
+    if (!isValidPostUri(uri)) {
       alert("Enter a valid AT-URI.");
       return;
     }

@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "../auth/auth";
-import { resolveIdentity } from "../../../atproto/identity";
+import { resolveIdentity } from "../../../atbbs/identity/service";
 import { alertOnError } from "../../app/browser/alerts";
 import { invalidateAllCommunityCaches } from "../../features/community/cache";
 

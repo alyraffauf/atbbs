@@ -2,7 +2,7 @@ import { useLoaderData } from "react-router-dom";
 import { useAuth } from "../../auth/auth";
 import { usePageTitle } from "../../../app/browser/usePageTitle";
 import NewsPostCard from "../components/NewsPostCard";
-import type { NewsLoaderData } from "../../../app/router/loaders";
+import type { NewsLoaderData } from "../../../app/router/loaders/content";
 import { useDeleteNews } from "../useNewsMutations";
 
 export default function NewsPage() {

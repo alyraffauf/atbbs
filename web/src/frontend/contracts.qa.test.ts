@@ -16,9 +16,6 @@ import {
   threadRefsQuery,
   threadRootQuery,
 } from "./features/discussion/queries";
-import { createRecord, type AuthenticatedRepo } from "../atproto/repository";
-import { allSettledBounded } from "../atbbs/support/batch";
-import { fetchJson, type FetchError } from "../atproto/transport";
 
 afterEach(() => {
   queryClient.clear();
@@ -62,62 +59,6 @@ describe("frontend query keys", () => {
         { did: "did:plc:b", collection: "xyz.atbbs.post", rkey: "two" },
       ]).queryKey,
     ).toEqual(["thread-page", "at://thread", 2, "one/two"]);
-  });
-});
-
-describe("protocol errors and ordering", () => {
-  it.each([
-    [404, "not-found"],
-    [429, "rate-limit"],
-    [503, "server"],
-  ] as const)("classifies HTTP %i as %s", async (status, kind) => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("failure", { status })));
-    await expect(fetchJson("https://service.example/xrpc")).rejects.toMatchObject<
-      Partial<FetchError>
-    >({ kind });
-  });
-
-  it("preserves input order when bounded work finishes out of order", async () => {
-    const pending = new Map<number, () => void>();
-    const resultsPromise = allSettledBounded(
-      [1, 2, 3],
-      (value) =>
-        new Promise<number>((resolve) => pending.set(value, () => resolve(value))),
-      3,
-    );
-    await vi.waitFor(() => expect(pending.size).toBe(3));
-    pending.get(3)!();
-    pending.get(1)!();
-    pending.get(2)!();
-    expect(await resultsPromise).toEqual([
-      { status: "fulfilled", value: 1 },
-      { status: "fulfilled", value: 2 },
-      { status: "fulfilled", value: 3 },
-    ]);
-  });
-});
-
-describe("record writes", () => {
-  it("keeps the create-record envelope and explicit rkey", async () => {
-    const post = vi.fn(async () => ({
-      ok: true,
-      data: { uri: "at://did:plc:me/xyz.atbbs.pin/fixed", cid: "cid" },
-    }));
-    const repo = {
-      did: "did:plc:me",
-      client: { post },
-    } as unknown as AuthenticatedRepo;
-
-    await createRecord(repo, "xyz.atbbs.pin", { did: "did:plc:bbs" }, "fixed");
-
-    expect(post).toHaveBeenCalledWith("com.atproto.repo.createRecord", {
-      input: {
-        repo: "did:plc:me",
-        collection: "xyz.atbbs.pin",
-        rkey: "fixed",
-        record: { $type: "xyz.atbbs.pin", did: "did:plc:bbs" },
-      },
-    });
   });
 });
 

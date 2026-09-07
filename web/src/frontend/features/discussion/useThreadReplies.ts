@@ -8,7 +8,6 @@ import {
   threadPageQuery,
   threadRefsQuery,
 } from "../../features/discussion/queries";
-import { parseAtUri } from "../../../atproto/uri";
 import {
   clampPage,
   parsePageParam,
@@ -51,8 +50,7 @@ export function useThreadReplies(threadUri: string) {
     setParams((prev) => writePageParam(prev, clamped));
   }
 
-  function scrollToReply(uri: string) {
-    const { rkey } = parseAtUri(uri);
+  function scrollToReply(uri: string, rkey: string) {
     const onScreen = document.getElementById(`reply-${rkey}`);
     if (onScreen) {
       onScreen.scrollIntoView({ behavior: "smooth" });

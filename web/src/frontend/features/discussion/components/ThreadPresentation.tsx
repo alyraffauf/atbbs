@@ -20,7 +20,7 @@ interface ThreadPresentationProps {
   truncated: boolean;
   onPageChange: (page: number) => void;
   onReplyTo: (reply: Reply) => void;
-  onParentClick: (uri: string) => void;
+  onParentClick: (uri: string, rkey: string) => void;
   onDeleteThread: () => void;
   onDeleteReply: (reply: Reply) => void;
   onBan: (did: string) => void;

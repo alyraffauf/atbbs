@@ -12,7 +12,7 @@ import { threadUrl } from "../../../app/router/urls";
 import ThreadListItem, { ThreadListHeader } from "../components/ThreadListItem";
 import PostComposer from "../components/PostComposer";
 import ListSkeleton from "../../../app/layout/ListSkeleton";
-import type { BoardLoaderData } from "../../../app/router/loaders";
+import type { BoardLoaderData } from "../../../app/router/loaders/content";
 import { useBoardPosting } from "../useBoardPosting";
 
 export default function BoardPage() {

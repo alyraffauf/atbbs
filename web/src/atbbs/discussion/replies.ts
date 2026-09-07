@@ -18,6 +18,7 @@ export interface Reply {
   body: string;
   createdAt: string;
   parent: string | null;
+  parentRkey: string | null;
   attachments: AttachmentView[];
 }
 
@@ -47,6 +48,9 @@ export function recordToReply(
     body: record.value.body,
     createdAt: record.value.createdAt,
     parent: record.value.parent ?? null,
+    parentRkey: record.value.parent
+      ? parseAtUri(record.value.parent).rkey
+      : null,
     attachments: prepareAttachmentViews(
       record.value.attachments,
       did,

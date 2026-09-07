@@ -10,7 +10,7 @@ interface ThreadReplyListProps {
   userDid?: string;
   sysopDid: string;
   onReplyTo: (reply: Reply) => void;
-  onParentClick: (uri: string) => void;
+  onParentClick: (uri: string, rkey: string) => void;
   onDelete: (reply: Reply) => void;
   onBan: (did: string) => void;
   onUnban: (rkey: string) => void;
@@ -43,6 +43,7 @@ export default function ThreadReplyList({
 
   return visibleReplies.map((reply) => {
     const parentUri = reply.parent;
+    const parentRkey = reply.parentRkey;
     const parentReply = parentUri ? parentReplies[parentUri] : null;
     const replyModeration = getPostModeration(
       moderation,
@@ -63,7 +64,11 @@ export default function ThreadReplyList({
         banRkey={replyModeration.banRkey}
         hideRkey={replyModeration.hideRkey}
         onReplyTo={() => onReplyTo(reply)}
-        onParentClick={parentUri ? () => onParentClick(parentUri) : undefined}
+        onParentClick={
+          parentUri && parentRkey
+            ? () => onParentClick(parentUri, parentRkey)
+            : undefined
+        }
         onDelete={() => onDelete(reply)}
         onBan={() => onBan(reply.did)}
         onUnban={onUnban}

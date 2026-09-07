@@ -6,8 +6,10 @@ import {
   type ReplyRef,
 } from "../../../atbbs/discussion/replies";
 import { refToUri } from "./pagination";
-import type { ReplyPage } from "../../../atbbs/discussion/thread";
-import type { BoundedResult } from "../../../atproto/records";
+import type {
+  ReplyPage,
+  ReplyRefsResult,
+} from "../../../atbbs/discussion/thread";
 
 export async function cancelRefsRefetch(threadUri: string) {
   await queryClient.cancelQueries({
@@ -17,11 +19,11 @@ export async function cancelRefsRefetch(threadUri: string) {
 
 export function getRefs(threadUri: string): ReplyRef[] {
   const key = threadRefsQuery(threadUri).queryKey;
-  return queryClient.getQueryData<BoundedResult<ReplyRef>>(key)?.items ?? [];
+  return queryClient.getQueryData<ReplyRefsResult>(key)?.items ?? [];
 }
 
 export function setRefs(threadUri: string, refs: ReplyRef[]) {
-  queryClient.setQueryData<BoundedResult<ReplyRef>>(
+  queryClient.setQueryData<ReplyRefsResult>(
     threadRefsQuery(threadUri).queryKey,
     (current) => ({
       items: refs,

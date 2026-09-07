@@ -11,7 +11,7 @@ import { useModerationMutations } from "../../moderation/useModerationMutations"
 import { usePageTitle } from "../../../app/browser/usePageTitle";
 import { useThreadMutations } from "../useThreadMutations";
 import { useThreadReplies } from "../useThreadReplies";
-import type { ThreadLoaderData } from "../../../app/router/loaders";
+import type { ThreadLoaderData } from "../../../app/router/loaders/content";
 
 export default function ThreadPage() {
   const { handle, bbs, thread } = useLoaderData() as ThreadLoaderData;
@@ -31,6 +31,7 @@ export default function ThreadPage() {
   const [replyingTo, setReplyingTo] = useState<{
     uri: string;
     handle: string;
+    replyRkey: string;
   } | null>(null);
 
   usePageTitle(`${thread.title} — ${bbs.site.name}`);
@@ -92,7 +93,11 @@ export default function ThreadPage() {
         truncated={truncated}
         onPageChange={setPage}
         onReplyTo={(reply) =>
-          setReplyingTo({ uri: reply.uri, handle: reply.handle })
+          setReplyingTo({
+            uri: reply.uri,
+            handle: reply.handle,
+            replyRkey: reply.replyRkey,
+          })
         }
         onParentClick={scrollToReply}
         onDeleteThread={onDeleteThread}
@@ -109,6 +114,7 @@ export default function ThreadPage() {
               createReply.mutateAsync({
                 ...draft,
                 parent: replyingTo?.uri ?? null,
+                parentRkey: replyingTo?.replyRkey ?? null,
               })
             }
             bodyPlaceholder="Write a reply..."

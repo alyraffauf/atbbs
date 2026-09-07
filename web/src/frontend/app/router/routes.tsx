@@ -15,19 +15,21 @@ import NewsPage from "../../features/discussion/pages/NewsPage";
 import NotFoundPage from "../layout/NotFoundPage";
 
 import {
+  requireNoBBSLoader,
+  requireSysopBBSLoader,
+  type SysopBBSLoaderData,
+} from "./loaders/account";
+import {
   boardLoader,
   communityLoader,
   newsLoader,
-  oauthCallbackLoader,
-  requireNoBBSLoader,
-  requireSysopBBSLoader,
   threadLoader,
   type BoardLoaderData,
   type CommunityLoaderData,
   type NewsLoaderData,
-  type SysopBBSLoaderData,
   type ThreadLoaderData,
-} from "./loaders";
+} from "./loaders/content";
+import { oauthCallbackLoader } from "../../features/auth/oauthLoader";
 import { breadcrumbHandle } from "./breadcrumbs";
 import { bbsUrl, boardUrl } from "../../app/router/urls";
 

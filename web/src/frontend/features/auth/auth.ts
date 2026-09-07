@@ -13,9 +13,11 @@ import {
 } from "@atcute/oauth-browser-client";
 import type { ActorResolver, ResolvedActor } from "@atcute/identity-resolver";
 import type { ActorIdentifier } from "@atcute/lexicons/syntax";
-import { resolveIdentity } from "../../../atproto/identity";
-import type { AuthenticatedRepo } from "../../../atproto/repository";
-import { createAtbbsWriter, type AtbbsWriter } from "../../../atbbs/writer";
+import { resolveIdentity } from "../../../atbbs/identity/service";
+import {
+  createAtbbsWriterForSession,
+  type AtbbsWriter,
+} from "../../../atbbs/writer";
 
 // --- OAuth setup (deferred until config is available) ---
 
@@ -84,7 +86,7 @@ const POST_LOGIN_KEY = "atbbs:post-login-redirect";
 let status: Status = "loading";
 let currentUser: AuthUser | null = null;
 let currentWriter: AtbbsWriter | null = null;
-let currentRepository: AuthenticatedRepo | null = null;
+let currentClient: Client | null = null;
 
 let initPromise: Promise<void> | null = null;
 let callbackPromise: Promise<void> | null = null;
@@ -129,9 +131,8 @@ async function setSignedIn(oauthAgent: OAuthUserAgent) {
     // Offline; the visibilitychange listener below will retry on next focus.
   }
 
-  const repository = { client: rpc, did: did as AuthenticatedRepo["did"] };
-  currentRepository = repository;
-  currentWriter = createAtbbsWriter(repository, pdsUrl);
+  currentClient = rpc;
+  currentWriter = createAtbbsWriterForSession(rpc, did, pdsUrl);
   currentUser = { did, handle, pdsUrl };
   status = "signedIn";
 
@@ -152,8 +153,12 @@ async function retryIdentityIfUnresolved() {
       handle: doc.handle,
       pdsUrl: doc.pds ?? currentUser.pdsUrl,
     };
-    if (currentRepository) {
-      currentWriter = createAtbbsWriter(currentRepository, currentUser.pdsUrl);
+    if (currentClient) {
+      currentWriter = createAtbbsWriterForSession(
+        currentClient,
+        currentUser.did,
+        currentUser.pdsUrl,
+      );
     }
     localStorage.setItem(
       IDENTITY_KEY,
@@ -174,7 +179,7 @@ if (typeof document !== "undefined") {
 function setSignedOut() {
   currentUser = null;
   currentWriter = null;
-  currentRepository = null;
+  currentClient = null;
   status = "signedOut";
 }
 

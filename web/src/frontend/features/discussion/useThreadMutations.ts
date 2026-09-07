@@ -36,7 +36,9 @@ export function useThreadMutations(options: ThreadMutationOptions) {
   const threadUri = thread.uri;
 
   const createReply = useMutation({
-    mutationFn: async (input: PostDraft & { parent: string | null }) => {
+    mutationFn: async (
+      input: PostDraft & { parent: string | null; parentRkey: string | null },
+    ) => {
       if (!writer || !user) throw new Error("Not signed in");
       const record = await writer.createReply({
         communityDid: bbs.identity.did,
@@ -63,6 +65,7 @@ export function useThreadMutations(options: ThreadMutationOptions) {
         body: input.body,
         createdAt: record.createdAt,
         parent: input.parent,
+        parentRkey: input.parentRkey,
         attachments: record.attachments,
       };
       const refs = appendRefAndReply(threadUri, ref, reply);

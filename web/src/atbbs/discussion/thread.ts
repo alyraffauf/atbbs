@@ -35,14 +35,16 @@ export interface Thread {
 const MAX_REF_PAGES = 20;
 const REF_PAGE_SIZE = 100;
 
-/** Every reply ref for the thread, oldest-first. */
-export async function fetchThreadRefs(
-  threadUri: string,
-): Promise<{
+export interface ReplyRefsResult {
   items: BacklinkRef[];
   truncated: boolean;
   nextCursor: string | null;
-}> {
+}
+
+/** Every reply ref for the thread, oldest-first. */
+export async function fetchThreadRefs(
+  threadUri: string,
+): Promise<ReplyRefsResult> {
   const collected: BacklinkRef[] = [];
   let cursor: string | undefined;
   const seenCursors = new Set<string>();

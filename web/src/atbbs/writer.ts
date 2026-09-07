@@ -1,4 +1,5 @@
 import type { AuthenticatedRepo } from "../atproto/repository";
+import type { Client } from "@atcute/client";
 import { deleteRecord } from "../atproto/repository";
 import { getRecord } from "../atproto/records";
 import { makeAtUri, parseAtUri } from "../atproto/uri";
@@ -192,4 +193,15 @@ export function createAtbbsWriter(
       await putProfile(repo, input.name, input.pronouns, input.bio);
     },
   };
+}
+
+export function createAtbbsWriterForSession(
+  client: Client,
+  did: string,
+  pdsUrl: string,
+): AtbbsWriter {
+  return createAtbbsWriter(
+    { client, did: did as AuthenticatedRepo["did"] },
+    pdsUrl,
+  );
 }

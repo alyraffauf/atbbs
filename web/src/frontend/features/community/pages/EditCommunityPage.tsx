@@ -5,7 +5,7 @@ import { bbsUrl } from "../../../app/router/urls";
 import CommunityEditor, {
   type CommunityDraft,
 } from "../components/CommunityEditor";
-import type { SysopBBSLoaderData } from "../../../app/router/loaders";
+import type { SysopBBSLoaderData } from "../../../app/router/loaders/account";
 import { invalidateAllCommunityCaches } from "../../../features/community/cache";
 
 export default function EditCommunityPage() {

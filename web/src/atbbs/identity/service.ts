@@ -4,6 +4,8 @@ import { FetchError } from "../../atproto/transport";
 import { allSettledBounded, reportPartialFailures } from "../support/batch";
 import { avatarUrl } from "../media/urls";
 
+export { resolveIdentity };
+
 const BSKY_PROFILE = "app.bsky.actor.profile";
 
 export async function resolveIdentitiesBatch(ids: string[]) {
