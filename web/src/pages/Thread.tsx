@@ -7,6 +7,7 @@ import { usePageTitle } from "../hooks/usePageTitle";
 import { useThreadReplies } from "../hooks/useThreadReplies";
 import { BOARD, POST } from "../lib/lexicon";
 import { makeAtUri, nowIso, parseAtUri } from "../lib/util";
+import type { Did } from "@atcute/lexicons/syntax";
 import * as limits from "../lib/limits";
 import {
   createPost,
@@ -99,7 +100,11 @@ export default function ThreadPage() {
       files: File[];
     }) => {
       if (!repo || !user) throw new Error("Not signed in");
-      const boardUri = makeAtUri(bbs.identity.did, BOARD, thread.boardSlug);
+      const boardUri = makeAtUri(
+        bbs.identity.did as Did,
+        BOARD,
+        thread.boardSlug,
+      );
       const attachments = await uploadAttachments(repo, input.files);
       const resp = await createPost(repo, boardUri, input.body, {
         root: threadUri,

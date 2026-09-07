@@ -9,6 +9,7 @@ import {
 } from "./atproto";
 import { BAN, BOARD, HIDE, POST, SITE } from "./lexicon";
 import { makeAtUri, parseAtUri } from "./util";
+import type { Did } from "@atcute/lexicons/syntax";
 import { deleteRecord } from "./writes";
 
 export async function deleteBBS(
@@ -35,7 +36,7 @@ export async function deleteBBS(
   }
 
   // Delete sysop's news posts (posts scoped to the site)
-  const siteUri = makeAtUri(did, SITE, "self");
+  const siteUri = makeAtUri(did as Did, SITE, "self");
   try {
     let cursor: string | undefined;
     const seenCursors = new Set<string>();

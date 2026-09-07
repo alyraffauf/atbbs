@@ -15,6 +15,7 @@ import {
 } from "./atproto";
 import { POST, BOARD } from "./lexicon";
 import { makeAtUri, parseAtUri } from "./util";
+import type { Did } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "./recordGuards";
 
 export interface Participant {
@@ -49,7 +50,7 @@ export async function hydrateThreadPage(
   slug: string,
   cursor?: string,
 ): Promise<ThreadPageResult> {
-  const boardUri = makeAtUri(bbsDid, BOARD, slug);
+  const boardUri = makeAtUri(bbsDid as Did, BOARD, slug);
 
   const lastActivity = new Map<string, string>();
   const postersByThread = new Map<string, Set<string>>();

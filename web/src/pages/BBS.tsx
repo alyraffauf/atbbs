@@ -17,6 +17,7 @@ import { createPost, uploadAttachments } from "../lib/writes";
 import { findPinRkey } from "../lib/pins";
 import { SITE } from "../lib/lexicon";
 import { makeAtUri, nowIso, parseAtUri, truncate } from "../lib/util";
+import type { Did } from "@atcute/lexicons/syntax";
 import * as limits from "../lib/limits";
 import { bbsQuery, newsQuery, pinsQuery } from "../lib/queries";
 import { bbsUrl, boardUrl, newsUrl, profileUrl } from "../lib/routes";
@@ -64,7 +65,7 @@ export default function BBSPage() {
       files: File[];
     }) => {
       if (!repo) throw new Error("Not signed in");
-      const siteUri = makeAtUri(bbs.identity.did, SITE, "self");
+      const siteUri = makeAtUri(bbs.identity.did as Did, SITE, "self");
       const attachments = await uploadAttachments(repo, input.files);
       const resp = await createPost(repo, siteUri, input.body, {
         title: input.title,

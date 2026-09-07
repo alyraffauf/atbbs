@@ -3,11 +3,12 @@
 import { getBacklinks, getRecordsBatch } from "./atproto";
 import { POST, SITE } from "./lexicon";
 import { makeAtUri, parseAtUri } from "./util";
+import type { Did } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "./recordGuards";
 import type { NewsPost } from "./bbs";
 
 export async function fetchNews(bbsDid: string): Promise<NewsPost[]> {
-  const siteUri = makeAtUri(bbsDid, SITE, "self");
+  const siteUri = makeAtUri(bbsDid as Did, SITE, "self");
   const backlinks = await getBacklinks(
     siteUri,
     `${POST}:scope`,

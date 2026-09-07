@@ -5,6 +5,7 @@ import { useAuth } from "../lib/auth";
 import { deleteRecord, putBoard, putSite } from "../lib/writes";
 import { BOARD } from "../lib/lexicon";
 import { makeAtUri, nowIso } from "../lib/util";
+import type { Did } from "@atcute/lexicons/syntax";
 import * as limits from "../lib/limits";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
@@ -74,7 +75,7 @@ export default function SysopEdit() {
         description: description.trim(),
         intro,
         boards: cleanBoards.map((board) =>
-          makeAtUri(user.did, BOARD, board.slug),
+          makeAtUri(user.did as Did, BOARD, board.slug),
         ),
         createdAt: bbs.site.createdAt || now,
         updatedAt: now,

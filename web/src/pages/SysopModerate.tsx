@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { isCanonicalResourceUri } from "@atcute/lexicons/syntax";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
 import { bbsQuery, sysopModerationQuery } from "../lib/queries";
@@ -86,7 +87,7 @@ export default function SysopModerate() {
 
   function onHide() {
     const uri = hideUri.trim();
-    if (!uri.startsWith("at://")) {
+    if (!isCanonicalResourceUri(uri)) {
       alert("Enter a valid AT-URI.");
       return;
     }

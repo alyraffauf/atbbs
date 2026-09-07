@@ -13,6 +13,7 @@ import { useAuth } from "../lib/auth";
 import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { makeAtUri, nowIso, parseAtUri, relativeDate } from "../lib/util";
+import type { Did } from "@atcute/lexicons/syntax";
 import { BOARD } from "../lib/lexicon";
 import { createPost, uploadAttachments } from "../lib/writes";
 import * as limits from "../lib/limits";
@@ -101,7 +102,7 @@ export default function BoardPage() {
       files: File[];
     }) => {
       if (!repo) throw new Error("Not signed in");
-      const boardUri = makeAtUri(bbs.identity.did, BOARD, board.slug);
+      const boardUri = makeAtUri(bbs.identity.did as Did, BOARD, board.slug);
       const attachments = await uploadAttachments(repo, input.files);
       const resp = await createPost(repo, boardUri, input.body, {
         title: input.title,

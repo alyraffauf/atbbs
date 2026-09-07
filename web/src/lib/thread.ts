@@ -11,6 +11,7 @@ import {
 } from "./atproto";
 import { POST } from "./lexicon";
 import { makeAtUri, parseAtUri } from "./util";
+import type { Did } from "@atcute/lexicons/syntax";
 import { recordToReply } from "./replies";
 import { isPostRecord } from "./recordGuards";
 import type { Reply } from "./replies";
@@ -95,7 +96,7 @@ export async function fetchThreadRoot(
 }
 
 export function threadUriFor(did: string, tid: string): string {
-  return makeAtUri(did, POST, tid);
+  return makeAtUri(did as Did, POST, tid);
 }
 
 export interface ReplyPage {

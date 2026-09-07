@@ -5,6 +5,7 @@ import { createBoard, createSite, deleteRecord } from "../lib/writes";
 import { BOARD } from "../lib/lexicon";
 import { DEFAULT_BOARD } from "../lib/shared";
 import { makeAtUri, nowIso } from "../lib/util";
+import type { Did } from "@atcute/lexicons/syntax";
 import * as limits from "../lib/limits";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { bbsUrl } from "../lib/routes";
@@ -67,7 +68,7 @@ export default function SysopCreate() {
         description: description.trim(),
         intro,
         boards: cleanBoards.map((board) =>
-          makeAtUri(user.did, BOARD, board.slug),
+          makeAtUri(user.did as Did, BOARD, board.slug),
         ),
         createdAt: now,
       });
