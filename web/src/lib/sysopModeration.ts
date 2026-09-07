@@ -2,16 +2,10 @@
 
 import {
   getRecordsByUri,
-  listRecords,
-  requireComplete,
   resolveIdentitiesBatch,
 } from "./atproto";
-import { BAN, HIDE } from "./lexicon";
 import { parseAtUri } from "./util";
-import { is } from "@atcute/lexicons/validations";
-import { mainSchema as banSchema } from "../lexicons/types/xyz/atbbs/ban";
-import { mainSchema as hideSchema } from "../lexicons/types/xyz/atbbs/hide";
-import type { XyzAtbbsBan, XyzAtbbsHide } from "../lexicons";
+import { fetchBBSModeration } from "./bbsModeration";
 
 export interface HiddenInfo {
   uri: string;
@@ -25,20 +19,6 @@ export interface SysopModeration {
   bannedHandles: Record<string, string>;
   hideRkeys: Record<string, string[]>;
   hidden: HiddenInfo[];
-}
-
-function buildRkeyMap<T>(
-  records: { uri: string; value: Record<string, unknown> }[],
-  schema: Parameters<typeof is>[0],
-  getKey: (value: T) => string,
-): Record<string, string[]> {
-  const map: Record<string, string[]> = {};
-  for (const record of records) {
-    if (!is(schema, record.value)) continue;
-    const key = getKey(record.value as unknown as T);
-    (map[key] ??= []).push(parseAtUri(record.uri).rkey);
-  }
-  return map;
 }
 
 async function hydrateHiddenPosts(uris: string[]): Promise<HiddenInfo[]> {
@@ -76,23 +56,7 @@ export async function fetchSysopModeration(
   pdsUrl: string,
   did: string,
 ): Promise<SysopModeration> {
-  const [banResult, hideResult] = await Promise.all([
-    listRecords(pdsUrl, did, BAN),
-    listRecords(pdsUrl, did, HIDE),
-  ]);
-  const banRecs = requireComplete(banResult);
-  const hideRecs = requireComplete(hideResult);
-
-  const banRkeys = buildRkeyMap<XyzAtbbsBan.Main>(
-    banRecs,
-    banSchema,
-    (ban) => ban.did,
-  );
-  const hideRkeys = buildRkeyMap<XyzAtbbsHide.Main>(
-    hideRecs,
-    hideSchema,
-    (hide) => hide.uri,
-  );
+  const { banRkeys, hideRkeys } = await fetchBBSModeration(pdsUrl, did);
 
   const bannedDids = Object.keys(banRkeys);
   let bannedHandles: Record<string, string> = {};
