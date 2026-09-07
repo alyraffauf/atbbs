@@ -10,8 +10,7 @@ fi
 
 HTML=/usr/share/nginx/html
 
-jq --arg origin "$PUBLIC_URL" \
-  'walk(if type == "string" then gsub("__PUBLIC_URL__"; $origin) else . end)' \
+sed "s|__PUBLIC_URL__|${PUBLIC_URL}|g" \
   "${HTML}/client-metadata.template.json" > "${HTML}/client-metadata.json"
 
 exec "$@"
