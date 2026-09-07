@@ -1,6 +1,6 @@
 import { resolveIdentity, type ResolvedIdentity } from "../../atproto/identity";
 import { getRecord } from "../../atproto/records";
-import { FetchError } from "../../atproto/transport";
+import { isNotFound } from "../../atproto/transport";
 import { allSettledBounded, reportPartialFailures } from "../support/batch";
 import { avatarUrl } from "../media/urls";
 
@@ -27,7 +27,7 @@ export async function getAvatar(did: string): Promise<string | null> {
     const cid = avatar?.ref?.$link;
     return cid ? avatarUrl(did, cid) : null;
   } catch (error) {
-    if (error instanceof FetchError && error.kind === "not-found") return null;
+    if (isNotFound(error)) return null;
     throw error;
   }
 }

@@ -26,12 +26,7 @@ export async function createBan(repo: AuthenticatedRepo, did: string) {
     did: did as BanValue["did"],
     createdAt: nowIso(),
   };
-  const response = await createRecord(repo, {
-    collection: BAN,
-    value,
-    rkey: await deterministicRkey(did),
-  });
-  return response;
+  return createRecord(repo, BAN, value, await deterministicRkey(did));
 }
 
 export async function createHide(repo: AuthenticatedRepo, uri: string) {
@@ -39,20 +34,13 @@ export async function createHide(repo: AuthenticatedRepo, uri: string) {
     uri: uri as HideValue["uri"],
     createdAt: nowIso(),
   };
-  const response = await createRecord(repo, {
-    collection: HIDE,
-    value,
-    rkey: await deterministicRkey(uri),
-  });
-  return response;
+  return createRecord(repo, HIDE, value, await deterministicRkey(uri));
 }
 
-export async function deleteBan(repo: AuthenticatedRepo, rkey: string) {
-  const response = await deleteRecord(repo, BAN, rkey);
-  return response;
+export function deleteBan(repo: AuthenticatedRepo, rkey: string) {
+  return deleteRecord(repo, BAN, rkey);
 }
 
-export async function deleteHide(repo: AuthenticatedRepo, rkey: string) {
-  const response = await deleteRecord(repo, HIDE, rkey);
-  return response;
+export function deleteHide(repo: AuthenticatedRepo, rkey: string) {
+  return deleteRecord(repo, HIDE, rkey);
 }

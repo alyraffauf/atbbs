@@ -17,22 +17,12 @@ interface BoardWrite {
   updatedAt?: string;
 }
 
-export async function createSite(repo: AuthenticatedRepo, site: SiteValue) {
-  const response = await createRecord(repo, {
-    collection: SITE,
-    value: site,
-    rkey: "self",
-  });
-  return response;
+export function createSite(repo: AuthenticatedRepo, site: SiteValue) {
+  return createRecord(repo, SITE, site, "self");
 }
 
-export async function putSite(repo: AuthenticatedRepo, site: SiteValue) {
-  const response = await putRecord(repo, {
-    collection: SITE,
-    rkey: "self",
-    value: site,
-  });
-  return response;
+export function putSite(repo: AuthenticatedRepo, site: SiteValue) {
+  return putRecord(repo, SITE, "self", site);
 }
 
 function boardValue(board: BoardWrite): BoardValue {
@@ -46,20 +36,10 @@ function boardValue(board: BoardWrite): BoardValue {
   };
 }
 
-export async function putBoard(repo: AuthenticatedRepo, board: BoardWrite) {
-  const response = await putRecord(repo, {
-    collection: BOARD,
-    rkey: board.slug,
-    value: boardValue(board),
-  });
-  return response;
+export function putBoard(repo: AuthenticatedRepo, board: BoardWrite) {
+  return putRecord(repo, BOARD, board.slug, boardValue(board));
 }
 
-export async function createBoard(repo: AuthenticatedRepo, board: BoardWrite) {
-  const response = await createRecord(repo, {
-    collection: BOARD,
-    value: boardValue(board),
-    rkey: board.slug,
-  });
-  return response;
+export function createBoard(repo: AuthenticatedRepo, board: BoardWrite) {
+  return createRecord(repo, BOARD, boardValue(board), board.slug);
 }

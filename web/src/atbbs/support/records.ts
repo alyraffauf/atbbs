@@ -4,7 +4,7 @@ import {
   getRecordByUri,
   type ATRecord,
 } from "../../atproto/records";
-import { FetchError } from "../../atproto/transport";
+import { isNotFound } from "../../atproto/transport";
 import { allSettledBounded, reportPartialFailures } from "./batch";
 
 export interface RecordHydrationOptions {
@@ -17,11 +17,7 @@ function collectRecords(
 ) {
   const failures = results.filter(
     (result): result is PromiseRejectedResult =>
-      result.status === "rejected" &&
-      !(
-        result.reason instanceof FetchError &&
-        result.reason.kind === "not-found"
-      ),
+      result.status === "rejected" && !isNotFound(result.reason),
   );
   if (failureMode === "strict" && failures.length) throw failures[0].reason;
   if (failureMode === "best-effort") {

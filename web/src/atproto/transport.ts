@@ -8,6 +8,10 @@ export class FetchError extends Error {
   }
 }
 
+export function isNotFound(error: unknown): error is FetchError {
+  return error instanceof FetchError && error.kind === "not-found";
+}
+
 export async function fetchJson<T>(url: string): Promise<T> {
   let response: Response;
   try {

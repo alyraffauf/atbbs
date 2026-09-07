@@ -3,7 +3,7 @@
 import { resolveIdentity } from "../../atproto/identity";
 import { getRecord, type ATRecord } from "../../atproto/records";
 import { getRecordsByUri } from "../support/records";
-import { FetchError, malformed } from "../../atproto/transport";
+import { isNotFound, malformed } from "../../atproto/transport";
 import { BOARD, SITE } from "../../config";
 import { parseAtUri } from "../../atproto/uri";
 import { isBoardRecord, isSiteRecord } from "../schema/records";
@@ -46,8 +46,7 @@ export async function resolveCommunity(handle: string): Promise<Community> {
   try {
     identity = await resolveIdentity(handle);
   } catch (error) {
-    if (!(error instanceof FetchError) || error.kind !== "not-found")
-      throw error;
+    if (!isNotFound(error)) throw error;
     throw new BBSNotFoundError(`Could not resolve handle: ${handle}`);
   }
   if (!identity.pds) {
@@ -58,8 +57,7 @@ export async function resolveCommunity(handle: string): Promise<Community> {
   try {
     siteRecord = await getRecord(identity.did, SITE, "self");
   } catch (error) {
-    if (!(error instanceof FetchError) || error.kind !== "not-found")
-      throw error;
+    if (!isNotFound(error)) throw error;
     throw new NoBBSError(`${handle} isn't running a BBS.`);
   }
 

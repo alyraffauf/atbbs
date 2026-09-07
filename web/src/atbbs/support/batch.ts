@@ -1,4 +1,4 @@
-import { FetchError } from "../../atproto/transport";
+import { isNotFound } from "../../atproto/transport";
 
 export async function allSettledBounded<T, Result>(
   values: T[],
@@ -35,10 +35,7 @@ export function reportPartialFailures(
       (result): result is PromiseRejectedResult => result.status === "rejected",
     )
     .map((result) => result.reason)
-    .filter(
-      (reason) =>
-        !(reason instanceof FetchError && reason.kind === "not-found"),
-    );
+    .filter((reason) => !isNotFound(reason));
   if (failures.length) {
     console.warn(
       `${operation} completed with ${failures.length} partial failure(s)`,

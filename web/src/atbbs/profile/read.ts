@@ -5,7 +5,7 @@ import { getRecord } from "../../atproto/records";
 import { getAvatar } from "../identity/service";
 import { PROFILE, SITE } from "../../config";
 import { isProfileRecord, isSiteRecord } from "../schema/records";
-import { FetchError, malformed } from "../../atproto/transport";
+import { isNotFound, malformed } from "../../atproto/transport";
 
 export interface Profile {
   did: string;
@@ -25,7 +25,7 @@ export async function fetchProfile(handle: string): Promise<Profile | null> {
   try {
     identity = await resolveIdentity(handle);
   } catch (error) {
-    if (error instanceof FetchError && error.kind === "not-found") return null;
+    if (isNotFound(error)) return null;
     throw error;
   }
 
@@ -45,11 +45,7 @@ export async function fetchProfile(handle: string): Promise<Profile | null> {
   };
 
   for (const result of [profileResult, siteResult]) {
-    if (
-      result.status === "rejected" &&
-      (!(result.reason instanceof FetchError) ||
-        result.reason.kind !== "not-found")
-    ) {
+    if (result.status === "rejected" && !isNotFound(result.reason)) {
       throw result.reason;
     }
   }

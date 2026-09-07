@@ -10,5 +10,5 @@ export function createPin(repo: AuthenticatedRepo, did: string) {
     did: did as PinValue["did"],
     createdAt: nowIso(),
   };
-  return createRecord(repo, { collection: PIN, value, rkey: did });
+  return createRecord(repo, PIN, value, did);
 }

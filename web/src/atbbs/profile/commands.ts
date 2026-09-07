@@ -17,5 +17,5 @@ export function putProfile(
     ...(bio ? { bio } : {}),
     createdAt: nowIso() as ProfileValue["createdAt"],
   };
-  return putRecord(repo, { collection: PROFILE, rkey: "self", value });
+  return putRecord(repo, PROFILE, "self", value);
 }

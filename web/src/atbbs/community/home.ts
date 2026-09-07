@@ -4,7 +4,7 @@
 import { getRecord } from "../../atproto/records";
 import { SITE } from "../../config";
 import { isSiteRecord } from "../schema/records";
-import { FetchError, malformed } from "../../atproto/transport";
+import { isNotFound, malformed } from "../../atproto/transport";
 
 export interface HomeSysopInfo {
   hasBBS: boolean;
@@ -17,9 +17,7 @@ export async function fetchHomeSysopInfo(did: string): Promise<HomeSysopInfo> {
     if (!isSiteRecord(record)) malformed("Site record");
     return { hasBBS: true, bbsName: record.value.name };
   } catch (error) {
-    if (!(error instanceof FetchError) || error.kind !== "not-found") {
-      throw error;
-    }
+    if (!isNotFound(error)) throw error;
     return { hasBBS: false, bbsName: null };
   }
 }

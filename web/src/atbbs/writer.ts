@@ -30,7 +30,7 @@ import {
   deleteHide,
 } from "./moderation/commands";
 import { putProfile } from "./profile/commands";
-import { BOARD, PIN } from "../config";
+import { BOARD, PIN, SITE } from "../config";
 import { isBoardRecord, isSiteRecord } from "./schema/records";
 import { nowIso } from "./support/time";
 
@@ -95,7 +95,7 @@ export function createAtbbsWriter(
       } catch (error) {
         for (const slug of [...createdSlugs].reverse()) {
           try {
-            await deleteRecord(repo, "xyz.atbbs.board", slug);
+            await deleteRecord(repo, BOARD, slug);
           } catch {
             // Preserve the create failure. The remaining record is retryable.
           }
@@ -106,23 +106,22 @@ export function createAtbbsWriter(
 
     async updateCommunity(draft) {
       const updatedAt = nowIso();
-      const existing = await getRecord(repo.did, "xyz.atbbs.site", "self");
+      const existing = await getRecord(repo.did, SITE, "self");
       if (!isSiteRecord(existing)) malformed("Existing site record");
       const existingSite = existing.value;
-      const existingBoards = new Map<string, string>();
+      const existingBoards = new Set<string>();
       for (const boardUri of existingSite.boards) {
         const address = parseAtUri(boardUri);
         if (address.did !== repo.did || address.collection !== BOARD) {
           malformed("Existing site board reference");
         }
-        existingBoards.set(address.rkey, boardUri);
+        existingBoards.add(address.rkey);
       }
 
       const boardCreatedAt = new Map<string, string>();
       await Promise.all(
         draft.boards.map(async (board) => {
-          const existingUri = existingBoards.get(board.slug);
-          if (!existingUri) return;
+          if (!existingBoards.has(board.slug)) return;
           const record = await getRecord(repo.did, BOARD, board.slug);
           if (!isBoardRecord(record)) malformed("Existing board record");
           const address = parseAtUri(record.uri);
@@ -155,10 +154,9 @@ export function createAtbbsWriter(
         updatedAt,
       });
       const currentSlugs = new Set(draft.boards.map((board) => board.slug));
-      for (const boardUri of existingSite.boards) {
-        const { rkey } = parseAtUri(boardUri);
+      for (const rkey of existingBoards) {
         if (!currentSlugs.has(rkey)) {
-          await deleteRecord(repo, "xyz.atbbs.board", rkey);
+          await deleteRecord(repo, BOARD, rkey);
         }
       }
     },

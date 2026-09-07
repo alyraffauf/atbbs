@@ -8,15 +8,11 @@ export interface AuthenticatedRepo {
 type Did = `did:${string}:${string}`;
 type Nsid = `${string}.${string}.${string}`;
 
-interface CreateRecordOptions<V> {
-  collection: string;
-  value: V;
-  rkey?: string;
-}
-
 export async function createRecord<V extends object>(
   repo: AuthenticatedRepo,
-  { collection, value, rkey }: CreateRecordOptions<V>,
+  collection: string,
+  value: V,
+  rkey?: string,
 ) {
   return ok(
     await repo.client.post("com.atproto.repo.createRecord", {
@@ -30,15 +26,11 @@ export async function createRecord<V extends object>(
   );
 }
 
-interface PutRecordOptions<V> {
-  collection: string;
-  rkey: string;
-  value: V;
-}
-
 export async function putRecord<V extends object>(
   repo: AuthenticatedRepo,
-  { collection, rkey, value }: PutRecordOptions<V>,
+  collection: string,
+  rkey: string,
+  value: V,
 ) {
   return ok(
     await repo.client.post("com.atproto.repo.putRecord", {
