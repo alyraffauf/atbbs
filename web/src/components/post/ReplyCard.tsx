@@ -1,6 +1,6 @@
 import { truncate } from "../../lib/util";
 import ModerationBadge from "./ModerationBadge";
-import PostActions from "./PostActions";
+import PostActions, { type PostAction } from "./PostActions";
 import PostBody from "./PostBody";
 import PostContent from "./PostContent";
 import PostMeta from "./PostMeta";
@@ -40,6 +40,19 @@ export default function ReplyCard({
   const isAuthor = userDid === reply.did;
   const isSysop = userDid === sysopDid;
   const isModerated = !!banRkey || !!hideRkey;
+  const actions: PostAction[] = [];
+  if (userDid) actions.push({ kind: "reply", onSelect: onReplyTo });
+  if (isAuthor) actions.push({ kind: "delete", onSelect: onDelete });
+  if (isSysop && !isAuthor && !banRkey) {
+    actions.push({ kind: "ban", onSelect: onBan });
+  }
+  if (isSysop && banRkey) {
+    actions.push({ kind: "unban", onSelect: () => onUnban(banRkey) });
+  }
+  if (isSysop && !hideRkey) actions.push({ kind: "hide", onSelect: onHide });
+  if (isSysop && hideRkey) {
+    actions.push({ kind: "unhide", onSelect: () => onUnhide(hideRkey) });
+  }
 
   return (
     <div
@@ -52,18 +65,7 @@ export default function ReplyCard({
     >
       <div className="flex items-baseline justify-between mb-2">
         <PostMeta handle={reply.handle} createdAt={reply.createdAt} />
-        <PostActions
-          isAuthor={isAuthor}
-          isSysop={isSysop}
-          banRkey={banRkey}
-          hideRkey={hideRkey}
-          onReplyTo={userDid ? onReplyTo : undefined}
-          onDelete={onDelete}
-          onBan={onBan}
-          onUnban={onUnban}
-          onHide={onHide}
-          onUnhide={onUnhide}
-        />
+        <PostActions actions={actions} />
       </div>
 
       <ModerationBadge isHidden={!!hideRkey} isBannedAuthor={!!banRkey} />

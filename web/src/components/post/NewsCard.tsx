@@ -24,7 +24,9 @@ export default function NewsCard({
     <article className="bg-neutral-900 border border-neutral-800 rounded p-4">
       <div className="flex items-baseline justify-between mb-3">
         <PostMeta handle={handle} createdAt={news.createdAt} />
-        <PostActions isAuthor={isSysop} isSysop={false} onDelete={onDelete} />
+        <PostActions
+          actions={isSysop ? [{ kind: "delete", onSelect: onDelete }] : []}
+        />
       </div>
       <h1 className="text-lg text-neutral-200 font-bold mb-3">{news.title}</h1>
       <PostContent

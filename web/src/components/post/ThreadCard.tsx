@@ -1,6 +1,6 @@
 import type { ThreadRoot } from "../../lib/thread";
 import ModerationBadge from "./ModerationBadge";
-import PostActions from "./PostActions";
+import PostActions, { type PostAction } from "./PostActions";
 import PostContent from "./PostContent";
 import PostMeta from "./PostMeta";
 
@@ -32,6 +32,18 @@ export default function ThreadCard({
   const isAuthor = !!(userDid && userDid === thread.did);
   const isSysop = !!(userDid && userDid === sysopDid);
   const isModerated = !!banRkey || !!hideRkey;
+  const actions: PostAction[] = [];
+  if (isAuthor) actions.push({ kind: "delete", onSelect: onDelete });
+  if (isSysop && !isAuthor && !banRkey) {
+    actions.push({ kind: "ban", onSelect: onBan });
+  }
+  if (isSysop && banRkey) {
+    actions.push({ kind: "unban", onSelect: () => onUnban(banRkey) });
+  }
+  if (isSysop && !hideRkey) actions.push({ kind: "hide", onSelect: onHide });
+  if (isSysop && hideRkey) {
+    actions.push({ kind: "unhide", onSelect: () => onUnhide(hideRkey) });
+  }
 
   return (
     <article
@@ -41,17 +53,7 @@ export default function ThreadCard({
     >
       <div className="flex items-baseline justify-between mb-3">
         <PostMeta handle={thread.authorHandle} createdAt={thread.createdAt} />
-        <PostActions
-          isAuthor={isAuthor}
-          isSysop={isSysop}
-          banRkey={banRkey}
-          hideRkey={hideRkey}
-          onDelete={onDelete}
-          onBan={onBan}
-          onUnban={onUnban}
-          onHide={onHide}
-          onUnhide={onUnhide}
-        />
+        <PostActions actions={actions} />
       </div>
       <ModerationBadge isHidden={!!hideRkey} isBannedAuthor={!!banRkey} />
       <h1 className="text-lg text-neutral-200 font-bold mb-3">

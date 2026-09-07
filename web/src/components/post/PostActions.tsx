@@ -1,31 +1,28 @@
 import { useRef, useState, useEffect } from "react";
 import { Reply, MoreHorizontal, Trash2, Ban, EyeOff, Eye } from "lucide-react";
 
+export type PostAction =
+  | { kind: "reply"; onSelect: () => void }
+  | { kind: "delete"; onSelect: () => void }
+  | { kind: "ban"; onSelect: () => void }
+  | { kind: "unban"; onSelect: () => void }
+  | { kind: "hide"; onSelect: () => void }
+  | { kind: "unhide"; onSelect: () => void };
+
 interface PostActionsProps {
-  isAuthor: boolean;
-  isSysop: boolean;
-  banRkey?: string | null;
-  hideRkey?: string | null;
-  onDelete?: () => void;
-  onBan?: () => void;
-  onUnban?: (rkey: string) => void;
-  onHide?: () => void;
-  onUnhide?: (rkey: string) => void;
-  onReplyTo?: () => void;
+  actions: PostAction[];
 }
 
-export default function PostActions({
-  isAuthor,
-  isSysop,
-  banRkey,
-  hideRkey,
-  onDelete,
-  onBan,
-  onUnban,
-  onHide,
-  onUnhide,
-  onReplyTo,
-}: PostActionsProps) {
+const actionDetails = {
+  reply: { label: "reply", icon: Reply, destructive: false },
+  delete: { label: "delete", icon: Trash2, destructive: true },
+  ban: { label: "ban", icon: Ban, destructive: true },
+  unban: { label: "unban", icon: Ban, destructive: false },
+  hide: { label: "hide", icon: EyeOff, destructive: true },
+  unhide: { label: "unhide", icon: Eye, destructive: false },
+} as const;
+
+export default function PostActions({ actions }: PostActionsProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -40,14 +37,7 @@ export default function PostActions({
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [open]);
 
-  const canDelete = isAuthor && !!onDelete;
-  const canBan = isSysop && !isAuthor && !!onBan && !banRkey;
-  const canUnban = isSysop && !!onUnban && !!banRkey;
-  const canHide = isSysop && !!onHide && !hideRkey;
-  const canUnhide = isSysop && !!onUnhide && !!hideRkey;
-  const hasModActions = canDelete || canBan || canUnban || canHide || canUnhide;
-
-  if (!onReplyTo && !hasModActions) return null;
+  if (!actions.length) return null;
 
   function select(action: () => void) {
     setOpen(false);
@@ -69,47 +59,24 @@ export default function PostActions({
 
       {open && (
         <div className="absolute right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded shadow-lg z-10 py-1 min-w-28">
-          {onReplyTo && (
-            <button onClick={() => select(onReplyTo)} className={menuItem}>
-              <Reply size={12} /> reply
-            </button>
-          )}
-
-          {onReplyTo && hasModActions && (
-            <div className="border-t border-neutral-800 my-1" />
-          )}
-
-          {canDelete && (
-            <button onClick={() => select(onDelete)} className={dangerItem}>
-              <Trash2 size={12} /> delete
-            </button>
-          )}
-          {canBan && (
-            <button onClick={() => select(onBan)} className={dangerItem}>
-              <Ban size={12} /> ban
-            </button>
-          )}
-          {canUnban && (
-            <button
-              onClick={() => select(() => onUnban!(banRkey!))}
-              className={menuItem}
-            >
-              <Ban size={12} /> unban
-            </button>
-          )}
-          {canHide && (
-            <button onClick={() => select(onHide)} className={dangerItem}>
-              <EyeOff size={12} /> hide
-            </button>
-          )}
-          {canUnhide && (
-            <button
-              onClick={() => select(() => onUnhide!(hideRkey!))}
-              className={menuItem}
-            >
-              <Eye size={12} /> unhide
-            </button>
-          )}
+          {actions.map((action, index) => {
+            const details = actionDetails[action.kind];
+            const Icon = details.icon;
+            const followsReply = index === 1 && actions[0]?.kind === "reply";
+            return (
+              <div key={action.kind}>
+                {followsReply && (
+                  <div className="border-t border-neutral-800 my-1" />
+                )}
+                <button
+                  onClick={() => select(action.onSelect)}
+                  className={details.destructive ? dangerItem : menuItem}
+                >
+                  <Icon size={12} /> {details.label}
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
