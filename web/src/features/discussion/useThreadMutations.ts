@@ -21,7 +21,9 @@ import {
 import { nowIso } from "../../atbbs/support/time";
 import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import { createPost } from "./data/discussionRecords";
-import { deleteRecord, uploadAttachments } from "../../shared/protocol/repository";
+import { deleteRecord } from "../../atproto/repository";
+import { uploadAttachments } from "../../atbbs/discussion/attachments";
+import { pendingAttachmentsFromFiles } from "../../frontend/features/discussion/browser/pendingAttachment";
 import type { BacklinkRef } from "../../atproto/backlinks";
 
 interface ThreadMutationOptions {
@@ -47,7 +49,10 @@ export function useThreadMutations(options: ThreadMutationOptions) {
         BOARD,
         thread.boardSlug,
       );
-      const attachments = await uploadAttachments(repo, input.files);
+      const attachments = await uploadAttachments(
+        repo,
+        pendingAttachmentsFromFiles(input.files),
+      );
       const record = await createPost(repo, boardUri, input.body, {
         root: threadUri,
         parent: input.parent ?? undefined,

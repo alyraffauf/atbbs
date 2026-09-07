@@ -12,7 +12,9 @@ import { bbsUrl } from "../../frontend/app/router/urls";
 import { nowIso } from "../../atbbs/support/time";
 import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import { createPost } from "./data/discussionRecords";
-import { deleteRecord, uploadAttachments } from "../../shared/protocol/repository";
+import { deleteRecord } from "../../atproto/repository";
+import { uploadAttachments } from "../../atbbs/discussion/attachments";
+import { pendingAttachmentsFromFiles } from "../../frontend/features/discussion/browser/pendingAttachment";
 
 export function usePostNews(bbs: BBS) {
   const { repo } = useAuth();
@@ -20,7 +22,10 @@ export function usePostNews(bbs: BBS) {
     mutationFn: async (input: PostDraft) => {
       if (!repo) throw new Error("Not signed in");
       const siteUri = makeAtUri(bbs.identity.did as Did, SITE, "self");
-      const attachments = await uploadAttachments(repo, input.files);
+      const attachments = await uploadAttachments(
+        repo,
+        pendingAttachmentsFromFiles(input.files),
+      );
       const record = await createPost(repo, siteUri, input.body, {
         title: input.title ?? "",
         attachments,

@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/auth";
 import { createBoard, createSite } from "../data/communityRecords";
-import { deleteRecord } from "../../../shared/protocol/repository";
+import { deleteRecord } from "../../../atproto/repository";
 import { BOARD } from "../../../atbbs/schema/collections";
 import { DEFAULT_BOARD } from "../../../atbbs/community/config";
 import { nowIso } from "../../../atbbs/support/time";

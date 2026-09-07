@@ -5,7 +5,7 @@ import {
   createRecord,
   putRecord,
   type AuthenticatedRepo,
-} from "../../../shared/protocol/repository";
+} from "../../../atproto/repository";
 
 type SiteValue = Omit<XyzAtbbsSite.Main, "$type">;
 type BoardValue = Omit<XyzAtbbsBoard.Main, "$type">;

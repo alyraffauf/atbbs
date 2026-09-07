@@ -1,12 +1,12 @@
 /** Delete a user's entire BBS: boards, news posts, bans, hides, then the site record. */
 
-import type { AuthenticatedRepo } from "../../../shared/protocol/repository";
+import type { AuthenticatedRepo } from "../../../atproto/repository";
 import { getBacklinks } from "../../../atproto/backlinks";
 import { getRecord, listRecords, requireComplete } from "../../../atproto/records";
 import { BAN, BOARD, HIDE, POST, SITE } from "../../../atbbs/schema/collections";
 import { makeAtUri, parseAtUri } from "../../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
-import { deleteRecord } from "../../../shared/protocol/repository";
+import { deleteRecord } from "../../../atproto/repository";
 
 export async function deleteBBS(
   repo: AuthenticatedRepo,

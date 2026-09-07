@@ -1,7 +1,7 @@
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/auth";
 import { putBoard, putSite } from "../data/communityRecords";
-import { deleteRecord } from "../../../shared/protocol/repository";
+import { deleteRecord } from "../../../atproto/repository";
 import { BOARD } from "../../../atbbs/schema/collections";
 import { nowIso } from "../../../atbbs/support/time";
 import { makeAtUri } from "../../../atproto/uri";

@@ -6,7 +6,7 @@ import {
   createRecord,
   deleteRecord,
   type AuthenticatedRepo,
-} from "../../../shared/protocol/repository";
+} from "../../../atproto/repository";
 
 type BanValue = Omit<XyzAtbbsBan.Main, "$type">;
 type HideValue = Omit<XyzAtbbsHide.Main, "$type">;

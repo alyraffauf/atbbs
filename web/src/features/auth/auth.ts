@@ -14,7 +14,7 @@ import {
 import type { ActorResolver, ResolvedActor } from "@atcute/identity-resolver";
 import type { ActorIdentifier } from "@atcute/lexicons/syntax";
 import { resolveIdentity } from "../../atproto/identity";
-import type { AuthenticatedRepo } from "../../shared/protocol/repository";
+import type { AuthenticatedRepo } from "../../atproto/repository";
 
 // --- OAuth setup (deferred until config is available) ---
 
