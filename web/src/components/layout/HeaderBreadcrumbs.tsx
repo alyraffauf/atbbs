@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { useBreadcrumbState } from "../../hooks/useBreadcrumb";
+import { useRouteBreadcrumbs } from "../../router/breadcrumbs";
 
 export default function HeaderBreadcrumbs() {
-  const { crumbs } = useBreadcrumbState();
+  const crumbs = useRouteBreadcrumbs();
   if (!crumbs.length) return null;
 
   return (

@@ -15,10 +15,21 @@ import News from "../pages/News";
 import NotFound from "../pages/NotFound";
 
 import {
+  boardLoader,
+  communityLoader,
+  newsLoader,
   oauthCallbackLoader,
   requireNoBBSLoader,
   requireSysopBBSLoader,
+  threadLoader,
+  type BoardLoaderData,
+  type CommunityLoaderData,
+  type NewsLoaderData,
+  type SysopBBSLoaderData,
+  type ThreadLoaderData,
 } from "./loaders";
+import { breadcrumbHandle } from "./breadcrumbs";
+import { bbsUrl, boardUrl } from "../lib/routes";
 
 export const router = createBrowserRouter([
   {
@@ -37,20 +48,69 @@ export const router = createBrowserRouter([
         path: "/account/edit",
         loader: requireSysopBBSLoader,
         element: <SysopEdit />,
+        handle: breadcrumbHandle<SysopBBSLoaderData>(({ user, bbs }) => [
+          { label: bbs.site.name, to: bbsUrl(user.handle) },
+          { label: "Edit" },
+        ]),
       },
       {
         path: "/account/moderate",
         loader: requireSysopBBSLoader,
         element: <SysopModerate />,
+        handle: breadcrumbHandle<SysopBBSLoaderData>(({ user, bbs }) => [
+          { label: bbs.site.name, to: bbsUrl(user.handle) },
+          { label: "Moderate" },
+        ]),
       },
       {
+        id: "community",
         path: "/bbs/:handle",
+        loader: communityLoader,
         element: <Outlet />,
+        handle: breadcrumbHandle<CommunityLoaderData>(({ handle, bbs }) => [
+          { label: bbs.site.name, to: bbsUrl(handle) },
+        ]),
         children: [
           { index: true, element: <BBS /> },
-          { path: "board/:slug", element: <Board /> },
-          { path: "thread/:did/:tid", element: <Thread /> },
-          { path: "news/:tid", element: <News /> },
+          {
+            path: "board/:slug",
+            loader: boardLoader,
+            element: <Board />,
+            handle: breadcrumbHandle<BoardLoaderData>(({ handle, board }) => [
+              { label: board.name, to: boardUrl(handle, board.slug) },
+            ]),
+          },
+          {
+            path: "thread/:did/:tid",
+            loader: threadLoader,
+            element: <Thread />,
+            handle: breadcrumbHandle<ThreadLoaderData>(
+              ({ handle, bbs, thread }) => {
+                const board = bbs.site.boards.find(
+                  (candidate) => candidate.slug === thread.boardSlug,
+                );
+                return [
+                  ...(board
+                    ? [
+                        {
+                          label: board.name,
+                          to: boardUrl(handle, board.slug),
+                        },
+                      ]
+                    : []),
+                  { label: thread.title },
+                ];
+              },
+            ),
+          },
+          {
+            path: "news/:tid",
+            loader: newsLoader,
+            element: <News />,
+            handle: breadcrumbHandle<NewsLoaderData>(({ item }) => [
+              { label: item.title },
+            ]),
+          },
         ],
       },
       { path: "/profile/:handle", element: <Profile /> },

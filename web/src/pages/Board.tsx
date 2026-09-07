@@ -1,16 +1,14 @@
 import { useState, type SyntheticEvent } from "react";
 import { PenLine } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLoaderData, useNavigate } from "react-router-dom";
 import {
   useInfiniteQuery,
   useMutation,
   useQuery,
-  useSuspenseQuery,
   type InfiniteData,
   type QueryKey,
 } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
-import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { makeAtUri, nowIso, parseAtUri, relativeDate } from "../lib/util";
 import type { Did } from "@atcute/lexicons/syntax";
@@ -19,17 +17,17 @@ import { createPost, uploadAttachments } from "../lib/writes";
 import * as limits from "../lib/limits";
 import {
   bbsModerationQuery,
-  bbsQuery,
   boardThreadsInfiniteQuery,
   myThreadsQuery,
 } from "../lib/queries";
 import { queryClient } from "../lib/queryClient";
-import { bbsUrl, boardUrl, threadUrl } from "../lib/routes";
+import { threadUrl } from "../lib/routes";
 import { alertOnError } from "../lib/alerts";
 import type { ThreadItem, ThreadPageResult } from "../lib/boardThreads";
 import ThreadLink, { ThreadListHeader } from "../components/nav/ThreadLink";
 import ComposeForm from "../components/form/ComposeForm";
 import ListSkeleton from "../components/layout/ListSkeleton";
+import type { BoardLoaderData } from "../router/loaders";
 
 // Constellation indexes PDS writes asynchronously — usually within a second,
 // occasionally longer. After creating a thread we refetch with backoff until
@@ -54,20 +52,16 @@ async function refetchUntilIndexed(boardKey: QueryKey, threadUri: string) {
 }
 
 export default function BoardPage() {
-  const { handle, slug } = useParams();
+  const { handle, bbs, board } = useLoaderData() as BoardLoaderData;
   const { user, repo } = useAuth();
   const navigate = useNavigate();
-
-  const { data: bbs } = useSuspenseQuery(bbsQuery(handle!));
-  const board = bbs.site.boards.find((b) => b.slug === slug);
-  if (!board) throw new Response("Board not found", { status: 404 });
 
   const {
     data: threadPages,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery(boardThreadsInfiniteQuery(bbs.identity.did, slug!));
+  } = useInfiniteQuery(boardThreadsInfiniteQuery(bbs.identity.did, board.slug));
   const { data: moderation, isError: moderationIsStale } = useQuery(
     bbsModerationQuery(bbs.identity.pds ?? "", bbs.identity.did),
   );
@@ -87,13 +81,6 @@ export default function BoardPage() {
   const [files, setFiles] = useState<File[]>([]);
 
   usePageTitle(`${board.name} — ${bbs.site.name}`);
-  useBreadcrumb(
-    [
-      { label: bbs.site.name, to: bbsUrl(handle!) },
-      { label: board.name, to: boardUrl(handle!, board.slug) },
-    ],
-    [bbs, board, handle],
-  );
 
   const createThreadMutation = useMutation({
     mutationFn: async (input: {
@@ -152,7 +139,7 @@ export default function BoardPage() {
       setTitle("");
       setBody("");
       setFiles([]);
-      navigate(threadUrl(handle!, did, rkey));
+      navigate(threadUrl(handle, did, rkey));
     },
     onError: alertOnError("post"),
   });
@@ -210,7 +197,7 @@ export default function BoardPage() {
             {threads.map((t) => (
               <ThreadLink
                 key={t.uri}
-                to={threadUrl(handle!, t.did, t.rkey)}
+                to={threadUrl(handle, t.did, t.rkey)}
                 title={t.title}
                 preview={t.body.substring(0, 120)}
                 authorHandle={t.handle}

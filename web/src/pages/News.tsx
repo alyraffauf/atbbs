@@ -1,54 +1,36 @@
-import { useNavigate, useParams } from "react-router-dom";
-import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
+import { useLoaderData, useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
-import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { POST } from "../lib/lexicon";
 import { deleteRecord } from "../lib/writes";
-import { bbsQuery, newsQuery } from "../lib/queries";
 import { bbsUrl } from "../lib/routes";
 import { alertOnError } from "../lib/alerts";
 import NewsCard from "../components/post/NewsCard";
+import type { NewsLoaderData } from "../router/loaders";
 
 export default function NewsPage() {
-  const { handle, tid } = useParams();
+  const { handle, bbs, item } = useLoaderData() as NewsLoaderData;
   const { user, repo } = useAuth();
   const navigate = useNavigate();
 
-  const { data: bbs } = useSuspenseQuery(bbsQuery(handle!));
-  const { data: news } = useSuspenseQuery(newsQuery(bbs.identity.did));
-  const item = news.find((n) => n.rkey === tid);
-
-  useBreadcrumb(
-    [
-      { label: bbs.site.name, to: bbsUrl(handle!) },
-      { label: item?.title ?? "News" },
-    ],
-    [bbs, handle, tid],
-  );
-  usePageTitle(
-    item ? `${item.title} — ${bbs.site.name}` : `News — ${bbs.site.name}`,
-  );
+  usePageTitle(`${item.title} — ${bbs.site.name}`);
 
   const isSysop = !!(user && user.did === bbs.identity.did);
 
   const deleteNewsMutation = useMutation({
     mutationFn: async () => {
-      if (!repo || !tid) throw new Error("Not signed in");
-      await deleteRecord(repo, POST, tid);
+      if (!repo) throw new Error("Not signed in");
+      await deleteRecord(repo, POST, item.rkey);
     },
-    onSuccess: () => navigate(bbsUrl(handle!)),
+    onSuccess: () => navigate(bbsUrl(handle)),
     onError: alertOnError("delete"),
   });
-
-  if (!item) {
-    return <p className="text-neutral-400">News post not found.</p>;
-  }
 
   return (
     <NewsCard
       news={item}
-      handle={handle ?? ""}
+      handle={handle}
       pds={bbs.identity.pds ?? ""}
       did={bbs.identity.did}
       isSysop={isSysop}

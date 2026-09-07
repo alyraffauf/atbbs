@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { useBreadcrumbState } from "../../hooks/useBreadcrumb";
+import { useRouteBreadcrumbs } from "../../router/breadcrumbs";
 
 export default function MobileBackButton() {
-  const { crumbs } = useBreadcrumbState();
+  const crumbs = useRouteBreadcrumbs();
   if (crumbs.length <= 1) return null;
   const parent = crumbs[crumbs.length - 2];
   if (!parent?.to) return null;

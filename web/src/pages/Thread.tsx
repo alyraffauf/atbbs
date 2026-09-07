@@ -1,8 +1,7 @@
 import { useState, type SyntheticEvent } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLoaderData, useNavigate } from "react-router-dom";
 import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
-import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { useThreadReplies } from "../hooks/useThreadReplies";
 import { BOARD, POST } from "../lib/lexicon";
@@ -17,12 +16,10 @@ import {
 import { useModerationMutations } from "../hooks/useModerationMutations";
 import {
   bbsModerationQuery,
-  bbsQuery,
   myThreadsQuery,
-  threadRootQuery,
 } from "../lib/queries";
 import { queryClient } from "../lib/queryClient";
-import { bbsUrl, boardUrl } from "../lib/routes";
+import { bbsUrl } from "../lib/routes";
 import { REPLIES_PER_PAGE } from "../lib/replies";
 import {
   appendRefAndReply,
@@ -33,23 +30,19 @@ import {
 } from "../lib/threadCache";
 import { alertOnError } from "../lib/alerts";
 import type { BacklinkRef } from "../lib/atproto";
-import type { BBS } from "../lib/bbs";
 import PageNav from "../components/nav/PageNav";
 import ReplyCard from "../components/post/ReplyCard";
 import type { Reply } from "../lib/replies";
 import ComposeForm from "../components/form/ComposeForm";
 import ThreadCard from "../components/post/ThreadCard";
+import type { ThreadLoaderData } from "../router/loaders";
 
 export default function ThreadPage() {
-  const { handle, did, tid } = useParams();
-  const threadUri = makeAtUri(did! as Did, POST, tid!);
+  const { handle, bbs, thread } = useLoaderData() as ThreadLoaderData;
+  const threadUri = thread.uri;
   const { user, repo } = useAuth();
   const navigate = useNavigate();
 
-  const { data: bbs } = useSuspenseQuery(bbsQuery(handle!));
-  const { data: thread } = useSuspenseQuery(
-    threadRootQuery(bbs.identity.did, did!, tid!),
-  );
   const { data: moderation, isError: moderationIsStale } = useSuspenseQuery(
     bbsModerationQuery(bbs.identity.pds ?? "", bbs.identity.did),
   );
@@ -84,11 +77,6 @@ export default function ThreadPage() {
   } | null>(null);
 
   usePageTitle(`${thread.title} — ${bbs.site.name}`);
-  useBreadcrumb(buildBreadcrumb(bbs, thread.title, thread.boardSlug, handle!), [
-    bbs,
-    thread,
-    handle,
-  ]);
 
   // --- Mutations ---
 
@@ -174,7 +162,7 @@ export default function ThreadPage() {
       if (user) {
         queryClient.invalidateQueries(myThreadsQuery(user.pdsUrl, user.did));
       }
-      navigate(bbsUrl(handle!));
+      navigate(bbsUrl(handle));
     },
     onError: alertOnError("delete"),
   });
@@ -333,18 +321,4 @@ export default function ThreadPage() {
       )}
     </>
   );
-}
-
-function buildBreadcrumb(
-  bbs: BBS,
-  threadTitle: string,
-  boardSlug: string,
-  handle: string,
-) {
-  const board = bbs.site.boards.find((b) => b.slug === boardSlug);
-  return [
-    { label: bbs.site.name, to: bbsUrl(handle) },
-    ...(board ? [{ label: board.name, to: boardUrl(handle, board.slug) }] : []),
-    { label: threadTitle },
-  ];
 }

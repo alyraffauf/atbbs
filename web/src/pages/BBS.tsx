@@ -1,6 +1,6 @@
 import { useState, type SyntheticEvent } from "react";
-import { Link, useParams } from "react-router-dom";
-import { useSuspenseQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { Link, useRouteLoaderData } from "react-router-dom";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   UserCog,
   Pencil,
@@ -11,15 +11,14 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
-import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { createPost, uploadAttachments } from "../lib/writes";
 import { SITE } from "../lib/lexicon";
 import { makeAtUri, nowIso, parseAtUri, truncate } from "../lib/util";
 import type { Did } from "@atcute/lexicons/syntax";
 import * as limits from "../lib/limits";
-import { bbsQuery, newsQuery } from "../lib/queries";
-import { bbsUrl, boardUrl, newsUrl, profileUrl } from "../lib/routes";
+import { newsQuery } from "../lib/queries";
+import { boardUrl, newsUrl, profileUrl } from "../lib/routes";
 import { queryClient } from "../lib/queryClient";
 import { alertOnError } from "../lib/alerts";
 import type { NewsPost } from "../lib/bbs";
@@ -30,24 +29,21 @@ import ActionBar from "../components/nav/ActionBar";
 import { ActionLink } from "../components/nav/ActionButton";
 import PinButton from "../components/PinButton";
 import ListSkeleton from "../components/layout/ListSkeleton";
+import type { CommunityLoaderData } from "../router/loaders";
 
 const INITIAL_NEWS_COUNT = 3;
 
 export default function BBSPage() {
-  const { handle } = useParams();
+  const { handle, bbs } = useRouteLoaderData(
+    "community",
+  ) as CommunityLoaderData;
   const { user, repo } = useAuth();
   const [newsTitle, setNewsTitle] = useState("");
   const [newsBody, setNewsBody] = useState("");
   const [newsFiles, setNewsFiles] = useState<File[]>([]);
   const [showAllNews, setShowAllNews] = useState(false);
 
-  const { data: bbs } = useSuspenseQuery(bbsQuery(handle!));
   const { data: news } = useQuery(newsQuery(bbs.identity.did));
-
-  useBreadcrumb(
-    [{ label: bbs.site.name, to: bbsUrl(handle!) }],
-    [bbs, handle],
-  );
   usePageTitle(`${bbs.site.name} — atbbs`);
 
   const isSysop = user && user.did === bbs.identity.did;
@@ -113,7 +109,7 @@ export default function BBSPage() {
         <p className="text-neutral-400 mb-3">{bbs.site.description}</p>
         <ActionBar>
           <PinButton bbsDid={bbs.identity.did} />
-          <ActionLink to={profileUrl(handle!)} icon={UserCog}>
+          <ActionLink to={profileUrl(handle)} icon={UserCog}>
             admin
           </ActionLink>
           {isSysop && (
@@ -143,7 +139,7 @@ export default function BBSPage() {
           {bbs.site.boards.map((board) => (
             <ListLink
               key={board.slug}
-              to={boardUrl(handle!, board.slug)}
+              to={boardUrl(handle, board.slug)}
               name={board.name}
               description={board.description}
             />
@@ -188,7 +184,7 @@ export default function BBSPage() {
             {visibleNews.map((item, i) => (
               <Link
                 key={item.rkey}
-                to={newsUrl(handle!, item.rkey)}
+                to={newsUrl(handle, item.rkey)}
                 className={`reply-card block bg-neutral-900 border border-neutral-800 rounded p-4 hover:border-neutral-700 ${i < visibleNews.length - 1 ? "mb-2" : ""}`}
               >
                 <div className="flex items-baseline gap-2 mb-2">

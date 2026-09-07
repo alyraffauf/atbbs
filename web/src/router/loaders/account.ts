@@ -20,11 +20,16 @@ export async function requireNoBBSLoader() {
  *  lands on fresh data with no flash. */
 export async function requireSysopBBSLoader() {
   const user = await requireAuth();
+  let bbs;
   try {
-    await queryClient.ensureQueryData(bbsQuery(user.handle));
+    bbs = await queryClient.ensureQueryData(bbsQuery(user.handle));
   } catch (error) {
     if (error instanceof NoBBSError) throw redirect("/account/create");
     throw error;
   }
-  return null;
+  return { user, bbs };
 }
+
+export type SysopBBSLoaderData = Awaited<
+  ReturnType<typeof requireSysopBBSLoader>
+>;

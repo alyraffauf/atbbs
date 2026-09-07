@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { isCanonicalResourceUri } from "@atcute/lexicons/syntax";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useAuth } from "../lib/auth";
-import { bbsQuery, sysopModerationQuery } from "../lib/queries";
-import { bbsUrl } from "../lib/routes";
+import { useLoaderData } from "react-router-dom";
+import { sysopModerationQuery } from "../lib/queries";
 import HandleInput from "../components/form/HandleInput";
 import { Button } from "../components/form/Form";
-import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { useModerationMutations } from "../hooks/useModerationMutations";
+import type { SysopBBSLoaderData } from "../router/loaders";
 
 interface ModerationListItemProps {
   label: string;
@@ -52,25 +51,16 @@ function ModerationListItem({
 }
 
 export default function SysopModerate() {
-  const { user } = useAuth();
+  const { user, bbs } = useLoaderData() as SysopBBSLoaderData;
   const [identifier, setIdentifier] = useState("");
   const [hideUri, setHideUri] = useState("");
   usePageTitle("Moderate community — atbbs");
 
-  // requireSysopBBSLoader guarantees user is present at render time.
-  const { data: bbs } = useSuspenseQuery(bbsQuery(user!.handle));
   const { data: moderation } = useSuspenseQuery(
-    sysopModerationQuery(user!.pdsUrl, user!.did),
+    sysopModerationQuery(user.pdsUrl, user.did),
   );
   const { banRkeys, bannedHandles, hideRkeys, hidden } = moderation;
 
-  useBreadcrumb(
-    [
-      { label: bbs.site.name, to: bbsUrl(user!.handle) },
-      { label: "Moderate" },
-    ],
-    [bbs, user!.handle],
-  );
 
   const { ban, unban, hide, unhide } = useModerationMutations();
 

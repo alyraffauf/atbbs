@@ -1,25 +1,20 @@
-import { useNavigate } from "react-router-dom";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useLoaderData, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { deleteRecord, putBoard, putSite } from "../lib/writes";
 import { BOARD } from "../lib/lexicon";
 import { makeAtUri, nowIso } from "../lib/util";
 import type { Did } from "@atcute/lexicons/syntax";
-import { useBreadcrumb } from "../hooks/useBreadcrumb";
 import { usePageTitle } from "../hooks/usePageTitle";
-import { bbsQuery } from "../lib/queries";
 import { bbsUrl } from "../lib/routes";
 import CommunityForm, {
   type CommunityDraft,
 } from "../components/form/CommunityForm";
+import type { SysopBBSLoaderData } from "../router/loaders";
 
 export default function SysopEdit() {
-  const { user, repo } = useAuth();
+  const { repo } = useAuth();
   const navigate = useNavigate();
-
-  // requireSysopBBSLoader has already redirected unauthenticated users, so
-  // `user` is non-null at render time.
-  const { data: bbs } = useSuspenseQuery(bbsQuery(user!.handle));
+  const { user, bbs } = useLoaderData() as SysopBBSLoaderData;
 
   const initialDraft: CommunityDraft = {
     name: bbs.site.name,
@@ -33,13 +28,9 @@ export default function SysopEdit() {
   };
 
   usePageTitle("Edit community — atbbs");
-  useBreadcrumb(
-    [{ label: bbs.site.name, to: bbsUrl(user!.handle) }, { label: "Edit" }],
-    [bbs, user!.handle],
-  );
 
   async function save(draft: CommunityDraft) {
-    if (!repo || !user) throw new Error("Not signed in");
+    if (!repo) throw new Error("Not signed in");
     const now = nowIso();
     for (const board of draft.boards) {
       await putBoard(repo, board.slug, board.name, board.description, now);

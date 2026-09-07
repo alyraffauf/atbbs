@@ -1,5 +1,6 @@
 import { BBSNotFoundError, NoBBSError } from "../../lib/bbs";
 import { useAuth } from "../../lib/auth";
+import { isRouteErrorResponse } from "react-router-dom";
 import { ActionLink } from "../nav/ActionButton";
 
 interface ErrorPageProps {
@@ -25,6 +26,9 @@ export default function ErrorPage({ error }: ErrorPageProps) {
         "This account isn't running a community yet. Is this you? Log in to start one.";
       action = { to: "/?login=1", label: "log in" };
     }
+  } else if (isRouteErrorResponse(error)) {
+    title = error.status === 404 ? "Not found." : title;
+    detail = typeof error.data === "string" ? error.data : error.statusText;
   } else if (error instanceof Error) {
     detail = error.message;
   }
