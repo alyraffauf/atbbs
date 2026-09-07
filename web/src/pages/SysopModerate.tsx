@@ -2,7 +2,7 @@ import { useState } from "react";
 import { isCanonicalResourceUri } from "@atcute/lexicons/syntax";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useLoaderData } from "react-router-dom";
-import { sysopModerationQuery } from "../lib/queries";
+import { sysopModerationQuery } from "../lib/queries/moderation";
 import HandleInput from "../components/form/HandleInput";
 import { Button } from "../components/form/Form";
 import { usePageTitle } from "../hooks/usePageTitle";
@@ -60,7 +60,6 @@ export default function SysopModerate() {
     sysopModerationQuery(user.pdsUrl, user.did),
   );
   const { banRkeys, bannedHandles, hideRkeys, hidden } = moderation;
-
 
   const { ban, unban, hide, unhide } = useModerationMutations();
 

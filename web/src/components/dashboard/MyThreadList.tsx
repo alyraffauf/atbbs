@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
-import { parseAtUri, formatFullDate, relativeDate } from "../../lib/util";
+import { formatFullDate, relativeDate } from "../../lib/util";
+import { parseAtUri } from "../../lib/protocol/uri";
 import { threadUrl } from "../../lib/routes";
 import type { MyThread } from "../../lib/mythreads";
 

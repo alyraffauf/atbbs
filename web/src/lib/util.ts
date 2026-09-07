@@ -20,32 +20,7 @@ export function nowIso(): IsoDatetime {
   return new Date().toISOString() as IsoDatetime;
 }
 
-import {
-  parseCanonicalResourceUri,
-  type CanonicalResourceUri,
-  type Did,
-  type Nsid,
-  type RecordKey,
-} from "@atcute/lexicons/syntax";
-
-export function parseAtUri(uri: string): {
-  did: Did;
-  collection: Nsid;
-  rkey: RecordKey;
-} {
-  const { repo, collection, rkey } = parseCanonicalResourceUri(uri);
-  return { did: repo, collection, rkey };
-}
-
 export function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength) + "...";
-}
-
-export function makeAtUri(
-  did: Did,
-  collection: Nsid,
-  rkey: RecordKey,
-): CanonicalResourceUri {
-  return `at://${did}/${collection}/${rkey}`;
 }

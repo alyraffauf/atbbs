@@ -1,9 +1,9 @@
 /** Lookup tables for a BBS's moderation state: who is banned, which posts
  *  are hidden, and the rkeys of those records (so the sysop can undo). */
 
-import { listRecords, requireComplete } from "./atproto";
+import { listRecords, requireComplete } from "./protocol/records";
 import { BAN, HIDE } from "./lexicon";
-import { parseAtUri } from "./util";
+import { parseAtUri } from "./protocol/uri";
 import { isBanRecord, isHideRecord } from "./recordGuards";
 
 // Fields must be JSON-safe — this shape is persisted via localStorage.

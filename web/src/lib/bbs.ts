@@ -1,16 +1,11 @@
 /** Resolve a handle to a fully hydrated BBS via Slingshot/Constellation. */
 
-import {
-  getRecord,
-  getRecordsByUri,
-  resolveIdentity,
-  type MiniDoc,
-  type ATRecord,
-  FetchError,
-} from "./atproto";
+import { resolveIdentity, type MiniDoc } from "./protocol/identities";
+import { getRecord, getRecordsByUri, type ATRecord } from "./protocol/records";
+import { FetchError } from "./protocol/transport";
 import { queryClient } from "./queryClient";
 import { SITE } from "./lexicon";
-import { parseAtUri } from "./util";
+import { parseAtUri } from "./protocol/uri";
 import { isBoardRecord, isSiteRecord } from "./recordGuards";
 import { MAX_BOARDS } from "./limits";
 
@@ -65,7 +60,8 @@ export async function resolveBBS(handle: string): Promise<BBS> {
   try {
     identity = await resolveIdentity(handle);
   } catch (error) {
-    if (!(error instanceof FetchError) || error.kind !== "not-found") throw error;
+    if (!(error instanceof FetchError) || error.kind !== "not-found")
+      throw error;
     throw new BBSNotFoundError(`Could not resolve handle: ${handle}`);
   }
   if (!identity.pds) {
@@ -76,7 +72,8 @@ export async function resolveBBS(handle: string): Promise<BBS> {
   try {
     siteRecord = await getRecord(identity.did, SITE, "self");
   } catch (error) {
-    if (!(error instanceof FetchError) || error.kind !== "not-found") throw error;
+    if (!(error instanceof FetchError) || error.kind !== "not-found")
+      throw error;
     throw new NoBBSError(`${handle} isn't running a BBS.`);
   }
 
@@ -92,8 +89,13 @@ export async function resolveBBS(handle: string): Promise<BBS> {
   }
   for (const uri of boardUris) {
     const parsed = parseAtUri(uri);
-    if (parsed.did !== identity.did || parsed.collection !== "xyz.atbbs.board") {
-      throw new UnsupportedRecordError("Site record references a foreign board.");
+    if (
+      parsed.did !== identity.did ||
+      parsed.collection !== "xyz.atbbs.board"
+    ) {
+      throw new UnsupportedRecordError(
+        "Site record references a foreign board.",
+      );
     }
   }
 

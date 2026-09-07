@@ -6,11 +6,13 @@ import { alertOnError } from "../lib/alerts";
 import { useAuth } from "../lib/auth";
 import type { BBS, NewsPost } from "../lib/bbs";
 import { POST, SITE } from "../lib/lexicon";
-import { newsQuery } from "../lib/queries";
+import { newsQuery } from "../lib/queries/community";
 import { queryClient } from "../lib/queryClient";
 import { bbsUrl } from "../lib/routes";
-import { makeAtUri, nowIso, parseAtUri } from "../lib/util";
-import { createPost, deleteRecord, uploadAttachments } from "../lib/writes";
+import { nowIso } from "../lib/util";
+import { makeAtUri, parseAtUri } from "../lib/protocol/uri";
+import { createPost } from "../lib/discussionRecords";
+import { deleteRecord, uploadAttachments } from "../lib/protocol/repository";
 
 export function usePostNews(bbs: BBS) {
   const { repo } = useAuth();

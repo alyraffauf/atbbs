@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Phone, Copy, Check } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { usePageTitle } from "../hooks/usePageTitle";
-import { discoveryQuery, pinCountsQuery } from "../lib/queries";
+import { discoveryQuery, pinCountsQuery } from "../lib/queries/community";
 import DialBBS from "../components/dashboard/DialBBS";
 import { bbsToSuggestion, type Suggestion } from "../lib/suggestions";
 import DiscoveryList from "../components/dashboard/DiscoveryList";

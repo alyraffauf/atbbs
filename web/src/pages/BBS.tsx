@@ -14,7 +14,7 @@ import { useAuth } from "../lib/auth";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { truncate } from "../lib/util";
 import * as limits from "../lib/limits";
-import { newsQuery } from "../lib/queries";
+import { newsQuery } from "../lib/queries/community";
 import { boardUrl, newsUrl, profileUrl } from "../lib/routes";
 import ComposeForm from "../components/form/ComposeForm";
 import Localtime from "../components/Localtime";

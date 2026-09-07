@@ -6,7 +6,7 @@ import { alertOnError } from "../lib/alerts";
 import { useAuth } from "../lib/auth";
 import type { BBS } from "../lib/bbs";
 import { BOARD, POST } from "../lib/lexicon";
-import { myThreadsQuery } from "../lib/queries";
+import { myThreadsQuery } from "../lib/queries/dashboard";
 import { queryClient } from "../lib/queryClient";
 import { REPLIES_PER_PAGE, type Reply } from "../lib/replies";
 import { bbsUrl } from "../lib/routes";
@@ -18,9 +18,11 @@ import {
   removeRefAndReply,
   setRefs,
 } from "../lib/threadCache";
-import { makeAtUri, nowIso, parseAtUri } from "../lib/util";
-import { createPost, deleteRecord, uploadAttachments } from "../lib/writes";
-import type { BacklinkRef } from "../lib/atproto";
+import { nowIso } from "../lib/util";
+import { makeAtUri, parseAtUri } from "../lib/protocol/uri";
+import { createPost } from "../lib/discussionRecords";
+import { deleteRecord, uploadAttachments } from "../lib/protocol/repository";
+import type { BacklinkRef } from "../lib/protocol/backlinks";
 
 interface ThreadMutationOptions {
   bbs: BBS;

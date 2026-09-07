@@ -1,7 +1,7 @@
 import Markdown, { defaultUrlTransform } from "react-markdown";
 import type { Components } from "react-markdown";
 import AttachmentLink from "./AttachmentLink";
-import { blobUrl, cdnImageUrl } from "../../lib/atproto";
+import { blobUrl, cdnImageUrl } from "../../lib/protocol/urls";
 import type { PostAttachment } from "../../lib/bbs";
 
 interface PostBodyProps {
@@ -53,7 +53,8 @@ function findAttachment(
   url: string | undefined,
   attachments: PostAttachment[],
 ): { name: string; attachment: PostAttachment | undefined } | null {
-  if (typeof url !== "string" || !url.startsWith(ATTACHMENT_PREFIX)) return null;
+  if (typeof url !== "string" || !url.startsWith(ATTACHMENT_PREFIX))
+    return null;
   const name = decodeName(url.slice(ATTACHMENT_PREFIX.length));
   return { name, attachment: attachments.find((a) => a.name === name) };
 }

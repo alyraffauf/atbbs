@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { AuthenticatedRepo } from "./repository";
-import { createPost, uploadAttachments } from "./writes";
+import { createPost } from "./discussionRecords";
+import {
+  uploadAttachments,
+  type AuthenticatedRepo,
+} from "./protocol/repository";
 
 describe("authenticated writes", () => {
   it("throws when the PDS rejects a write", async () => {
@@ -52,10 +55,7 @@ describe("authenticated writes", () => {
     } as unknown as AuthenticatedRepo;
     const file = new File(["test"], "test.txt", { type: "text/plain" });
     await uploadAttachments(repo, [file]);
-    const request = post.mock.calls[0] as unknown as [
-      string,
-      { input: File },
-    ];
+    const request = post.mock.calls[0] as unknown as [string, { input: File }];
     expect(request[1]).toMatchObject({ input: file });
   });
 });

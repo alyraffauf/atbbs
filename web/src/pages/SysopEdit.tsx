@@ -1,8 +1,10 @@
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
-import { deleteRecord, putBoard, putSite } from "../lib/writes";
+import { putBoard, putSite } from "../lib/communityRecords";
+import { deleteRecord } from "../lib/protocol/repository";
 import { BOARD } from "../lib/lexicon";
-import { makeAtUri, nowIso } from "../lib/util";
+import { nowIso } from "../lib/util";
+import { makeAtUri } from "../lib/protocol/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { bbsUrl } from "../lib/routes";

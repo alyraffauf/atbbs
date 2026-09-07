@@ -1,16 +1,11 @@
 /** Thread detail fetchers: root post, reply refs, and the hydrated
  *  reply records for one page of the thread. */
 
-import {
-  getBacklinks,
-  getRecord,
-  getRecordsBatch,
-  resolveIdentitiesBatch,
-  resolveIdentity,
-  type BacklinkRef,
-} from "./atproto";
+import { getBacklinks, type BacklinkRef } from "./protocol/backlinks";
+import { resolveIdentitiesBatch, resolveIdentity } from "./protocol/identities";
+import { getRecord, getRecordsBatch } from "./protocol/records";
 import { POST } from "./lexicon";
-import { parseAtUri } from "./util";
+import { parseAtUri } from "./protocol/uri";
 import { recordToReply } from "./replies";
 import { isPostRecord } from "./recordGuards";
 import type { Reply } from "./replies";
@@ -34,7 +29,11 @@ const REF_PAGE_SIZE = 100;
 /** Every reply ref for the thread, oldest-first. */
 export async function fetchThreadRefs(
   threadUri: string,
-): Promise<{ items: BacklinkRef[]; truncated: boolean; nextCursor: string | null }> {
+): Promise<{
+  items: BacklinkRef[];
+  truncated: boolean;
+  nextCursor: string | null;
+}> {
   const collected: BacklinkRef[] = [];
   let cursor: string | undefined;
   const seenCursors = new Set<string>();

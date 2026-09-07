@@ -5,7 +5,7 @@ import ComposeForm from "../components/form/ComposeForm";
 import ThreadPresentation from "../components/post/ThreadPresentation";
 import { useAuth } from "../lib/auth";
 import * as limits from "../lib/limits";
-import { bbsModerationQuery } from "../lib/queries";
+import { bbsModerationQuery } from "../lib/queries/moderation";
 import type { Reply } from "../lib/replies";
 import { useModerationMutations } from "../hooks/useModerationMutations";
 import { usePageTitle } from "../hooks/usePageTitle";

@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
 import { PIN } from "../lib/lexicon";
-import { createPin, deleteRecord } from "../lib/writes";
+import { createPin } from "../lib/pinRecords";
+import { deleteRecord } from "../lib/protocol/repository";
 import { findPinRkey } from "../lib/pins";
-import { pinsQuery } from "../lib/queries";
+import { pinsQuery } from "../lib/queries/community";
 import { ActionButton } from "./nav/ActionButton";
 import { Pin, PinOff } from "lucide-react";
 
@@ -24,7 +25,8 @@ export default function PinButton({ bbsDid }: PinButtonProps) {
       if (pinRkey) return deleteRecord(repo, PIN, pinRkey);
       return createPin(repo, bbsDid);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: pinsOptions.queryKey }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: pinsOptions.queryKey }),
   });
 
   if (!user) return null;

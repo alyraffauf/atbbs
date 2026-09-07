@@ -9,11 +9,14 @@ import { useAuth } from "../lib/auth";
 import type { BBS, Board } from "../lib/bbs";
 import type { ThreadItem, ThreadPageResult } from "../lib/boardThreads";
 import { BOARD } from "../lib/lexicon";
-import { boardThreadsInfiniteQuery, myThreadsQuery } from "../lib/queries";
+import { myThreadsQuery } from "../lib/queries/dashboard";
+import { boardThreadsInfiniteQuery } from "../lib/queries/discussion";
 import { queryClient } from "../lib/queryClient";
 import { threadUrl } from "../lib/routes";
-import { makeAtUri, nowIso, parseAtUri } from "../lib/util";
-import { createPost, uploadAttachments } from "../lib/writes";
+import { nowIso } from "../lib/util";
+import { makeAtUri, parseAtUri } from "../lib/protocol/uri";
+import { createPost } from "../lib/discussionRecords";
+import { uploadAttachments } from "../lib/protocol/repository";
 import { alertOnError } from "../lib/alerts";
 import type { PostDraft } from "../components/form/ComposeForm";
 

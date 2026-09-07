@@ -1,10 +1,10 @@
 import { queryClient } from "./queryClient";
-import { threadPageQuery, threadRefsQuery } from "./queries";
+import { threadPageQuery, threadRefsQuery } from "./queries/discussion";
 import { REPLIES_PER_PAGE, refToUri } from "./replies";
-import type { BacklinkRef } from "./atproto";
+import type { BacklinkRef } from "./protocol/backlinks";
 import type { ReplyPage } from "./thread";
 import type { Reply } from "./replies";
-import type { BoundedResult } from "./atproto";
+import type { BoundedResult } from "./protocol/records";
 
 export async function cancelRefsRefetch(threadUri: string) {
   await queryClient.cancelQueries({
@@ -63,10 +63,7 @@ export function appendRefAndReply(
   return updatedRefs;
 }
 
-export function removeRefAndReply(
-  threadUri: string,
-  replyUri: string,
-) {
+export function removeRefAndReply(threadUri: string, replyUri: string) {
   const previousRefs = getRefs(threadUri);
   const updatedRefs = previousRefs.filter((ref) => refToUri(ref) !== replyUri);
   setRefs(threadUri, updatedRefs);

@@ -1,6 +1,6 @@
 import { redirect } from "react-router-dom";
 import { NoBBSError } from "../../lib/bbs";
-import { bbsQuery } from "../../lib/queries";
+import { bbsQuery } from "../../lib/queries/community";
 import { queryClient } from "../../lib/queryClient";
 import { requireAuth } from "./auth";
 

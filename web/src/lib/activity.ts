@@ -1,9 +1,11 @@
 /** Activity data — replies to your posts from other users. */
 
-import { fetchAndHydrate, listRecords, resolveIdentitiesBatch } from "./atproto";
+import { fetchAndHydrate } from "./protocol/backlinks";
+import { resolveIdentitiesBatch } from "./protocol/identities";
+import { listRecords } from "./protocol/records";
 import { POST } from "./lexicon";
 import { isPostRecord } from "./recordGuards";
-import { parseAtUri } from "./util";
+import { parseAtUri } from "./protocol/uri";
 
 export interface ActivityItem {
   type: "reply" | "parent_reply";

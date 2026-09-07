@@ -1,6 +1,7 @@
 /** Fetch a user's atbbs profile and BBS info. */
 
-import { getAvatar, getRecord, resolveIdentity } from "./atproto";
+import { getAvatar, resolveIdentity } from "./protocol/identities";
+import { getRecord } from "./protocol/records";
 import { PROFILE, SITE } from "./lexicon";
 import { isProfileRecord, isSiteRecord } from "./recordGuards";
 
@@ -51,10 +52,7 @@ export async function fetchProfile(handle: string): Promise<Profile | null> {
     profile.createdAt = value.createdAt;
   }
 
-  if (
-    siteResult.status === "fulfilled" &&
-    isSiteRecord(siteResult.value)
-  ) {
+  if (siteResult.status === "fulfilled" && isSiteRecord(siteResult.value)) {
     const value = siteResult.value.value;
     profile.bbsName = value.name;
     profile.bbsDescription = value.description;

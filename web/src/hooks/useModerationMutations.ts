@@ -1,12 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
-import { resolveIdentity } from "../lib/atproto";
+import { resolveIdentity } from "../lib/protocol/identities";
 import {
   createBan,
   createHide,
   deleteBan,
   deleteHide,
-} from "../lib/writes";
+} from "../lib/moderationRecords";
 import { alertOnError } from "../lib/alerts";
 
 // Shared ban/unban/hide/unhide mutations

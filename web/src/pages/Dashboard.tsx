@@ -4,12 +4,11 @@ import { useAuth, type AuthUser } from "../lib/auth";
 import { deleteBBS } from "../lib/deletebbs";
 import { usePageTitle } from "../hooks/usePageTitle";
 import {
-  activityQuery,
   discoveryQuery,
   homeSysopQuery,
-  myThreadsQuery,
   pinsQuery,
-} from "../lib/queries";
+} from "../lib/queries/community";
+import { activityQuery, myThreadsQuery } from "../lib/queries/dashboard";
 import { queryClient } from "../lib/queryClient";
 import { invalidateAllBBSCaches } from "../lib/bbs";
 import DialBBS from "../components/dashboard/DialBBS";

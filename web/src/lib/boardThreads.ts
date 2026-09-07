@@ -5,16 +5,11 @@
  *  returns newest posts first, the first time a thread URI appears is its
  *  most recent activity — giving us bump order naturally. */
 
-import {
-  getAvatars,
-  getBacklinkCountsBatch,
-  getBacklinks,
-  getRecordsBatch,
-  getRecordsByUri,
-  resolveIdentitiesBatch,
-} from "./atproto";
+import { getAvatars, resolveIdentitiesBatch } from "./protocol/identities";
+import { getBacklinkCountsBatch, getBacklinks } from "./protocol/backlinks";
+import { getRecordsBatch, getRecordsByUri } from "./protocol/records";
 import { POST, BOARD } from "./lexicon";
-import { makeAtUri, parseAtUri } from "./util";
+import { makeAtUri, parseAtUri } from "./protocol/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "./recordGuards";
 
@@ -69,7 +64,9 @@ export async function hydrateThreadPage(
     if (!backlinks.records.length) break;
 
     const remaining = PAGE_SIZE - lastActivity.size;
-    const records = await getRecordsBatch(backlinks.records.slice(0, remaining));
+    const records = await getRecordsBatch(
+      backlinks.records.slice(0, remaining),
+    );
     for (const record of records) {
       if (lastActivity.size >= PAGE_SIZE) break;
       if (!isPostRecord(record)) continue;
@@ -98,13 +95,13 @@ export async function hydrateThreadPage(
     failureMode: "best-effort",
   });
 
-  const validRoots = rootRecords
-    .filter(isPostRecord)
-    .filter((record) => {
-      if (!record.value.title || record.value.root) return false;
-      const scope = parseAtUri(record.value.scope);
-      return scope.did === bbsDid && scope.collection === BOARD && scope.rkey === slug;
-    });
+  const validRoots = rootRecords.filter(isPostRecord).filter((record) => {
+    if (!record.value.title || record.value.root) return false;
+    const scope = parseAtUri(record.value.scope);
+    return (
+      scope.did === bbsDid && scope.collection === BOARD && scope.rkey === slug
+    );
+  });
 
   const allDids = new Set<string>();
   for (const record of validRoots) {

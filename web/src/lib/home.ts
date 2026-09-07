@@ -1,7 +1,7 @@
 /** Minimal check for the dashboard: does this user run a BBS, and if so
  *  what's it called? A full BBS fetch only happens on the BBS page itself. */
 
-import { getRecord } from "./atproto";
+import { getRecord } from "./protocol/records";
 import { SITE } from "./lexicon";
 
 export interface HomeSysopInfo {
