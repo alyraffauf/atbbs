@@ -41,11 +41,7 @@ export async function waitForThreadIndexing(
   }
 }
 
-export function useBoardPosting(
-  bbs: Community,
-  board: Board,
-  handle: string,
-) {
+export function useBoardPosting(bbs: Community, board: Board, handle: string) {
   const { user, writer } = useAuth();
   const navigate = useNavigate();
 

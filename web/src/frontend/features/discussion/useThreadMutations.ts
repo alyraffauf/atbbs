@@ -7,7 +7,10 @@ import type { Community } from "../../../atbbs/community/read";
 import { POST } from "../../../atbbs/schema/collections";
 import { myThreadsQuery } from "../../features/dashboard/queries";
 import { queryClient } from "../../app/queryClient";
-import { REPLIES_PER_PAGE, type Reply } from "../../../atbbs/discussion/replies";
+import {
+  REPLIES_PER_PAGE,
+  type Reply,
+} from "../../../atbbs/discussion/replies";
 import { bbsUrl } from "../../app/router/urls";
 import type { Thread } from "../../../atbbs/discussion/thread";
 import {

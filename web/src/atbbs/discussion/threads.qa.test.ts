@@ -6,10 +6,8 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("board thread hydration", () => {
   it("keeps valid threads when a stale root returns a server error", async () => {
-    const boardUri =
-      "at://did:plc:sysop/xyz.atbbs.board/general";
-    const staleRoot =
-      "at://did:plc:missing/xyz.atbbs.post/stale-root";
+    const boardUri = "at://did:plc:sysop/xyz.atbbs.board/general";
+    const staleRoot = "at://did:plc:missing/xyz.atbbs.post/stale-root";
     const goodRoot = "at://did:plc:author/xyz.atbbs.post/good-root";
     const replyUri = "at://did:plc:reader/xyz.atbbs.post/reply";
     const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -44,7 +42,11 @@ describe("board thread hydration", () => {
         if (url.pathname.endsWith("blue.microcosm.identity.resolveMiniDoc")) {
           const did = url.searchParams.get("identifier");
           return new Response(
-            JSON.stringify({ did, handle: `${did}.example`, pds: "https://pds.example" }),
+            JSON.stringify({
+              did,
+              handle: `${did}.example`,
+              pds: "https://pds.example",
+            }),
           );
         }
 

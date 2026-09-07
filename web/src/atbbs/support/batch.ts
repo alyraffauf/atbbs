@@ -5,7 +5,7 @@ export async function allSettledBounded<T, Result>(
   worker: (value: T) => Promise<Result>,
   concurrency = 10,
 ): Promise<PromiseSettledResult<Result>[]> {
-  const results: PromiseSettledResult<Result>[] = new Array(values.length);
+  const results: PromiseSettledResult<Result>[] = [];
   let nextIndex = 0;
   async function run() {
     while (nextIndex < values.length) {

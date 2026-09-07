@@ -81,10 +81,7 @@ export default function ReplyPostCard({
         </button>
       )}
 
-      <PostContent
-        body={reply.body}
-        attachments={reply.attachments}
-      />
+      <PostContent body={reply.body} attachments={reply.attachments} />
     </div>
   );
 }

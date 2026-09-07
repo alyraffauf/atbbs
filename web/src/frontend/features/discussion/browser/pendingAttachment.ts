@@ -26,6 +26,8 @@ export function pendingAttachmentFromFile(file: File): PendingAttachment {
   };
 }
 
-export function pendingAttachmentsFromFiles(files: File[]): PendingAttachment[] {
+export function pendingAttachmentsFromFiles(
+  files: File[],
+): PendingAttachment[] {
   return files.map(pendingAttachmentFromFile);
 }

@@ -36,12 +36,8 @@ export default function BoardPage() {
       ? allThreads
       : allThreads.filter(
           (thread) =>
-            getPostModeration(
-              moderation,
-              thread,
-              user?.did,
-              bbs.identity.did,
-            ).isVisible,
+            getPostModeration(moderation, thread, user?.did, bbs.identity.did)
+              .isVisible,
         );
 
   usePageTitle(`${board.name} — ${bbs.site.name}`);

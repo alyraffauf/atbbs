@@ -4,7 +4,12 @@ import { deleteRecord } from "../atproto/repository";
 import { getRecord } from "../atproto/records";
 import { makeAtUri, parseAtUri } from "../atproto/uri";
 import type { RecordKey } from "@atcute/lexicons/syntax";
-import { createBoard, createSite, putBoard, putSite } from "./community/records";
+import {
+  createBoard,
+  createSite,
+  putBoard,
+  putSite,
+} from "./community/records";
 import { deleteBBS } from "./community/delete";
 import { createPin } from "./community/pinCommands";
 import type { Board, Community } from "./community/read";

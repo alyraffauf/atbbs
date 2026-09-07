@@ -1,9 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  type ReactNode,
-} from "react";
+import { createContext, useCallback, useContext, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 
 interface LoginModalCtx {

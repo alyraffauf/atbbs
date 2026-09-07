@@ -3,10 +3,7 @@
 import type { ATRecord } from "../../atproto/records";
 import { parseAtUri } from "../../atproto/uri";
 import { isPostRecord } from "../schema/records";
-import {
-  prepareAttachmentViews,
-  type AttachmentView,
-} from "./attachments";
+import { prepareAttachmentViews, type AttachmentView } from "./attachments";
 export interface Reply {
   uri: string;
   did: string;

@@ -7,10 +7,7 @@ import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "../schema/records";
 import { resolveIdentity } from "../../atproto/identity";
-import {
-  prepareAttachmentViews,
-  type AttachmentView,
-} from "./attachments";
+import { prepareAttachmentViews, type AttachmentView } from "./attachments";
 
 export interface NewsPost {
   uri: string;

@@ -79,7 +79,9 @@ export default function LoggedOutHomePage() {
         <div className="mb-6">
           <CommunityPicker discovered={discovered} suggestions={suggestions} />
         </div>
-        {rankedByPins && <CommunityDirectory discovered={rankedByPins} limit={3} />}
+        {rankedByPins && (
+          <CommunityDirectory discovered={rankedByPins} limit={3} />
+        )}
       </div>
 
       <div className="border-t border-neutral-800 py-4">

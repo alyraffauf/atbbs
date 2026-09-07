@@ -1,17 +1,22 @@
-import {
-  getBacklinkCount,
-  getBacklinks,
-} from "../../atproto/backlinks";
+import { getBacklinkCount, getBacklinks } from "../../atproto/backlinks";
 import { parseAtUri } from "../../atproto/uri";
 import { resolveIdentitiesBatch } from "../identity/service";
-import { getRecordsBatch, type RecordHydrationOptions } from "../support/records";
+import {
+  getRecordsBatch,
+  type RecordHydrationOptions,
+} from "../support/records";
 
-export async function getBacklinkCountsBatch(subjects: string[], source: string) {
+export async function getBacklinkCountsBatch(
+  subjects: string[],
+  source: string,
+) {
   const unique = [...new Set(subjects)];
   const counts = await Promise.all(
     unique.map((subject) => getBacklinkCount(subject, source)),
   );
-  return Object.fromEntries(unique.map((subject, index) => [subject, counts[index]]));
+  return Object.fromEntries(
+    unique.map((subject, index) => [subject, counts[index]]),
+  );
 }
 
 interface HydratedRecord {
@@ -56,14 +61,16 @@ export async function fetchAndHydrate(
     const { did, rkey } = parseAtUri(record.uri);
     const identity = identities[did];
     return identity
-      ? [{
-          uri: record.uri,
-          did,
-          rkey,
-          handle: identity.handle,
-          pds: identity.pds ?? "",
-          value: record.value,
-        }]
+      ? [
+          {
+            uri: record.uri,
+            did,
+            rkey,
+            handle: identity.handle,
+            pds: identity.pds ?? "",
+            value: record.value,
+          },
+        ]
       : [];
   });
   return { records: hydrated, cursor: backlinks.cursor ?? null };

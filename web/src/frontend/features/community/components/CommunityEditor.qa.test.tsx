@@ -22,7 +22,9 @@ const draft: CommunityDraft = {
 afterEach(cleanup);
 
 function submit() {
-  fireEvent.submit(screen.getByRole("button", { name: "save" }).closest("form")!);
+  fireEvent.submit(
+    screen.getByRole("button", { name: "save" }).closest("form")!,
+  );
 }
 
 describe("CommunityEditor", () => {

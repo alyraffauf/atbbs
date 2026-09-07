@@ -13,7 +13,8 @@ export async function resolveIdentitiesBatch(ids: string[]) {
   reportPartialFailures("Identity hydration", results);
   const identities: Record<string, ResolvedIdentity> = {};
   for (const result of results) {
-    if (result.status === "fulfilled") identities[result.value.did] = result.value;
+    if (result.status === "fulfilled")
+      identities[result.value.did] = result.value;
   }
   return identities;
 }
@@ -21,7 +22,8 @@ export async function resolveIdentitiesBatch(ids: string[]) {
 export async function getAvatar(did: string): Promise<string | null> {
   try {
     const record = await getRecord(did, BSKY_PROFILE, "self");
-    const avatar = record.value.avatar as { ref?: { $link?: string } } | undefined;
+    const avatar = record.value.avatar as
+      { ref?: { $link?: string } } | undefined;
     const cid = avatar?.ref?.$link;
     return cid ? avatarUrl(did, cid) : null;
   } catch (error) {

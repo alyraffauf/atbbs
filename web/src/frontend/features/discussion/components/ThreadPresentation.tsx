@@ -89,7 +89,11 @@ export default function ThreadPresentation(props: ThreadPresentationProps) {
       />
 
       {totalPages > 1 && (
-        <ReplyPagination current={page} total={totalPages} onGo={onPageChange} />
+        <ReplyPagination
+          current={page}
+          total={totalPages}
+          onGo={onPageChange}
+        />
       )}
       {truncated && (
         <p className="text-xs text-neutral-500 mt-2">
@@ -114,7 +118,11 @@ export default function ThreadPresentation(props: ThreadPresentationProps) {
       </div>
       {totalPages > 1 && (
         <div className="mt-6">
-          <ReplyPagination current={page} total={totalPages} onGo={onPageChange} />
+          <ReplyPagination
+            current={page}
+            total={totalPages}
+            onGo={onPageChange}
+          />
         </div>
       )}
       {children}

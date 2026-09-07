@@ -31,10 +31,7 @@ export default function Header() {
         <div className="hidden md:flex items-center gap-3 shrink-0 ml-4">
           {user ? (
             <>
-              <Link
-                to={profileUrl(user.handle)}
-                className={linkStyle}
-              >
+              <Link to={profileUrl(user.handle)} className={linkStyle}>
                 {user.handle}
               </Link>
               <button type="button" onClick={onLogout} className={linkStyle}>

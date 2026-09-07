@@ -95,17 +95,13 @@ function attachmentMarkdownComponents(
   };
 }
 
-export default function PostBody({
-  children,
-  attachments,
-}: PostBodyProps) {
-  const resolver =
-    attachments
-      ? {
-          urlTransform: passAttachmentUrls,
-          components: attachmentMarkdownComponents(attachments),
-        }
-      : {};
+export default function PostBody({ children, attachments }: PostBodyProps) {
+  const resolver = attachments
+    ? {
+        urlTransform: passAttachmentUrls,
+        components: attachmentMarkdownComponents(attachments),
+      }
+    : {};
 
   return (
     <div className="text-neutral-400 leading-relaxed prose dark:prose-invert prose-sm prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-h4:text-sm">

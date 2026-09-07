@@ -30,9 +30,7 @@ export function usePostNews(bbs: Community) {
         title: input.title ?? "",
         body: input.body,
         createdAt: record.createdAt,
-        attachments: record.attachments.length
-          ? record.attachments
-          : undefined,
+        attachments: record.attachments.length ? record.attachments : undefined,
       };
       queryClient.setQueryData<NewsPost[]>(
         newsQuery(bbs.identity.did).queryKey,

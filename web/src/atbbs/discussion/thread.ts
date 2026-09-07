@@ -11,10 +11,7 @@ import { parseAtUri } from "../../atproto/uri";
 import { recordToReply } from "./replies";
 import { isPostRecord } from "../schema/records";
 import type { Reply } from "./replies";
-import {
-  prepareAttachmentViews,
-  type AttachmentView,
-} from "./attachments";
+import { prepareAttachmentViews, type AttachmentView } from "./attachments";
 
 export interface Thread {
   uri: string;

@@ -27,11 +27,13 @@ export function prepareAttachmentViews(
   return (attachments ?? []).flatMap((attachment) => {
     const cid = (attachment.file as { ref?: { $link?: string } }).ref?.$link;
     if (!cid) return [];
-    return [{
-      name: attachment.name,
-      downloadUrl: blobUrl(pdsUrl, did, cid),
-      imageUrl: cdnImageUrl(did, cid),
-    }];
+    return [
+      {
+        name: attachment.name,
+        downloadUrl: blobUrl(pdsUrl, did, cid),
+        imageUrl: cdnImageUrl(did, cid),
+      },
+    ];
   });
 }
 

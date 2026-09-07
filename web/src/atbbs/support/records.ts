@@ -18,7 +18,10 @@ function collectRecords(
   const failures = results.filter(
     (result): result is PromiseRejectedResult =>
       result.status === "rejected" &&
-      !(result.reason instanceof FetchError && result.reason.kind === "not-found"),
+      !(
+        result.reason instanceof FetchError &&
+        result.reason.kind === "not-found"
+      ),
   );
   if (failureMode === "strict" && failures.length) throw failures[0].reason;
   if (failureMode === "best-effort") {

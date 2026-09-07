@@ -17,9 +17,7 @@ export default function PostContent({
 
   return (
     <>
-      <PostBody attachments={attachments}>
-        {body}
-      </PostBody>
+      <PostBody attachments={attachments}>{body}</PostBody>
       {remaining.length > 0 && (
         <div className={attachmentListClassName}>
           {remaining.map((attachment, index) => (

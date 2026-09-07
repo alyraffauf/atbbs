@@ -35,7 +35,10 @@ function buildVisibleSuggestions(
   return alreadyIncluded ? filtered : [resolved, ...filtered];
 }
 
-export default function CommunityPicker({ discovered, suggestions }: CommunityPickerProps) {
+export default function CommunityPicker({
+  discovered,
+  suggestions,
+}: CommunityPickerProps) {
   const navigate = useNavigate();
   const [inputValue, setInputValue] = useState("");
   const resolved = useResolvedCommunity(inputValue);
