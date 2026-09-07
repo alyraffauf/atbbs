@@ -1,0 +1,54 @@
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../features/auth/auth";
+import { useLoginModal } from "../../features/auth/loginModal";
+import { profileUrl } from "../../app/router/urls";
+import Logo from "./Logo";
+import HeaderBreadcrumbs from "./HeaderBreadcrumbs";
+import MobileMenu from "./MobileMenu";
+
+const linkStyle = "text-neutral-400 hover:text-neutral-300";
+
+export default function Header() {
+  const { user, logout } = useAuth();
+  const { openLogin } = useLoginModal();
+  const navigate = useNavigate();
+
+  async function onLogout() {
+    await logout();
+    navigate("/");
+  }
+
+  return (
+    <header className="border-b border-neutral-800">
+      <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="hidden md:flex items-center gap-2 text-neutral-400 min-w-0 whitespace-nowrap">
+          <Logo />
+          <HeaderBreadcrumbs />
+        </div>
+        <div className="md:hidden">
+          <Logo />
+        </div>
+        <div className="hidden md:flex items-center gap-3 shrink-0 ml-4">
+          {user ? (
+            <>
+              <Link
+                to={profileUrl(user.handle)}
+                className={linkStyle}
+              >
+                {user.handle}
+              </Link>
+              <button type="button" onClick={onLogout} className={linkStyle}>
+                log out
+              </button>
+            </>
+          ) : (
+            <button type="button" onClick={openLogin} className={linkStyle}>
+              log in
+            </button>
+          )}
+        </div>
+        <MobileMenu user={user} onLogout={onLogout} />
+      </div>
+    </header>
+  );
+}

@@ -1,0 +1,67 @@
+import { Input } from "../../../ui/Form";
+import * as limits from "../../../../atbbs/schema/limits";
+import type { BoardDraft } from "../../../../atbbs/writer";
+
+export type BoardRow = BoardDraft;
+
+interface BoardEditorRowProps {
+  boards: BoardRow[];
+  onChange: (boards: BoardRow[]) => void;
+}
+
+export default function BoardEditorRow({
+  boards,
+  onChange,
+}: BoardEditorRowProps) {
+  function updateBoard(index: number, field: keyof BoardRow, value: string) {
+    const updated = boards.map((board, i) =>
+      i === index ? { ...board, [field]: value } : board,
+    );
+    onChange(updated);
+  }
+
+  return (
+    <div>
+      <label className="block text-neutral-400 mb-1">Boards</label>
+      <p className="text-neutral-400 text-xs mb-2">
+        One board per row: slug, name, description
+      </p>
+      <div className="space-y-2">
+        {boards.map((board, i) => (
+          <div key={i} className="flex gap-2">
+            <Input
+              value={board.slug}
+              onChange={(e) => updateBoard(i, "slug", e.target.value)}
+              placeholder="slug"
+              className="w-1/4!"
+            />
+            <Input
+              value={board.name}
+              onChange={(e) => updateBoard(i, "name", e.target.value)}
+              placeholder="Name"
+              maxLength={limits.BOARD_NAME}
+              className="w-1/3!"
+            />
+            <Input
+              value={board.description}
+              onChange={(e) => updateBoard(i, "description", e.target.value)}
+              placeholder="Description"
+              maxLength={limits.BOARD_DESCRIPTION}
+              className="flex-1!"
+            />
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() =>
+          onChange([...boards, { slug: "", name: "", description: "" }])
+        }
+        disabled={boards.length >= limits.MAX_BOARDS}
+        className="mt-2 text-neutral-400 hover:text-neutral-300 text-xs"
+      >
+        + add board
+      </button>
+    </div>
+  );
+}
