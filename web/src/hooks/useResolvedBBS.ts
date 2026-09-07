@@ -1,50 +1,35 @@
 /** Debounced BBS resolution — resolves a handle to a BBS name if one exists. */
 
-import { useEffect, useState } from "react";
 import { resolveIdentity, getRecord, getAvatar } from "../lib/atproto";
 import { SITE } from "../lib/lexicon";
 import { bbsUrl } from "../lib/routes";
 import type { Suggestion } from "../lib/suggestions";
+import { useDebouncedAsync } from "./useDebouncedAsync";
 
 const DEBOUNCE_MS = 300;
 
 export function useResolvedBBS(query: string): Suggestion | null {
-  const [result, setResult] = useState<Suggestion | null>(null);
+  const input = query.trim();
+  return useDebouncedAsync({
+    input,
+    enabled: !!input && input.includes("."),
+    delay: DEBOUNCE_MS,
+    loader: resolveBBSPreview,
+    emptyValue: null,
+  });
+}
 
-  useEffect(() => {
-    const trimmed = query.trim();
-    if (!trimmed || !trimmed.includes(".")) {
-      setResult(null);
-      return;
-    }
-
-    let cancelled = false;
-    const timeout = setTimeout(async () => {
-      try {
-        const identity = await resolveIdentity(trimmed);
-        const [siteRecord, avatar] = await Promise.all([
-          getRecord(identity.did, SITE, "self"),
-          getAvatar(identity.did),
-        ]);
-        const siteValue = siteRecord.value as { name?: string };
-        if (!cancelled) {
-          setResult({
-            to: bbsUrl(identity.handle),
-            name: siteValue.name ?? identity.handle,
-            handle: identity.handle,
-            avatar: avatar ?? undefined,
-          });
-        }
-      } catch {
-        if (!cancelled) setResult(null);
-      }
-    }, DEBOUNCE_MS);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timeout);
-    };
-  }, [query]);
-
-  return result;
+async function resolveBBSPreview(handle: string): Promise<Suggestion> {
+  const identity = await resolveIdentity(handle);
+  const [siteRecord, avatar] = await Promise.all([
+    getRecord(identity.did, SITE, "self"),
+    getAvatar(identity.did),
+  ]);
+  const siteValue = siteRecord.value as { name?: string };
+  return {
+    to: bbsUrl(identity.handle),
+    name: siteValue.name ?? identity.handle,
+    handle: identity.handle,
+    avatar: avatar ?? undefined,
+  };
 }
