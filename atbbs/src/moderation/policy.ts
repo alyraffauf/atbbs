@@ -1,4 +1,10 @@
 import type { ModerationState } from "./state";
+import type { RequestOptions } from "@atbbs/atproto";
+
+export interface PublicReadOptions extends RequestOptions {
+  moderation?: ModerationState;
+  viewerDid?: string;
+}
 
 export interface PostModeration {
   isVisible: boolean;

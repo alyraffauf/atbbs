@@ -14,6 +14,7 @@ import {
   resolveIdentity,
   type ATRecord,
   type AuthenticatedRepo,
+  type RequestOptions,
 } from "@atbbs/atproto";
 import { getRecordsByUri } from "../support/records";
 import { BAN, BOARD, HIDE, POST, SITE } from "../config";
@@ -273,10 +274,13 @@ export async function deleteCommunity(
   await deleteRecord(repo, SITE, "self");
 }
 
-export async function resolveCommunity(handle: string): Promise<Community> {
+export async function resolveCommunity(
+  handle: string,
+  options: RequestOptions = {},
+): Promise<Community> {
   let identity: CommunityIdentity;
   try {
-    identity = await resolveIdentity(handle);
+    identity = await resolveIdentity(handle, options);
   } catch (error) {
     if (!isNotFound(error)) throw error;
     throw new BBSNotFoundError(`Could not resolve handle: ${handle}`);
@@ -287,7 +291,7 @@ export async function resolveCommunity(handle: string): Promise<Community> {
 
   let siteRecord: ATRecord;
   try {
-    siteRecord = await getRecord(identity.did, SITE, "self");
+    siteRecord = await getRecord(identity.did, SITE, "self", options);
   } catch (error) {
     if (!isNotFound(error)) throw error;
     throw new NoBBSError(`${handle} isn't running a BBS.`);
@@ -315,7 +319,7 @@ export async function resolveCommunity(handle: string): Promise<Community> {
     }
   }
 
-  const boardRecords = await getRecordsByUri(boardUris);
+  const boardRecords = await getRecordsByUri(boardUris, options);
   if (boardRecords.length !== boardUris.length) {
     malformed("Site board references");
   }

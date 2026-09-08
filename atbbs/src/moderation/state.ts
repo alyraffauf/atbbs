@@ -9,6 +9,7 @@ import {
   parseAtUri,
   requireComplete,
   type AuthenticatedRepo,
+  type RequestOptions,
 } from "@atbbs/atproto";
 import { BAN, HIDE } from "../config";
 import { isBanRecord, isHideRecord } from "../schema/records";
@@ -29,10 +30,11 @@ export interface ModerationState {
 export async function fetchBBSModeration(
   pdsUrl: string,
   did: string,
+  options: RequestOptions = {},
 ): Promise<ModerationState> {
   const [banResult, hideResult] = await Promise.all([
-    listRecords(pdsUrl, did, BAN),
-    listRecords(pdsUrl, did, HIDE),
+    listRecords(pdsUrl, did, BAN, options),
+    listRecords(pdsUrl, did, HIDE, options),
   ]);
   const banRecs = requireComplete(banResult);
   const hideRecs = requireComplete(hideResult);

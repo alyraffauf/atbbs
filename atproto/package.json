@@ -10,6 +10,7 @@
     "lint": "oxlint src --deny-warnings",
     "format": "prettier --write src package.json tsconfig.json",
     "format:check": "prettier --check src package.json tsconfig.json",
+    "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
@@ -20,6 +21,7 @@
   "devDependencies": {
     "oxlint": "^1.82.0",
     "prettier": "^3.9.6",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
   }
 }

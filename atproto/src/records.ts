@@ -1,5 +1,5 @@
 import { parseAtUri } from "./uri";
-import { fetchJson, malformed } from "./transport";
+import { fetchJson, malformed, type RequestOptions } from "./transport";
 import { DEFAULT_SLINGSHOT_URL } from "./services";
 
 export interface ATRecord {
@@ -14,7 +14,11 @@ export interface BoundedResult<T> {
   nextCursor: string | null;
 }
 
-export interface ListRecordsOptions {
+export interface RecordRequestOptions extends RequestOptions {
+  serviceUrl?: string;
+}
+
+export interface ListRecordsOptions extends RequestOptions {
   pageSize?: number;
   maxRecords?: number;
   maxPages?: number;
@@ -36,10 +40,14 @@ export async function getRecord(
   did: string,
   collection: string,
   rkey: string,
-  serviceUrl = DEFAULT_SLINGSHOT_URL,
+  {
+    serviceUrl = DEFAULT_SLINGSHOT_URL,
+    ...requestOptions
+  }: RecordRequestOptions = {},
 ): Promise<ATRecord> {
   const record = await fetchJson<ATRecord>(
     `${serviceUrl}/com.atproto.repo.getRecord?repo=${encodeURIComponent(did)}&collection=${encodeURIComponent(collection)}&rkey=${encodeURIComponent(rkey)}`,
+    requestOptions,
   );
   if (!isRecord(record)) {
     malformed("Record service");
@@ -49,10 +57,10 @@ export async function getRecord(
 
 export function getRecordByUri(
   uri: string,
-  serviceUrl = DEFAULT_SLINGSHOT_URL,
+  options: RecordRequestOptions = {},
 ) {
   const { did, collection, rkey } = parseAtUri(uri);
-  return getRecord(did, collection, rkey, serviceUrl);
+  return getRecord(did, collection, rkey, options);
 }
 
 export async function listRecords(
@@ -64,6 +72,7 @@ export async function listRecords(
     maxRecords = 10_000,
     maxPages = 100,
     reverse = false,
+    ...requestOptions
   }: ListRecordsOptions = {},
 ): Promise<BoundedResult<ATRecord>> {
   const records: ATRecord[] = [];
@@ -81,7 +90,7 @@ export async function listRecords(
     const data = await fetchJson<{
       records: ATRecord[];
       cursor?: string | null;
-    }>(url);
+    }>(url, requestOptions);
     if (
       !data ||
       !Array.isArray(data.records) ||

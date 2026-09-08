@@ -14,6 +14,10 @@ import { isPostRecord } from "../schema/records";
 import { prepareAttachmentViews, type AttachmentView } from "./attachments";
 import type { PendingAttachment } from "./attachments";
 import { createPost } from "./posts";
+import {
+  getPostModeration,
+  type PublicReadOptions,
+} from "../moderation/policy";
 
 export interface CreateNewsInput {
   communityDid: string;
@@ -44,19 +48,33 @@ export interface NewsPost {
   attachments?: AttachmentView[];
 }
 
-export async function fetchNews(bbsDid: string): Promise<NewsPost[]> {
-  const identity = await resolveIdentity(bbsDid);
+export async function fetchNews(
+  bbsDid: string,
+  options: PublicReadOptions = {},
+): Promise<NewsPost[]> {
+  const { moderation, viewerDid, ...requestOptions } = options;
+  const identity = await resolveIdentity(bbsDid, requestOptions);
   const siteUri = makeAtUri(bbsDid as Did, SITE, "self");
   const backlinks = await getBacklinks(siteUri, `${POST}:scope`, {
     limit: 50,
     did: bbsDid,
+    ...requestOptions,
   });
 
-  const records = await getRecordsBatch(backlinks.records);
+  const records = await getRecordsBatch(backlinks.records, requestOptions);
 
   const news: NewsPost[] = records
     .filter(isPostRecord)
     .filter((record) => record.value.title && !record.value.root)
+    .filter((record) => {
+      if (!moderation) return true;
+      return getPostModeration(
+        moderation,
+        { uri: record.uri, did: parseAtUri(record.uri).did },
+        viewerDid,
+        bbsDid,
+      ).isVisible;
+    })
     .map((record) => ({
       uri: record.uri,
       rkey: parseAtUri(record.uri).rkey,

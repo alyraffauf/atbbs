@@ -1,4 +1,4 @@
-import { fetchJson, malformed } from "./transport";
+import { fetchJson, malformed, type RequestOptions } from "./transport";
 import { DEFAULT_CONSTELLATION_URL } from "./services";
 
 export interface BacklinkRef {
@@ -13,10 +13,14 @@ export interface BacklinkPage {
   cursor?: string | null;
 }
 
-export interface BacklinkOptions {
+export interface BacklinkOptions extends RequestOptions {
   limit?: number;
   cursor?: string;
   did?: string;
+  serviceUrl?: string;
+}
+
+export interface BacklinkCountOptions extends RequestOptions {
   serviceUrl?: string;
 }
 
@@ -28,12 +32,13 @@ export async function getBacklinks(
     cursor,
     did,
     serviceUrl = DEFAULT_CONSTELLATION_URL,
+    ...requestOptions
   }: BacklinkOptions = {},
 ): Promise<BacklinkPage> {
   let url = `${serviceUrl}/blue.microcosm.links.getBacklinks?subject=${encodeURIComponent(subject)}&source=${encodeURIComponent(source)}&limit=${limit}`;
   if (cursor) url += `&cursor=${encodeURIComponent(cursor)}`;
   if (did) url += `&did=${encodeURIComponent(did)}`;
-  const response = await fetchJson<BacklinkPage>(url);
+  const response = await fetchJson<BacklinkPage>(url, requestOptions);
   if (
     !response ||
     typeof response.total !== "number" ||
@@ -55,10 +60,14 @@ export async function getBacklinks(
 export async function getBacklinkCount(
   subject: string,
   source: string,
-  serviceUrl = DEFAULT_CONSTELLATION_URL,
+  {
+    serviceUrl = DEFAULT_CONSTELLATION_URL,
+    ...requestOptions
+  }: BacklinkCountOptions = {},
 ) {
   const { total } = await fetchJson<{ total: number }>(
     `${serviceUrl}/blue.microcosm.links.getBacklinksCount?subject=${encodeURIComponent(subject)}&source=${encodeURIComponent(source)}`,
+    requestOptions,
   );
   if (typeof total !== "number") malformed("Backlink count service");
   return total;

@@ -17,6 +17,11 @@ import { getRecordsBatch, getRecordsByUri } from "../support/records";
 import { BOARD, POST } from "../config";
 import type { Did } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "../schema/records";
+import {
+  getPostModeration,
+  type PublicReadOptions,
+} from "../moderation/policy";
+import type { PostRecord } from "../schema/records";
 import type { PendingAttachment } from "./attachments";
 import { createPost } from "./posts";
 
@@ -65,18 +70,24 @@ export interface ThreadPageResult {
   cursor: string | null;
 }
 
+export interface ThreadPageOptions extends PublicReadOptions {
+  cursor?: string;
+}
+
 const MAX_SCANS = 4;
 const PAGE_SIZE = 25;
 
 export async function hydrateThreadPage(
   bbsDid: string,
   slug: string,
-  cursor?: string,
+  options: ThreadPageOptions = {},
 ): Promise<ThreadPageResult> {
+  const { cursor, moderation, viewerDid, ...requestOptions } = options;
   const boardUri = makeAtUri(bbsDid as Did, BOARD, slug);
 
   const lastActivity = new Map<string, string>();
   const postersByThread = new Map<string, Set<string>>();
+  const rootsByUri = new Map<string, PostRecord>();
   let scanCursor = cursor;
   const seenCursors = new Set<string>();
 
@@ -86,17 +97,61 @@ export async function hydrateThreadPage(
     const backlinks = await getBacklinks(boardUri, `${POST}:scope`, {
       limit: PAGE_SIZE - lastActivity.size,
       cursor: scanCursor,
+      ...requestOptions,
     });
     if (!backlinks.records.length) break;
 
     const remaining = PAGE_SIZE - lastActivity.size;
     const records = await getRecordsBatch(
       backlinks.records.slice(0, remaining),
+      requestOptions,
     );
-    for (const record of records) {
+    const visibleActivity = records.filter(isPostRecord).filter((record) => {
+      if (!moderation) return true;
+      const did = parseAtUri(record.uri).did;
+      return getPostModeration(
+        moderation,
+        { uri: record.uri, did },
+        viewerDid,
+        bbsDid,
+      ).isVisible;
+    });
+    const candidateThreadUris = [
+      ...new Set(
+        visibleActivity
+          .map((record) => record.value.root ?? record.uri)
+          .filter((uri) => !rootsByUri.has(uri)),
+      ),
+    ];
+    const candidateRoots = await getRecordsByUri(candidateThreadUris, {
+      failureMode: "best-effort",
+      ...requestOptions,
+    });
+    for (const root of candidateRoots) {
+      if (!isPostRecord(root) || !root.value.title || root.value.root) continue;
+      const scope = parseAtUri(root.value.scope);
+      const did = parseAtUri(root.uri).did;
+      if (
+        scope.did !== bbsDid ||
+        scope.collection !== BOARD ||
+        scope.rkey !== slug ||
+        (moderation &&
+          !getPostModeration(
+            moderation,
+            { uri: root.uri, did },
+            viewerDid,
+            bbsDid,
+          ).isVisible)
+      ) {
+        continue;
+      }
+      rootsByUri.set(root.uri, root);
+    }
+
+    for (const record of visibleActivity) {
       if (lastActivity.size >= PAGE_SIZE) break;
-      if (!isPostRecord(record)) continue;
       const threadUri = record.value.root ?? record.uri;
+      if (!rootsByUri.has(threadUri)) continue;
       if (!lastActivity.has(threadUri)) {
         lastActivity.set(threadUri, record.value.createdAt);
       }
@@ -114,19 +169,9 @@ export async function hydrateThreadPage(
   }
 
   const threadUris = [...lastActivity.keys()].slice(0, PAGE_SIZE);
-  // Constellation can retain backlinks to deleted roots, and Slingshot may
-  // report those missing records as a server error. Keep the rest of the
-  // board usable when one stale root cannot be hydrated.
-  const rootRecords = await getRecordsByUri(threadUris, {
-    failureMode: "best-effort",
-  });
-
-  const validRoots = rootRecords.filter(isPostRecord).filter((record) => {
-    if (!record.value.title || record.value.root) return false;
-    const scope = parseAtUri(record.value.scope);
-    return (
-      scope.did === bbsDid && scope.collection === BOARD && scope.rkey === slug
-    );
+  const validRoots = threadUris.flatMap((uri) => {
+    const record = rootsByUri.get(uri);
+    return record ? [record] : [];
   });
 
   const allDids = new Set<string>();
@@ -137,12 +182,13 @@ export async function hydrateThreadPage(
   }
 
   const [identities, replyCounts, avatars] = await Promise.all([
-    resolveIdentitiesBatch([...allDids]),
+    resolveIdentitiesBatch([...allDids], requestOptions),
     getBacklinkCountsBatch(
       validRoots.map((record) => record.uri),
       `${POST}:root`,
+      requestOptions,
     ),
-    getAvatars([...allDids]),
+    getAvatars([...allDids], requestOptions),
   ]);
 
   const threads: ThreadSummary[] = validRoots

@@ -12,41 +12,81 @@ export function isNotFound(error: unknown): error is FetchError {
   return error instanceof FetchError && error.kind === "not-found";
 }
 
-export async function fetchJson<T>(url: string): Promise<T> {
-  let response: Response;
+export interface RequestOptions {
+  signal?: AbortSignal;
+  timeoutMs?: number;
+}
+
+function requestSignal({ signal, timeoutMs }: RequestOptions): {
+  signal: AbortSignal | undefined;
+  cleanup: () => void;
+} {
+  if (timeoutMs === undefined) return { signal, cleanup: () => {} };
+
+  const controller = new AbortController();
+  const abortFromCaller = () => controller.abort(signal?.reason);
+  if (signal?.aborted) abortFromCaller();
+  else signal?.addEventListener("abort", abortFromCaller, { once: true });
+
+  const timer = setTimeout(() => controller.abort(), Math.max(0, timeoutMs));
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", abortFromCaller);
+    },
+  };
+}
+
+export async function fetchJson<T>(
+  url: string,
+  options: RequestOptions = {},
+): Promise<T> {
+  const request = requestSignal(options);
   try {
-    response = await fetch(url);
-  } catch (error) {
-    throw new FetchError("transport", String(error));
-  }
-  if (response.status === 404) {
-    throw new FetchError("not-found", `404 ${url}`);
-  }
-  if (response.status === 400) {
-    const body = (await response
-      .clone()
-      .json()
-      .catch(() => null)) as { error?: unknown; message?: unknown } | null;
-    const error = typeof body?.error === "string" ? body.error : "";
-    const message = typeof body?.message === "string" ? body.message : "";
-    if (
-      error === "RecordNotFound" ||
-      /could not find (?:repo|record)/i.test(message)
-    ) {
-      throw new FetchError("not-found", message || `400 ${url}`);
+    let response: Response;
+    try {
+      response = await fetch(url, { signal: request.signal });
+    } catch (error) {
+      throw new FetchError("transport", String(error));
     }
-  }
-  if (response.status === 429) {
-    throw new FetchError("rate-limit", `429 ${url}`);
-  }
-  if (response.status >= 500) {
-    throw new FetchError("server", `${response.status} ${url}`);
-  }
-  if (!response.ok) throw new Error(`${response.status} ${url}`);
-  try {
-    return (await response.json()) as T;
-  } catch (error) {
-    throw new FetchError("malformed", String(error));
+    if (response.status === 404) {
+      throw new FetchError("not-found", `404 ${url}`);
+    }
+    if (response.status === 400) {
+      const body = (await response
+        .clone()
+        .json()
+        .catch(() => null)) as { error?: unknown; message?: unknown } | null;
+      if (request.signal?.aborted) {
+        throw new FetchError("transport", "Request aborted");
+      }
+      const error = typeof body?.error === "string" ? body.error : "";
+      const message = typeof body?.message === "string" ? body.message : "";
+      if (
+        error === "RecordNotFound" ||
+        /could not find (?:repo|record)/i.test(message)
+      ) {
+        throw new FetchError("not-found", message || `400 ${url}`);
+      }
+    }
+    if (response.status === 429) {
+      throw new FetchError("rate-limit", `429 ${url}`);
+    }
+    if (response.status >= 500) {
+      throw new FetchError("server", `${response.status} ${url}`);
+    }
+    if (!response.ok) throw new Error(`${response.status} ${url}`);
+    try {
+      return (await response.json()) as T;
+    } catch (error) {
+      if (request.signal?.aborted) {
+        throw new FetchError("transport", String(error));
+      }
+      throw new FetchError("malformed", String(error));
+    }
+  } finally {
+    request.cleanup();
   }
 }
 

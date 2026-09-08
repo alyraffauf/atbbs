@@ -12,7 +12,7 @@ export const boardThreadsInfiniteQuery = (bbsDid: string, slug: string) =>
   infiniteQueryOptions({
     queryKey: ["board-threads", bbsDid, slug] as const,
     queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
-      hydrateThreadPage(bbsDid, slug, pageParam),
+      hydrateThreadPage(bbsDid, slug, { cursor: pageParam }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.cursor ?? undefined,
     refetchOnMount: "always",

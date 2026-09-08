@@ -2,7 +2,7 @@
 
 import { resolveIdentitiesBatch } from "../identity/service";
 import { getRecordsByUri } from "../support/records";
-import { malformed, parseAtUri } from "@atbbs/atproto";
+import { malformed, parseAtUri, type RequestOptions } from "@atbbs/atproto";
 import { fetchBBSModeration } from "./state";
 import { isPostRecord } from "../schema/records";
 
@@ -20,14 +20,17 @@ export interface SysopModeration {
   hidden: HiddenInfo[];
 }
 
-async function hydrateHiddenPosts(uris: string[]): Promise<HiddenInfo[]> {
+async function hydrateHiddenPosts(
+  uris: string[],
+  options: RequestOptions,
+): Promise<HiddenInfo[]> {
   if (uris.length === 0) return [];
 
   const dids = [...new Set(uris.map((uri) => parseAtUri(uri).did))];
 
   const [identities, records] = await Promise.all([
-    resolveIdentitiesBatch(dids),
-    getRecordsByUri(uris, { failureMode: "best-effort" }),
+    resolveIdentitiesBatch(dids, options),
+    getRecordsByUri(uris, { failureMode: "best-effort", ...options }),
   ]);
 
   const recordsByUri = new Map(records.map((record) => [record.uri, record]));
@@ -52,14 +55,19 @@ async function hydrateHiddenPosts(uris: string[]): Promise<HiddenInfo[]> {
 export async function fetchSysopModeration(
   pdsUrl: string,
   did: string,
+  options: RequestOptions = {},
 ): Promise<SysopModeration> {
-  const { banRkeys, hideRkeys } = await fetchBBSModeration(pdsUrl, did);
+  const { banRkeys, hideRkeys } = await fetchBBSModeration(
+    pdsUrl,
+    did,
+    options,
+  );
 
   const bannedDids = Object.keys(banRkeys);
   let bannedHandles: Record<string, string> = {};
   if (bannedDids.length) {
     try {
-      const authors = await resolveIdentitiesBatch(bannedDids);
+      const authors = await resolveIdentitiesBatch(bannedDids, options);
       for (const did of bannedDids)
         bannedHandles[did] = authors[did]?.handle ?? did;
     } catch {
@@ -67,7 +75,7 @@ export async function fetchSysopModeration(
     }
   }
 
-  const hidden = await hydrateHiddenPosts(Object.keys(hideRkeys));
+  const hidden = await hydrateHiddenPosts(Object.keys(hideRkeys), options);
 
   return { banRkeys, bannedHandles, hideRkeys, hidden };
 }

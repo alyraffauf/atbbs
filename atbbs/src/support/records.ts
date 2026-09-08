@@ -4,10 +4,11 @@ import {
   isNotFound,
   type ATRecord,
   type BacklinkRef,
+  type RequestOptions,
 } from "@atbbs/atproto";
 import { allSettledBounded, reportPartialFailures } from "./batch";
 
-export interface RecordHydrationOptions {
+export interface RecordHydrationOptions extends RequestOptions {
   failureMode?: "strict" | "best-effort";
 }
 
@@ -30,15 +31,17 @@ function collectRecords(
 
 export async function getRecordsByUri(
   uris: string[],
-  { failureMode = "strict" }: RecordHydrationOptions = {},
+  { failureMode = "strict", ...requestOptions }: RecordHydrationOptions = {},
 ) {
-  const results = await allSettledBounded([...new Set(uris)], getRecordByUri);
+  const results = await allSettledBounded([...new Set(uris)], (uri) =>
+    getRecordByUri(uri, requestOptions),
+  );
   return collectRecords(results, failureMode);
 }
 
 export async function getRecordsBatch(
   refs: BacklinkRef[],
-  { failureMode = "strict" }: RecordHydrationOptions = {},
+  { failureMode = "strict", ...requestOptions }: RecordHydrationOptions = {},
 ) {
   const unique = [
     ...new Map(
@@ -46,7 +49,7 @@ export async function getRecordsBatch(
     ).values(),
   ];
   const results = await allSettledBounded(unique, (ref) =>
-    getRecord(ref.did, ref.collection, ref.rkey),
+    getRecord(ref.did, ref.collection, ref.rkey, requestOptions),
   );
   return collectRecords(results, failureMode);
 }

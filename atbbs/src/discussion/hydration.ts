@@ -1,4 +1,9 @@
-import { getBacklinkCount, getBacklinks, parseAtUri } from "@atbbs/atproto";
+import {
+  getBacklinkCount,
+  getBacklinks,
+  parseAtUri,
+  type RequestOptions,
+} from "@atbbs/atproto";
 import { resolveIdentitiesBatch } from "../identity/service";
 import {
   getRecordsBatch,
@@ -8,10 +13,11 @@ import {
 export async function getBacklinkCountsBatch(
   subjects: string[],
   source: string,
+  options: RequestOptions = {},
 ) {
   const unique = [...new Set(subjects)];
   const counts = await Promise.all(
-    unique.map((subject) => getBacklinkCount(subject, source)),
+    unique.map((subject) => getBacklinkCount(subject, source, options)),
   );
   return Object.fromEntries(
     unique.map((subject, index) => [subject, counts[index]]),
@@ -30,7 +36,7 @@ interface HydratedRecord {
 export async function fetchAndHydrate(
   subject: string,
   source: string,
-  options?: {
+  options?: RequestOptions & {
     limit?: number;
     cursor?: string;
     excludeDid?: string;
@@ -40,10 +46,14 @@ export async function fetchAndHydrate(
   const backlinks = await getBacklinks(subject, source, {
     limit: options?.limit,
     cursor: options?.cursor,
+    signal: options?.signal,
+    timeoutMs: options?.timeoutMs,
   });
   if (!backlinks.records.length) return { records: [], cursor: null };
   const records = await getRecordsBatch(backlinks.records, {
     failureMode: options?.failureMode,
+    signal: options?.signal,
+    timeoutMs: options?.timeoutMs,
   });
   const filtered = records.filter(
     (record) => parseAtUri(record.uri).did !== options?.excludeDid,
@@ -53,6 +63,7 @@ export async function fetchAndHydrate(
   }
   const identities = await resolveIdentitiesBatch(
     filtered.map((record) => parseAtUri(record.uri).did),
+    options,
   );
   const hydrated = filtered.flatMap((record): HydratedRecord[] => {
     const { did, rkey } = parseAtUri(record.uri);
