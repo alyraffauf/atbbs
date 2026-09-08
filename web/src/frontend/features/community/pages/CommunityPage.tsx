@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../auth/auth";
 import { usePageTitle } from "../../../app/browser/usePageTitle";
-import { truncate } from "../../../../atbbs/support/text";
-import * as limits from "../../../../atbbs/schema/limits";
+import { truncate } from "@atbbs/core/support";
+import * as limits from "@atbbs/core/schema";
 import { newsQuery } from "../../../features/discussion/queries";
 import { boardUrl, newsUrl, profileUrl } from "../../../app/router/urls";
 import PostComposer from "../../discussion/components/PostComposer";

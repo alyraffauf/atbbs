@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import DirectoryEntryLink from "./DirectoryEntryLink";
 import { bbsUrl } from "../../../app/router/urls";
-import type { PinnedCommunity } from "../../../../atbbs/community/pins";
+import type { PinnedCommunity } from "@atbbs/core/community";
 
 const PAGE_SIZE = 5;
 

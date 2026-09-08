@@ -27,7 +27,7 @@ atbbs-telnet = "telnet.server:main"
 packages = ["cli", "core", "telnet", "tui"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"data/shared.json" = "core/_shared.json"
+"atbbs/shared.json" = "core/_shared.json"
 
 [dependency-groups]
 dev = ["pytest>=9.1.1"]

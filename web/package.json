@@ -6,15 +6,16 @@
   "scripts": {
     "dev": "vite",
     "lex": "lex-cli generate",
-    "lint": "oxlint . --deny-warnings",
+    "lint": "oxlint src lex.config.js vite.config.ts vitest.config.ts --deny-warnings",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc -b",
-    "test": "vitest run",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@atbbs/atproto": "1.4.2",
+    "@atbbs/core": "1.4.2",
     "@atcute/atproto": "^4.0.4",
     "@atcute/client": "^5.1.1",
     "@atcute/lexicons": "^2.1.0",

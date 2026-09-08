@@ -1,7 +1,4 @@
-import {
-  REPLIES_PER_PAGE,
-  type ReplyRef,
-} from "../../../atbbs/discussion/replies";
+import { REPLIES_PER_PAGE, type ReplyRef } from "@atbbs/core/discussion";
 
 export function parsePageParam(value: string | null): number {
   if (!value || !/^\d+$/.test(value)) return 1;

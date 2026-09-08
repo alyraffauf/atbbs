@@ -1,7 +1,8 @@
-import type { ModerationState } from "../../../../atbbs/moderation/state";
-import { getPostModeration } from "../../../../atbbs/moderation/policy";
-import type { Reply } from "../../../../atbbs/discussion/replies";
-import type { Thread } from "../../../../atbbs/discussion/thread";
+import {
+  getPostModeration,
+  type ModerationState,
+} from "@atbbs/core/moderation";
+import type { Reply, Thread } from "@atbbs/core/discussion";
 import type { ReactNode } from "react";
 import ReplyPagination from "./ReplyPagination";
 import ThreadPostCard from "./ThreadPostCard";

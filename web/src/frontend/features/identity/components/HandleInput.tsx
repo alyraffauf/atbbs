@@ -1,5 +1,5 @@
 import { useEffect, useState, type InputHTMLAttributes } from "react";
-import { HANDLE_PLACEHOLDERS as PLACEHOLDERS } from "../../../../config";
+import { HANDLE_PLACEHOLDERS as PLACEHOLDERS } from "@atbbs/core";
 import { inputStyles } from "../../../ui/Form";
 
 interface HandleInputProps extends Omit<

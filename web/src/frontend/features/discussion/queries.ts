@@ -1,12 +1,12 @@
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
-import { hydrateThreadPage } from "../../../atbbs/discussion/threads";
 import {
+  fetchNews,
   fetchThreadRefs,
   fetchThreadRoot,
   hydrateReplyPage,
-} from "../../../atbbs/discussion/thread";
-import { fetchNews } from "../../../atbbs/discussion/news";
-import type { ReplyRef } from "../../../atbbs/discussion/replies";
+  hydrateThreadPage,
+  type ReplyRef,
+} from "@atbbs/core/discussion";
 
 export const boardThreadsInfiniteQuery = (bbsDid: string, slug: string) =>
   infiniteQueryOptions({

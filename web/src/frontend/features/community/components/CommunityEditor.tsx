@@ -1,9 +1,9 @@
 import { useState, type SyntheticEvent } from "react";
 
-import * as limits from "../../../../atbbs/schema/limits";
+import * as limits from "@atbbs/core/schema";
 import BoardEditorRow from "./BoardEditorRow";
 import { Button, Input, Textarea } from "../../../ui/Form";
-import type { CommunityDraft } from "../../../../atbbs/writer";
+import type { CommunityDraft } from "@atbbs/core";
 
 interface CommunityEditorProps {
   initialDraft: CommunityDraft;

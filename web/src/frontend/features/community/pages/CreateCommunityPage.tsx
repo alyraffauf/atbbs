@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/auth";
-import { DEFAULT_BOARD } from "../../../../config";
+import { DEFAULT_BOARD } from "@atbbs/core";
 import { usePageTitle } from "../../../app/browser/usePageTitle";
 import { bbsUrl } from "../../../app/router/urls";
 import CommunityEditor, {

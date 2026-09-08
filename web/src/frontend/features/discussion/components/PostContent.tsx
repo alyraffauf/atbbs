@@ -1,4 +1,4 @@
-import type { AttachmentView } from "../../../../atbbs/discussion/attachments";
+import type { AttachmentView } from "@atbbs/core/discussion";
 import AttachmentLink from "./AttachmentLink";
 import PostBody, { unembeddedAttachments } from "./PostBody";
 

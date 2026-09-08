@@ -1,16 +1,22 @@
 import { ImageResponse, loadGoogleFont } from "workers-og";
+import {
+  getRecord,
+  resolveIdentity,
+  type ATRecord,
+  type ResolvedIdentity,
+} from "@atbbs/atproto";
+import { BOARD, POST, SITE } from "@atbbs/core/config";
+import { isBoardRecord, isPostRecord, isSiteRecord } from "@atbbs/core/schema";
 import heroLogoSvg from "./hero-light.svg";
-
-const SLINGSHOT_URL = "https://slingshot.microcosm.blue/xrpc";
 
 const DEFAULT_TITLE = "atbbs";
 const DEFAULT_DESCRIPTION = "Decentralized forums on the AT Protocol.";
 
 // Tailwind neutral palette — matches the site's light theme.
 const COLORS = {
-  background: "#fafafa",  // neutral-50
-  title: "#171717",       // neutral-900
-  subtitle: "#525252",    // neutral-600
+  background: "#fafafa", // neutral-50
+  title: "#171717", // neutral-900
+  subtitle: "#525252", // neutral-600
   description: "#525252", // neutral-600
 };
 
@@ -38,18 +44,6 @@ interface AtTags {
   me: string;
 }
 
-interface SlingshotIdentity {
-  did: string;
-  handle: string;
-  pds?: string;
-}
-
-interface SlingshotRecord {
-  uri: string;
-  cid: string;
-  value: Record<string, string>;
-}
-
 // Utils
 
 function escapeHtml(text: string): string {
@@ -65,33 +59,33 @@ function truncate(text: string, maxLength: number): string {
   return text.substring(0, maxLength - 3) + "...";
 }
 
-// Slingshot
-
-async function resolveIdentity(
+async function resolveIdentityOrNull(
   handle: string,
-): Promise<SlingshotIdentity | null> {
-  const response = await fetch(
-    `${SLINGSHOT_URL}/blue.microcosm.identity.resolveMiniDoc?identifier=${encodeURIComponent(handle)}`,
-  );
-  if (!response.ok) return null;
-  return (await response.json()) as SlingshotIdentity;
+): Promise<ResolvedIdentity | null> {
+  try {
+    return await resolveIdentity(handle);
+  } catch {
+    return null;
+  }
 }
 
 async function fetchRecord(
   did: string,
   collection: string,
   recordKey: string,
-): Promise<SlingshotRecord | null> {
-  const response = await fetch(
-    `${SLINGSHOT_URL}/com.atproto.repo.getRecord?repo=${encodeURIComponent(did)}&collection=${encodeURIComponent(collection)}&rkey=${encodeURIComponent(recordKey)}`,
-  );
-  if (!response.ok) return null;
-  return (await response.json()) as SlingshotRecord;
+): Promise<ATRecord | null> {
+  try {
+    return await getRecord(did, collection, recordKey);
+  } catch {
+    return null;
+  }
 }
 
 async function fetchSiteName(did: string, fallback: string): Promise<string> {
-  const siteRecord = await fetchRecord(did, "xyz.atbbs.site", "self");
-  return siteRecord ? siteRecord.value.name : fallback;
+  const siteRecord = await fetchRecord(did, SITE, "self");
+  return siteRecord && isSiteRecord(siteRecord)
+    ? siteRecord.value.name
+    : fallback;
 }
 
 // --- Route parsing ---
@@ -128,16 +122,12 @@ export function parseRoute(path: string): Route | null {
 // Metadata
 
 export async function fetchMetadata(route: Route): Promise<Metadata | null> {
-  const identity = await resolveIdentity(route.handle);
+  const identity = await resolveIdentityOrNull(route.handle);
   if (!identity) return null;
 
   if (route.type === "bbs") {
-    const siteRecord = await fetchRecord(
-      identity.did,
-      "xyz.atbbs.site",
-      "self",
-    );
-    if (siteRecord) {
+    const siteRecord = await fetchRecord(identity.did, SITE, "self");
+    if (siteRecord && isSiteRecord(siteRecord)) {
       return {
         title: siteRecord.value.name,
         subtitle: "",
@@ -151,12 +141,8 @@ export async function fetchMetadata(route: Route): Promise<Metadata | null> {
     }
   } else if (route.type === "board") {
     const siteName = await fetchSiteName(identity.did, route.handle);
-    const boardRecord = await fetchRecord(
-      identity.did,
-      "xyz.atbbs.board",
-      route.slug!,
-    );
-    if (boardRecord) {
+    const boardRecord = await fetchRecord(identity.did, BOARD, route.slug!);
+    if (boardRecord && isBoardRecord(boardRecord)) {
       return {
         title: boardRecord.value.name,
         subtitle: siteName,
@@ -170,18 +156,14 @@ export async function fetchMetadata(route: Route): Promise<Metadata | null> {
     }
   } else if (route.type === "thread") {
     const siteName = await fetchSiteName(identity.did, route.handle);
-    const postRecord = await fetchRecord(
-      route.did!,
-      "xyz.atbbs.post",
-      route.rkey!,
-    );
-    if (postRecord && !postRecord.value.root) {
+    const postRecord = await fetchRecord(route.did!, POST, route.rkey!);
+    if (postRecord && isPostRecord(postRecord) && !postRecord.value.root) {
       const scope = postRecord.value.scope;
-      if (!scope?.startsWith(`at://${identity.did}/xyz.atbbs.board/`)) return null;
+      if (!scope.startsWith(`at://${identity.did}/${BOARD}/`)) return null;
       const boardKey = scope.split("/").at(-1);
       if (!boardKey) return null;
-      const board = await fetchRecord(identity.did, "xyz.atbbs.board", boardKey);
-      if (!board) return null;
+      const board = await fetchRecord(identity.did, BOARD, boardKey);
+      if (!board || !isBoardRecord(board)) return null;
       return {
         title: postRecord.value.title || "Thread",
         subtitle: siteName,
@@ -196,15 +178,12 @@ export async function fetchMetadata(route: Route): Promise<Metadata | null> {
     }
   } else if (route.type === "news") {
     const siteName = await fetchSiteName(identity.did, route.handle);
-    const postRecord = await fetchRecord(
-      identity.did,
-      "xyz.atbbs.post",
-      route.rkey!,
-    );
+    const postRecord = await fetchRecord(identity.did, POST, route.rkey!);
     if (
       postRecord &&
+      isPostRecord(postRecord) &&
       !postRecord.value.root &&
-      postRecord.value.scope === `at://${identity.did}/xyz.atbbs.site/self`
+      postRecord.value.scope === `at://${identity.did}/${SITE}/self`
     ) {
       return {
         title: postRecord.value.title || "News",
@@ -285,10 +264,7 @@ export function injectMetadata(
   const safePageUrl = escapeHtml(pageUrl);
   const safeImageUrl = escapeHtml(imageUrl);
 
-  html = html.replace(
-    "<title>atbbs</title>",
-    `<title>${safeTitle}</title>`,
-  );
+  html = html.replace("<title>atbbs</title>", `<title>${safeTitle}</title>`);
   html = html.replace(
     '<meta property="og:title" content="atbbs" />',
     `<meta property="og:title" content="${safeTitle}" />`,
@@ -352,7 +328,9 @@ export default {
     // Dynamic og:image at /og/bbs/... — cached at the edge for 1 hour.
     if (path.startsWith("/og/bbs/")) {
       const cache = caches.default;
-      const cacheKey = new Request(`${url.origin}${url.pathname}`, { method: "GET" });
+      const cacheKey = new Request(`${url.origin}${url.pathname}`, {
+        method: "GET",
+      });
       const cachedResponse = await cache.match(cacheKey);
       if (cachedResponse) {
         return request.method === "HEAD"
@@ -366,16 +344,26 @@ export default {
       try {
         const metadata = route ? await fetchMetadata(route) : null;
         imageResponse = metadata
-          ? await renderOgImage(metadata.title, metadata.subtitle, metadata.description)
+          ? await renderOgImage(
+              metadata.title,
+              metadata.subtitle,
+              metadata.description,
+            )
           : await renderOgImage(DEFAULT_TITLE, "", DEFAULT_DESCRIPTION);
       } catch {
-        imageResponse = await renderOgImage(DEFAULT_TITLE, "", DEFAULT_DESCRIPTION);
+        imageResponse = await renderOgImage(
+          DEFAULT_TITLE,
+          "",
+          DEFAULT_DESCRIPTION,
+        );
       }
 
       const cachedCopy = new Response(imageResponse.body, imageResponse);
       cachedCopy.headers.set("Cache-Control", "public, max-age=3600");
       context.waitUntil(cache.put(cacheKey, cachedCopy.clone()));
-      return request.method === "HEAD" ? new Response(null, cachedCopy) : cachedCopy;
+      return request.method === "HEAD"
+        ? new Response(null, cachedCopy)
+        : cachedCopy;
     }
 
     // Inject metadata into HTML for /bbs/... routes.
@@ -410,7 +398,12 @@ export default {
     }
 
     const headers = new Headers(originResponse.headers);
-    for (const name of ["content-length", "content-encoding", "etag", "last-modified"]) {
+    for (const name of [
+      "content-length",
+      "content-encoding",
+      "etag",
+      "last-modified",
+    ]) {
       headers.delete(name);
     }
     return new Response(request.method === "HEAD" ? null : html, {

@@ -13,12 +13,9 @@ import {
 } from "@atcute/oauth-browser-client";
 import type { ActorResolver, ResolvedActor } from "@atcute/identity-resolver";
 import type { ActorIdentifier } from "@atcute/lexicons/syntax";
-import { resolveIdentity } from "../../../atbbs/identity/service";
-import {
-  createAtbbsWriterForSession,
-  type AtbbsWriter,
-} from "../../../atbbs/writer";
-import { fetchJson } from "../../../atproto/transport";
+import { resolveIdentity } from "@atbbs/core/identity";
+import { createAtbbsWriterForSession, type AtbbsWriter } from "@atbbs/core";
+import { fetchJson } from "@atbbs/atproto";
 
 // --- OAuth setup (deferred until config is available) ---
 

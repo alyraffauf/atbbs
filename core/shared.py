@@ -1,6 +1,6 @@
-"""Loader for the cross-language shared data file (data/shared.json).
+"""Loader for the cross-language shared data file (atbbs/shared.json).
 
-Dev checkout: reads from <repo>/data/shared.json.
+Dev checkout: reads from <repo>/atbbs/shared.json.
 Installed wheel: reads from core/_shared.json (bundled via hatch force-include).
 """
 
@@ -13,7 +13,7 @@ def _find_shared_json() -> Path:
     here = Path(__file__).resolve().parent
     candidates = [
         here / "_shared.json",
-        here.parent / "data" / "shared.json",
+        here.parent / "atbbs" / "shared.json",
     ]
     for path in candidates:
         if path.exists():

@@ -1,4 +1,4 @@
-import type { Thread } from "../../../../atbbs/discussion/thread";
+import type { Thread } from "@atbbs/core/discussion";
 import ModerationBadge from "./ModerationBadge";
 import PostActions, { type PostAction } from "./PostActions";
 import PostContent from "./PostContent";

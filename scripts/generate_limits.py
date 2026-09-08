@@ -51,6 +51,6 @@ typescript_lines = [
     *(f"export const {name} = {value:_};" for name, value in values.items()),
     "",
 ]
-(ROOT / "web" / "src" / "lib" / "limits.ts").write_text(
+(ROOT / "atbbs" / "src" / "schema" / "limits.ts").write_text(
     "\n".join(typescript_lines)
 )

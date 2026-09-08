@@ -4,8 +4,8 @@ import { Link } from "react-router-dom";
 import { threadUrl } from "../../../app/router/urls";
 import PostBody from "../../discussion/components/PostBody";
 import PostMeta from "../../discussion/components/PostMeta";
-import type { ActivityItem } from "../../../../atbbs/dashboard/activity";
-import { parseAtUri } from "../../../../atproto/uri";
+import type { ActivityItem } from "@atbbs/core/dashboard";
+import { parseAtUri } from "@atbbs/atproto";
 
 const PAGE_SIZE = 10;
 

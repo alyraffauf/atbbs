@@ -1,9 +1,6 @@
 /** Debounced handle typeahead using Bluesky's public API. */
 
-import {
-  searchHandles,
-  type HandleMatch,
-} from "../../../atbbs/identity/search";
+import { searchHandles, type HandleMatch } from "@atbbs/core/identity";
 import { useDebouncedAsync } from "../../ui/useDebouncedAsync";
 
 const DEBOUNCE_MS = 300;

@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import { OAUTH_SCOPE } from "./src/config.ts";
+import { OAUTH_SCOPE } from "@atbbs/core/config";
 
 const SERVER_HOST = "127.0.0.1";
 const SERVER_PORT = 5173;
@@ -35,7 +35,7 @@ function buildMetadata(
  *
  * Build without VITE_PUBLIC_URL: emits *.template.json files with a
  * __PUBLIC_URL__ token. The Docker entrypoint substitutes at runtime from
- * the PUBLIC_URL env var. NSIDs/scope live in data/shared.json only.
+ * the PUBLIC_URL env var. NSIDs/scope live in atbbs/shared.json only.
  */
 export default defineConfig(({ command }) => {
   const isBuild = command === "build";
@@ -105,7 +105,7 @@ export default defineConfig(({ command }) => {
     server: {
       host: SERVER_HOST,
       port: SERVER_PORT,
-      // Allow importing ../../data/shared.json (shared with the Python TUI).
+      // Allow importing ../atbbs/shared.json (shared with the Python TUI).
       fs: { allow: [".."] },
     },
     build: {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Check, X } from "lucide-react";
 import { Input, Textarea, Button } from "../../../ui/Form";
-import * as limits from "../../../../atbbs/schema/limits";
+import * as limits from "@atbbs/core/schema";
 
 interface ProfileEditorProps {
   initialName: string;

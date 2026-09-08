@@ -1,0 +1,25 @@
+{
+  "name": "@atbbs/atproto",
+  "private": true,
+  "version": "1.4.2",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "oxlint src --deny-warnings",
+    "format": "prettier --write src package.json tsconfig.json",
+    "format:check": "prettier --check src package.json tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@atcute/atproto": "^4.0.4",
+    "@atcute/client": "^5.1.1",
+    "@atcute/lexicons": "^2.1.0"
+  },
+  "devDependencies": {
+    "oxlint": "^1.82.0",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2"
+  }
+}

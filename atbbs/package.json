@@ -1,0 +1,39 @@
+{
+  "name": "@atbbs/core",
+  "private": true,
+  "version": "1.4.2",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./community": "./src/community/index.ts",
+    "./config": "./src/config.ts",
+    "./dashboard": "./src/dashboard/index.ts",
+    "./discussion": "./src/discussion/index.ts",
+    "./identity": "./src/identity/index.ts",
+    "./media": "./src/media/index.ts",
+    "./moderation": "./src/moderation/index.ts",
+    "./profile": "./src/profile/index.ts",
+    "./schema": "./src/schema/index.ts",
+    "./support": "./src/support/index.ts"
+  },
+  "scripts": {
+    "lint": "oxlint src vitest.config.ts --deny-warnings",
+    "format": "prettier --write src package.json tsconfig.json vitest.config.ts",
+    "format:check": "prettier --check src package.json tsconfig.json vitest.config.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@atcute/client": "^5.1.1",
+    "@atcute/lexicons": "^2.1.0"
+  },
+  "peerDependencies": {
+    "@atbbs/atproto": "1.4.2"
+  },
+  "devDependencies": {
+    "oxlint": "^1.82.0",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
+  }
+}

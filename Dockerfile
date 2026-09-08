@@ -1,11 +1,15 @@
 FROM node:26-slim AS build
 
-WORKDIR /repo/web
-COPY web/package.json web/package-lock.json ./
+WORKDIR /repo
+COPY package.json package-lock.json ./
+COPY atbbs/package.json atbbs/package.json
+COPY atproto/package.json atproto/package.json
+COPY web/package.json web/package.json
 RUN npm ci
-COPY web/ .
-COPY data/shared.json /repo/data/shared.json
-RUN npm run build
+COPY atbbs atbbs
+COPY atproto atproto
+COPY web web
+RUN npm --workspace atbbs-web run build
 
 FROM nginx:alpine
 COPY --from=build /repo/web/dist /usr/share/nginx/html

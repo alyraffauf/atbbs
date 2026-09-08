@@ -1,5 +1,5 @@
-import type { PendingAttachment } from "../../../../atbbs/discussion/attachments";
-import { MAX_IMAGE_PIXELS } from "../../../../atbbs/schema/limits";
+import type { PendingAttachment } from "@atbbs/core/discussion";
+import { MAX_IMAGE_PIXELS } from "@atbbs/core/schema";
 
 async function readFile(file: File): Promise<Uint8Array> {
   if (!file.type.startsWith("image/")) {

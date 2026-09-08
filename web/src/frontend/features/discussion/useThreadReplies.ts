@@ -15,7 +15,7 @@ import {
   pageForReply,
   rkeyFromHash,
 } from "../../features/discussion/pagination";
-import { REPLIES_PER_PAGE } from "../../../atbbs/discussion/replies";
+import { REPLIES_PER_PAGE } from "@atbbs/core/discussion";
 
 export function useThreadReplies(threadUri: string) {
   const [params, setParams] = useSearchParams();

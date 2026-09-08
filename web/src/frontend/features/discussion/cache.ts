@@ -3,13 +3,11 @@ import { threadPageQuery, threadRefsQuery } from "./queries";
 import {
   REPLIES_PER_PAGE,
   type Reply,
+  type ReplyPage,
   type ReplyRef,
-} from "../../../atbbs/discussion/replies";
+  type ReplyRefsResult,
+} from "@atbbs/core/discussion";
 import { refToUri } from "./pagination";
-import type {
-  ReplyPage,
-  ReplyRefsResult,
-} from "../../../atbbs/discussion/thread";
 
 export async function cancelRefsRefetch(threadUri: string) {
   await queryClient.cancelQueries({

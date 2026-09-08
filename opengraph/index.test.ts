@@ -25,7 +25,7 @@ describe("OpenGraph routing", () => {
 
   it("escapes injected metadata", () => {
     const html = injectMetadata(
-      "<title>atbbs</title><meta property=\"og:type\"><meta property=\"og:title\" content=\"atbbs\" /><meta property=\"og:description\" content=\"Decentralized forums on the AT Protocol.\" /><meta property=\"og:image\" content=\"/og.png\" /></head>",
+      '<title>atbbs</title><meta property="og:type"><meta property="og:title" content="atbbs" /><meta property="og:description" content="Decentralized forums on the AT Protocol." /><meta property="og:image" content="/og.png" /></head>',
       "<unsafe>",
       "description",
       "https://atbbs.example/path",
@@ -87,15 +87,24 @@ describe("OpenGraph routing", () => {
       {
         uri: "at://did:plc:bbs/xyz.atbbs.site/self",
         cid: "site",
-        value: { name: "BBS" },
+        value: {
+          $type: "xyz.atbbs.site",
+          name: "BBS",
+          description: "",
+          intro: "",
+          boards: [],
+          createdAt: "2026-01-01T00:00:00.000Z",
+        },
       },
       {
         uri: "at://did:plc:author/xyz.atbbs.post/thread",
         cid: "post",
         value: {
+          $type: "xyz.atbbs.post",
           title: "Foreign",
           body: "body",
           scope: "at://did:plc:other/xyz.atbbs.board/general",
+          createdAt: "2026-01-01T00:00:00.000Z",
         },
       },
     ];

@@ -1,10 +1,10 @@
-import { truncate } from "../../../../atbbs/support/text";
+import { truncate } from "@atbbs/core/support";
 import ModerationBadge from "./ModerationBadge";
 import PostActions, { type PostAction } from "./PostActions";
 import PostBody from "./PostBody";
 import PostContent from "./PostContent";
 import PostMeta from "./PostMeta";
-import type { Reply } from "../../../../atbbs/discussion/replies";
+import type { Reply } from "@atbbs/core/discussion";
 
 interface ReplyPostCardProps {
   reply: Reply;

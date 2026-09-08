@@ -6,7 +6,7 @@ import IdentityRow from "../../identity/components/IdentityRow";
 import { Button } from "../../../ui/Form";
 import { useDropdown } from "../../../ui/useDropdown";
 import { useResolvedCommunity } from "../useResolvedCommunity";
-import type { DiscoveredBBS } from "../../../../atbbs/community/discovery";
+import type { DiscoveredBBS } from "@atbbs/core/community";
 import type { Suggestion } from "../data/suggestions";
 import { bbsUrl } from "../../../app/router/urls";
 

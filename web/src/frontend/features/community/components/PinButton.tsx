@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../auth/auth";
-import { findPinRkey } from "../../../../atbbs/community/pins";
+import { findPinRkey } from "@atbbs/core/community";
 import { pinsQuery } from "../../../features/community/queries";
 import { ActionButton } from "../../../app/ActionButton";
 import { Pin, PinOff } from "lucide-react";

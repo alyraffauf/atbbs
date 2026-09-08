@@ -1,5 +1,5 @@
 import { ExternalLink } from "lucide-react";
-import type { AtprotoApp } from "../../../../config";
+import type { AtprotoApp } from "@atbbs/core";
 
 interface AtprotoAppsCardProps {
   apps: AtprotoApp[];

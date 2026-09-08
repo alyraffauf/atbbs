@@ -1,6 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
-import { fetchBBSModeration } from "../../../atbbs/moderation/state";
-import { fetchSysopModeration } from "../../../atbbs/moderation/sysop";
+import {
+  fetchBBSModeration,
+  fetchSysopModeration,
+} from "@atbbs/core/moderation";
 
 export const sysopModerationQuery = (pdsUrl: string, did: string) =>
   queryOptions({

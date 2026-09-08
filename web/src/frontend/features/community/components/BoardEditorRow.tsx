@@ -1,6 +1,6 @@
 import { Input } from "../../../ui/Form";
-import * as limits from "../../../../atbbs/schema/limits";
-import type { BoardDraft } from "../../../../atbbs/writer";
+import * as limits from "@atbbs/core/schema";
+import type { BoardDraft } from "@atbbs/core";
 
 export type BoardRow = BoardDraft;
 

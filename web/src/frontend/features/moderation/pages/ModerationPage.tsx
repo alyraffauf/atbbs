@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { isValidPostUri } from "../../../../atbbs/moderation/validation";
+import { isValidPostUri } from "@atbbs/core/moderation";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useLoaderData } from "react-router-dom";
 import { sysopModerationQuery } from "../../../features/moderation/queries";

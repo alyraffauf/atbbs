@@ -1,5 +1,5 @@
 import IdentityRow from "./IdentityRow";
-import type { HandleMatch } from "../../../../atbbs/identity/search";
+import type { HandleMatch } from "@atbbs/core/identity";
 
 interface HandleSuggestionsProps {
   suggestions: HandleMatch[];

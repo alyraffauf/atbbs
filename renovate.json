@@ -45,7 +45,11 @@
     {
       "description": "Group compatible web updates",
       "matchManagers": ["npm"],
-      "matchFileNames": ["web/package.json"],
+      "matchFileNames": [
+        "atbbs/package.json",
+        "atproto/package.json",
+        "web/package.json"
+      ],
       "matchUpdateTypes": ["minor", "patch"],
       "groupName": "web minor and patch dependencies"
     },

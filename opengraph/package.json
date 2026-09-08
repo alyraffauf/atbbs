@@ -4,15 +4,23 @@
   "private": true,
   "scripts": {
     "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "lint": "oxlint . --deny-warnings",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "deploy": "wrangler deploy"
   },
   "dependencies": {
+    "@atbbs/atproto": "1.4.2",
+    "@atbbs/core": "1.4.2",
     "workers-og": "^0.0.27"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260906.1",
+    "oxlint": "^1.82.0",
+    "prettier": "^3.9.6",
     "typescript": "^7.0.2",
     "vitest": "^5.0.0",
     "wrangler": "^4.129.0"

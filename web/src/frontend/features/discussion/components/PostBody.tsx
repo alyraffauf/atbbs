@@ -1,7 +1,7 @@
 import Markdown, { defaultUrlTransform } from "react-markdown";
 import type { Components } from "react-markdown";
 import AttachmentLink from "./AttachmentLink";
-import type { AttachmentView } from "../../../../atbbs/discussion/attachments";
+import type { AttachmentView } from "@atbbs/core/discussion";
 
 interface PostBodyProps {
   children: string;

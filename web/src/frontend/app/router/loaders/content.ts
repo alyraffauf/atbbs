@@ -1,7 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router-dom";
-import type { Board, Community } from "../../../../atbbs/community/site";
-import type { NewsPost } from "../../../../atbbs/discussion/news";
-import type { Thread } from "../../../../atbbs/discussion/thread";
+import type { Board, Community } from "@atbbs/core/community";
+import type { NewsPost, Thread } from "@atbbs/core/discussion";
 import { bbsQuery } from "../../../features/community/queries";
 import {
   newsQuery,

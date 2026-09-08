@@ -3,16 +3,17 @@ import { useNavigate } from "react-router-dom";
 import type { PostDraft } from "./components/PostComposer";
 import { alertOnError } from "../../app/browser/alerts";
 import { useAuth } from "../auth/auth";
-import type { Community } from "../../../atbbs/community/site";
-import { POST } from "../../../config";
+import type { Community } from "@atbbs/core/community";
+import { POST } from "@atbbs/core";
 import { myThreadsQuery } from "../../features/dashboard/queries";
 import { queryClient } from "../../app/queryClient";
 import {
   REPLIES_PER_PAGE,
   type Reply,
-} from "../../../atbbs/discussion/replies";
+  type ReplyRef,
+  type Thread,
+} from "@atbbs/core/discussion";
 import { bbsUrl } from "../../app/router/urls";
-import type { Thread } from "../../../atbbs/discussion/thread";
 import {
   appendRefAndReply,
   cancelRefsRefetch,
@@ -21,7 +22,6 @@ import {
   setRefs,
 } from "../../features/discussion/cache";
 import { pendingAttachmentsFromFiles } from "../../features/discussion/browser/pendingAttachment";
-import type { ReplyRef } from "../../../atbbs/discussion/replies";
 
 interface ThreadMutationOptions {
   bbs: Community;

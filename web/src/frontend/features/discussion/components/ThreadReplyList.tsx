@@ -1,6 +1,8 @@
-import type { ModerationState } from "../../../../atbbs/moderation/state";
-import { getPostModeration } from "../../../../atbbs/moderation/policy";
-import type { Reply } from "../../../../atbbs/discussion/replies";
+import {
+  getPostModeration,
+  type ModerationState,
+} from "@atbbs/core/moderation";
+import type { Reply } from "@atbbs/core/discussion";
 import ReplyPostCard from "./ReplyPostCard";
 
 interface ThreadReplyListProps {

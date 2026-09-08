@@ -5,11 +5,8 @@ import {
 } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/auth";
-import type { Board, Community } from "../../../atbbs/community/site";
-import type {
-  ThreadSummary,
-  ThreadPageResult,
-} from "../../../atbbs/discussion/threads";
+import type { Board, Community } from "@atbbs/core/community";
+import type { ThreadSummary, ThreadPageResult } from "@atbbs/core/discussion";
 import { myThreadsQuery } from "../../features/dashboard/queries";
 import { boardThreadsInfiniteQuery } from "../../features/discussion/queries";
 import { queryClient } from "../../app/queryClient";

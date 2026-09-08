@@ -1,12 +1,14 @@
 import { queryOptions } from "@tanstack/react-query";
-import { PIN } from "../../../config";
-import { resolveCommunity } from "../../../atbbs/community/site";
-import { fetchPins } from "../../../atbbs/community/pins";
-import { fetchDiscovery } from "../../../atbbs/community/discovery";
-import { fetchHomeSysopInfo } from "../../../atbbs/community/home";
-import { getBacklinkCountsBatch } from "../../../atbbs/discussion/hydration";
+import { PIN } from "@atbbs/core";
+import {
+  fetchDiscovery,
+  fetchHomeSysopInfo,
+  fetchPins,
+  resolveCommunity,
+} from "@atbbs/core/community";
+import { getBacklinkCountsBatch } from "@atbbs/core/discussion";
 import { slowQueryOptions } from "../../app/queryOptions";
-import { getAvatar } from "../../../atbbs/identity/service";
+import { getAvatar } from "@atbbs/core/identity";
 
 export const bbsQuery = (handle: string) =>
   queryOptions({

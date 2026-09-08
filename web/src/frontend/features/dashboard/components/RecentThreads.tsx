@@ -3,7 +3,7 @@ import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatFullDate, relativeDate } from "../../../ui/dates";
 import { threadUrl } from "../../../app/router/urls";
-import type { OwnedThread } from "../../../../atbbs/dashboard/ownedThreads";
+import type { OwnedThread } from "@atbbs/core/dashboard";
 
 const PAGE_SIZE = 10;
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useLoginModal } from "../loginModal";
-import { ATPROTO_APPS } from "../../../../config";
+import { ATPROTO_APPS } from "@atbbs/core";
 import LoginForm from "./LoginForm";
 import AtprotoAppsCard from "./AtprotoAppsCard";
 

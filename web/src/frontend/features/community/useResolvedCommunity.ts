@@ -1,6 +1,6 @@
 /** Debounced BBS resolution — resolves a handle to a BBS name if one exists. */
 
-import { resolveCommunityPreview } from "../../../atbbs/community/preview";
+import { resolveCommunityPreview } from "@atbbs/core/community";
 import { bbsUrl } from "../../app/router/urls";
 import type { Suggestion } from "./data/suggestions";
 import { useDebouncedAsync } from "../../ui/useDebouncedAsync";

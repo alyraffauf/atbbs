@@ -1,6 +1,6 @@
 import DirectoryEntryLink from "./DirectoryEntryLink";
 import { bbsUrl } from "../../../app/router/urls";
-import type { DiscoveredBBS } from "../../../../atbbs/community/discovery";
+import type { DiscoveredBBS } from "@atbbs/core/community";
 
 interface CommunityDirectoryProps {
   discovered: DiscoveredBBS[];
