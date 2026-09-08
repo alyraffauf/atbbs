@@ -13,6 +13,7 @@
     "atbbs",
     "atproto",
     "opengraph",
+    "telnet",
     "web"
   ],
   "devDependencies": {

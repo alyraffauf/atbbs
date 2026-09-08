@@ -1,0 +1,24 @@
+{
+  "name": "@atbbs/telnet",
+  "private": true,
+  "version": "1.4.2",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --platform=node --target=node26 --format=esm --outfile=dist/main.js",
+    "lint": "oxlint src --deny-warnings",
+    "format": "prettier --write src package.json tsconfig.json",
+    "format:check": "prettier --check src package.json tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@atbbs/atproto": "1.4.2",
+    "@atbbs/core": "1.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.28.1",
+    "oxlint": "^1.82.0",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2"
+  }
+}

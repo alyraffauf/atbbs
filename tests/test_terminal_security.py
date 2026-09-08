@@ -3,7 +3,6 @@ import subprocess
 import httpx
 import pytest
 
-from telnet.server import sanitize_public_text
 from tui.util import (
     MAX_ATTACHMENT_DOWNLOAD_BYTES,
     AttachmentTooLargeError,
@@ -83,7 +82,3 @@ async def test_download_blob_rejects_oversized_content_length(tmp_path):
         with pytest.raises(AttachmentTooLargeError, match="100 MiB"):
             await download_blob(client, "https://blob.example/file", "x", tmp_path)
     assert list(tmp_path.iterdir()) == []
-
-
-def test_telnet_public_text_removes_terminal_controls():
-    assert sanitize_public_text("ok\x1b[31mred\x7f\x9f") == "ok[31mred"

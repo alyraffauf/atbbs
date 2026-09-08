@@ -21,10 +21,9 @@ build-backend = "hatchling.build"
 
 [project.scripts]
 atbbs = "cli.__main__:main"
-atbbs-telnet = "telnet.server:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["cli", "core", "telnet", "tui"]
+packages = ["cli", "core", "tui"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "atbbs/shared.json" = "core/_shared.json"

@@ -1,9 +1,17 @@
-FROM python:3.14-slim
+FROM node:26-slim AS build
 WORKDIR /app
-COPY pyproject.toml .
-RUN pip install --no-cache-dir httpx==0.28.1
-COPY core/ core/
+COPY package.json package-lock.json tsconfig.base.json ./
+COPY atbbs/package.json atbbs/package.json
+COPY atproto/package.json atproto/package.json
+COPY telnet/package.json telnet/package.json
+RUN npm ci
+COPY atbbs/ atbbs/
+COPY atproto/ atproto/
 COPY telnet/ telnet/
-COPY atbbs/shared.json atbbs/shared.json
+RUN npm run build --workspace=@atbbs/telnet
+
+FROM node:26-slim
+WORKDIR /app
+COPY --from=build /app/telnet/dist/main.js ./main.js
 EXPOSE 2323
-CMD ["python", "-m", "telnet.server"]
+CMD ["node", "main.js"]
