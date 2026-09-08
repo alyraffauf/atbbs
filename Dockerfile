@@ -1,7 +1,7 @@
 FROM node:26-slim AS build
 
 WORKDIR /repo
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json tsconfig.base.json ./
 COPY atbbs/package.json atbbs/package.json
 COPY atproto/package.json atproto/package.json
 COPY web/package.json web/package.json
