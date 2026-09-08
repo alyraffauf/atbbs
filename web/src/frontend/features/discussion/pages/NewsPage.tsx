@@ -13,7 +13,7 @@ export default function NewsPage() {
 
   const isSysop = !!(user && user.did === bbs.identity.did);
 
-  const deleteNews = useDeleteNews(handle, item.rkey);
+  const deleteNews = useDeleteNews(bbs.identity.did, handle, item.rkey);
 
   return (
     <NewsPostCard

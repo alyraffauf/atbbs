@@ -4,6 +4,7 @@ import {
   fetchThreadRefs,
   hydrateReplyPage,
   hydrateThreadPage,
+  REPLIES_PER_PAGE,
   resolveCommunity,
   type Community,
   type ModerationState,
@@ -13,7 +14,6 @@ import type { BacklinkRef } from "@atbbs/atproto";
 const BBS_CACHE_MS = 5 * 60_000;
 const MODERATION_CACHE_MS = 60 * 60_000;
 const UPSTREAM_TIMEOUT_MS = 5_000;
-const REPLIES_PER_PAGE = 10;
 type Cached<T> = { value: T; expiresAt: number };
 interface LoadedBbs {
   community: Community;

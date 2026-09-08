@@ -16,11 +16,17 @@ import {
   rkeyFromHash,
 } from "../../features/discussion/pagination";
 import { REPLIES_PER_PAGE } from "@atbbs/core/discussion";
+import type { DiscussionReadContext } from "./queries";
 
-export function useThreadReplies(threadUri: string) {
+export function useThreadReplies(
+  threadUri: string,
+  readContext: DiscussionReadContext,
+) {
   const [params, setParams] = useSearchParams();
 
-  const { data: refsResult } = useSuspenseQuery(threadRefsQuery(threadUri));
+  const { data: refsResult } = useSuspenseQuery(
+    threadRefsQuery(threadUri, readContext.audience),
+  );
   const refs = refsResult.items;
   const totalPages = Math.max(1, Math.ceil(refs.length / REPLIES_PER_PAGE));
 
@@ -39,7 +45,7 @@ export function useThreadReplies(threadUri: string) {
   const pageRefs = refs.slice(pageStart, pageStart + REPLIES_PER_PAGE);
 
   const { data: pageData } = useSuspenseQuery(
-    threadPageQuery(threadUri, page, pageRefs),
+    threadPageQuery(threadUri, page, pageRefs, readContext),
   );
   const { replies, parentReplies } = pageData;
 

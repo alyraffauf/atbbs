@@ -14,7 +14,8 @@ import { useThreadReplies } from "../useThreadReplies";
 import type { ThreadLoaderData } from "../../../app/router/loaders/content";
 
 export default function ThreadPage() {
-  const { handle, bbs, thread } = useLoaderData() as ThreadLoaderData;
+  const { handle, bbs, thread, readContext } =
+    useLoaderData() as ThreadLoaderData;
   const { user } = useAuth();
   const { data: moderation, isError: moderationIsStale } = useSuspenseQuery(
     bbsModerationQuery(bbs.identity.pds ?? "", bbs.identity.did),
@@ -27,7 +28,7 @@ export default function ThreadPage() {
     parentReplies,
     truncated,
     scrollToReply,
-  } = useThreadReplies(thread.uri);
+  } = useThreadReplies(thread.uri, readContext);
   const [replyingTo, setReplyingTo] = useState<{
     uri: string;
     handle: string;
@@ -42,6 +43,7 @@ export default function ThreadPage() {
     handle,
     page,
     setPage,
+    readContext,
     onReplyCreated: () => setReplyingTo(null),
   });
   const { ban, unban, hide, unhide } = useModerationMutations();

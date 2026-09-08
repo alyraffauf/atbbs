@@ -6,7 +6,7 @@ vi.mock("workers-og", () => ({
       super("image", { headers: { "content-type": "image/png" } });
     }
   },
-  loadGoogleFont: async () => new ArrayBuffer(0),
+  loadGoogleFont: vi.fn(async () => new ArrayBuffer(0)),
 }));
 
 import worker, { fetchMetadata, injectMetadata, parseRoute } from "./index";
@@ -25,7 +25,7 @@ describe("OpenGraph routing", () => {
 
   it("escapes injected metadata", () => {
     const html = injectMetadata(
-      '<title>atbbs</title><meta property="og:type"><meta property="og:title" content="atbbs" /><meta property="og:description" content="Decentralized forums on the AT Protocol." /><meta property="og:image" content="/og.png" /></head>',
+      '<head><link rel="icon" href="/favicon.svg" /><!-- atbbs:metadata:start --><title>atbbs</title><!-- atbbs:metadata:end --></head>',
       "<unsafe>",
       "description",
       "https://atbbs.example/path",
@@ -34,6 +34,8 @@ describe("OpenGraph routing", () => {
     );
     expect(html).toContain("&lt;unsafe&gt;");
     expect(html).not.toContain("<unsafe>");
+    expect(html).toContain('<link rel="icon" href="/favicon.svg" />');
+    expect(html).toContain("atbbs:metadata:start");
   });
 
   it("normalizes image cache keys to method and path", async () => {

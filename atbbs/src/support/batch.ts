@@ -5,6 +5,9 @@ export async function allSettledBounded<T, Result>(
   worker: (value: T) => Promise<Result>,
   concurrency = 10,
 ): Promise<PromiseSettledResult<Result>[]> {
+  if (!Number.isSafeInteger(concurrency) || concurrency <= 0) {
+    throw new RangeError("Concurrency must be a positive safe integer");
+  }
   const results: PromiseSettledResult<Result>[] = [];
   let nextIndex = 0;
   async function run() {

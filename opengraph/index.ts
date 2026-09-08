@@ -22,13 +22,31 @@ const COLORS = {
 
 // Types
 
-interface Route {
-  type: "bbs" | "board" | "thread" | "news";
+interface RouteBase {
   handle: string;
-  slug?: string;
-  did?: string;
-  rkey?: string;
 }
+
+interface BbsRoute extends RouteBase {
+  type: "bbs";
+}
+
+interface BoardRoute extends RouteBase {
+  type: "board";
+  slug: string;
+}
+
+interface ThreadRoute extends RouteBase {
+  type: "thread";
+  did: string;
+  rkey: string;
+}
+
+interface NewsRoute extends RouteBase {
+  type: "news";
+  rkey: string;
+}
+
+type Route = BbsRoute | BoardRoute | ThreadRoute | NewsRoute;
 
 interface Metadata {
   title: string;
@@ -141,7 +159,7 @@ export async function fetchMetadata(route: Route): Promise<Metadata | null> {
     }
   } else if (route.type === "board") {
     const siteName = await fetchSiteName(identity.did, route.handle);
-    const boardRecord = await fetchRecord(identity.did, BOARD, route.slug!);
+    const boardRecord = await fetchRecord(identity.did, BOARD, route.slug);
     if (boardRecord && isBoardRecord(boardRecord)) {
       return {
         title: boardRecord.value.name,
@@ -156,7 +174,7 @@ export async function fetchMetadata(route: Route): Promise<Metadata | null> {
     }
   } else if (route.type === "thread") {
     const siteName = await fetchSiteName(identity.did, route.handle);
-    const postRecord = await fetchRecord(route.did!, POST, route.rkey!);
+    const postRecord = await fetchRecord(route.did, POST, route.rkey);
     if (postRecord && isPostRecord(postRecord) && !postRecord.value.root) {
       const scope = postRecord.value.scope;
       if (!scope.startsWith(`at://${identity.did}/${BOARD}/`)) return null;
@@ -170,7 +188,7 @@ export async function fetchMetadata(route: Route): Promise<Metadata | null> {
         description: postRecord.value.body || "",
         atTags: {
           canonical: postRecord.uri,
-          author: route.did!,
+          author: route.did,
           alternate: postRecord.value.root,
           me: identity.did,
         },
@@ -178,7 +196,7 @@ export async function fetchMetadata(route: Route): Promise<Metadata | null> {
     }
   } else if (route.type === "news") {
     const siteName = await fetchSiteName(identity.did, route.handle);
-    const postRecord = await fetchRecord(identity.did, POST, route.rkey!);
+    const postRecord = await fetchRecord(identity.did, POST, route.rkey);
     if (
       postRecord &&
       isPostRecord(postRecord) &&
@@ -206,6 +224,21 @@ export async function fetchMetadata(route: Route): Promise<Metadata | null> {
 const HERO_LOGO_DATA_URI =
   "data:image/svg+xml," + encodeURIComponent(heroLogoSvg);
 
+let geistMonoFontPromise: Promise<ArrayBuffer> | undefined;
+
+function loadGeistMonoFont() {
+  if (!geistMonoFontPromise) {
+    geistMonoFontPromise = loadGoogleFont({
+      family: "Geist Mono",
+      weight: 400,
+    }).catch((error) => {
+      geistMonoFontPromise = undefined;
+      throw error;
+    });
+  }
+  return geistMonoFontPromise;
+}
+
 async function renderOgImage(
   title: string,
   subtitle: string,
@@ -215,10 +248,7 @@ async function renderOgImage(
   const displaySubtitle = escapeHtml(subtitle);
   const displayDescription = escapeHtml(truncate(description, 120));
 
-  const fontData = await loadGoogleFont({
-    family: "Geist Mono",
-    weight: 400,
-  });
+  const fontData = await loadGeistMonoFont();
 
   const subtitleHtml = displaySubtitle
     ? `<div style="display: flex; font-size: 24px; color: ${COLORS.subtitle}; font-family: 'Geist Mono';">${displaySubtitle}</div>`
@@ -264,35 +294,28 @@ export function injectMetadata(
   const safePageUrl = escapeHtml(pageUrl);
   const safeImageUrl = escapeHtml(imageUrl);
 
-  html = html.replace("<title>atbbs</title>", `<title>${safeTitle}</title>`);
-  html = html.replace(
-    '<meta property="og:title" content="atbbs" />',
-    `<meta property="og:title" content="${safeTitle}" />`,
+  const metadata = [
+    "<!-- atbbs:metadata:start -->",
+    `    <title>${safeTitle}</title>`,
+    `    <meta name="description" content="${safeDescription}" />`,
+    `    <meta property="og:title" content="${safeTitle}" />`,
+    `    <meta property="og:description" content="${safeDescription}" />`,
+    `    <meta property="og:image" content="${safeImageUrl}" />`,
+    `    <meta property="og:url" content="${safePageUrl}" />`,
+    '    <meta property="og:type" content="website" />',
+    renderAtTags(atTags),
+    "    <!-- atbbs:metadata:end -->",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  return html.replace(
+    /<!-- atbbs:metadata:start -->[\s\S]*?<!-- atbbs:metadata:end -->/,
+    metadata,
   );
-  html = html.replace(
-    '<meta property="og:description" content="Decentralized forums on the AT Protocol." />',
-    `<meta property="og:description" content="${safeDescription}" />`,
-  );
-  html = html.replace(
-    '<meta property="og:image" content="/og.png" />',
-    `<meta property="og:image" content="${safeImageUrl}" />`,
-  );
-
-  if (!html.includes("og:url")) {
-    html = html.replace(
-      '<meta property="og:type"',
-      `<meta property="og:url" content="${safePageUrl}" />\n    <meta property="og:type"`,
-    );
-  }
-
-  const atTagMarkup = renderAtTags(atTags);
-  html = html.replace("</head>", `${atTagMarkup}\n  </head>`);
-
-  return html;
 }
 
 function renderAtTags(atTags: AtTags): string {
-  const tags = [
+  const tags: Array<[string, string | undefined]> = [
     ["at:canonical", atTags.canonical],
     ["at:author", atTags.author],
     ["at:alternate", atTags.alternate],
@@ -300,10 +323,10 @@ function renderAtTags(atTags: AtTags): string {
   ];
 
   return tags
-    .filter(([, value]) => value)
+    .filter((tag): tag is [string, string] => tag[1] !== undefined)
     .map(
       ([name, value]) =>
-        `    <meta name="${name}" content="${escapeHtml(value!)}" />`,
+        `    <meta name="${name}" content="${escapeHtml(value)}" />`,
     )
     .join("\n");
 }

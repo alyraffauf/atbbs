@@ -14,6 +14,7 @@ import { threadUrl } from "../../app/router/urls";
 import { pendingAttachmentsFromFiles } from "../../features/discussion/browser/pendingAttachment";
 import { alertOnError } from "../../app/browser/alerts";
 import type { PostDraft } from "./components/PostComposer";
+import type { DiscussionReadContext } from "./queries";
 
 export async function waitForThreadIndexing(
   boardKey: QueryKey,
@@ -38,7 +39,12 @@ export async function waitForThreadIndexing(
   }
 }
 
-export function useBoardPosting(bbs: Community, board: Board, handle: string) {
+export function useBoardPosting(
+  bbs: Community,
+  board: Board,
+  handle: string,
+  readContext: DiscussionReadContext,
+) {
   const { user, writer } = useAuth();
   const navigate = useNavigate();
 
@@ -71,6 +77,7 @@ export function useBoardPosting(bbs: Community, board: Board, handle: string) {
       const boardKey = boardThreadsInfiniteQuery(
         bbs.identity.did,
         board.slug,
+        readContext,
       ).queryKey;
       queryClient.setQueryData<InfiniteData<ThreadPageResult>>(
         boardKey,

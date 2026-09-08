@@ -1,5 +1,9 @@
 import { queryClient } from "../../app/queryClient";
-import { threadPageQuery, threadRefsQuery } from "./queries";
+import {
+  threadPageQuery,
+  threadRefsQuery,
+  type DiscussionReadContext,
+} from "./queries";
 import {
   REPLIES_PER_PAGE,
   type Reply,
@@ -9,20 +13,30 @@ import {
 } from "@atbbs/core/discussion";
 import { refToUri } from "./pagination";
 
-export async function cancelRefsRefetch(threadUri: string) {
+export async function cancelRefsRefetch(
+  threadUri: string,
+  readContext: DiscussionReadContext,
+) {
   await queryClient.cancelQueries({
-    queryKey: threadRefsQuery(threadUri).queryKey,
+    queryKey: threadRefsQuery(threadUri, readContext.audience).queryKey,
   });
 }
 
-export function getRefs(threadUri: string): ReplyRef[] {
-  const key = threadRefsQuery(threadUri).queryKey;
+export function getRefs(
+  threadUri: string,
+  readContext: DiscussionReadContext,
+): ReplyRef[] {
+  const key = threadRefsQuery(threadUri, readContext.audience).queryKey;
   return queryClient.getQueryData<ReplyRefsResult>(key)?.items ?? [];
 }
 
-export function setRefs(threadUri: string, refs: ReplyRef[]) {
+export function setRefs(
+  threadUri: string,
+  refs: ReplyRef[],
+  readContext: DiscussionReadContext,
+) {
   queryClient.setQueryData<ReplyRefsResult>(
-    threadRefsQuery(threadUri).queryKey,
+    threadRefsQuery(threadUri, readContext.audience).queryKey,
     (current) => ({
       items: refs,
       truncated: current?.truncated ?? false,
@@ -42,8 +56,9 @@ export function appendRefAndReply(
   threadUri: string,
   newRef: ReplyRef,
   newReply: Reply,
+  readContext: DiscussionReadContext,
 ): ReplyRef[] {
-  const previousRefs = getRefs(threadUri);
+  const previousRefs = getRefs(threadUri, readContext);
   const updatedRefs = [...previousRefs, newRef].slice(-2_000);
 
   const newLastPage = Math.max(
@@ -51,13 +66,23 @@ export function appendRefAndReply(
     Math.ceil(updatedRefs.length / REPLIES_PER_PAGE),
   );
   const oldPageRefs = pageSlice(previousRefs, newLastPage);
-  const oldKey = threadPageQuery(threadUri, newLastPage, oldPageRefs).queryKey;
+  const oldKey = threadPageQuery(
+    threadUri,
+    newLastPage,
+    oldPageRefs,
+    readContext,
+  ).queryKey;
   const oldData = queryClient.getQueryData<ReplyPage>(oldKey);
 
-  setRefs(threadUri, updatedRefs);
+  setRefs(threadUri, updatedRefs, readContext);
 
   const pageRefs = pageSlice(updatedRefs, newLastPage);
-  const newKey = threadPageQuery(threadUri, newLastPage, pageRefs).queryKey;
+  const newKey = threadPageQuery(
+    threadUri,
+    newLastPage,
+    pageRefs,
+    readContext,
+  ).queryKey;
   queryClient.setQueryData<ReplyPage>(newKey, {
     replies: [...(oldData?.replies ?? []), newReply],
     parentReplies: oldData?.parentReplies ?? {},
@@ -66,10 +91,14 @@ export function appendRefAndReply(
   return updatedRefs;
 }
 
-export function removeRefAndReply(threadUri: string, replyUri: string) {
-  const previousRefs = getRefs(threadUri);
+export function removeRefAndReply(
+  threadUri: string,
+  replyUri: string,
+  readContext: DiscussionReadContext,
+) {
+  const previousRefs = getRefs(threadUri, readContext);
   const updatedRefs = previousRefs.filter((ref) => refToUri(ref) !== replyUri);
-  setRefs(threadUri, updatedRefs);
+  setRefs(threadUri, updatedRefs, readContext);
   queryClient.removeQueries({
     queryKey: ["thread-page", threadUri],
   });

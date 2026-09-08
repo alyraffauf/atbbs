@@ -154,6 +154,7 @@ function waitForDrain(socket: Socket): Promise<void> {
 }
 
 class SocketInput {
+  private static readonly MAX_QUEUED_LINES = 16;
   private readonly parser = new TelnetInputParser();
   private readonly lines: string[] = [];
   private readonly waiters: ((line: string | null) => void)[] = [];
@@ -183,7 +184,8 @@ class SocketInput {
   private add(line: string) {
     const waiter = this.waiters.shift();
     if (waiter) waiter(line);
-    else this.lines.push(line);
+    else if (this.lines.length < SocketInput.MAX_QUEUED_LINES)
+      this.lines.push(line);
   }
   private close() {
     this.closed = true;

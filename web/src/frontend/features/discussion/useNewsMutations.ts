@@ -40,7 +40,7 @@ export function usePostNews(bbs: Community) {
   });
 }
 
-export function useDeleteNews(handle: string, rkey: string) {
+export function useDeleteNews(bbsDid: string, handle: string, rkey: string) {
   const { writer } = useAuth();
   const navigate = useNavigate();
   return useMutation({
@@ -48,7 +48,12 @@ export function useDeleteNews(handle: string, rkey: string) {
       if (!writer) throw new Error("Not signed in");
       await writer.deletePost(rkey);
     },
-    onSuccess: () => navigate(bbsUrl(handle)),
+    onSuccess: () => {
+      queryClient.setQueryData<NewsPost[]>(newsQuery(bbsDid).queryKey, (news) =>
+        news?.filter((item) => item.rkey !== rkey),
+      );
+      navigate(bbsUrl(handle));
+    },
     onError: alertOnError("delete"),
   });
 }

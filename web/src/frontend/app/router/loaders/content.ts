@@ -7,6 +7,9 @@ import {
   threadRootQuery,
 } from "../../../features/discussion/queries";
 import { queryClient } from "../../../app/queryClient";
+import { bbsModerationQuery } from "../../../features/moderation/queries";
+import { ensureAuthReady, getCurrentUser } from "../../../features/auth/auth";
+import type { DiscussionReadContext } from "../../../features/discussion/queries";
 
 function requiredParam(
   params: LoaderFunctionArgs["params"],
@@ -34,6 +37,30 @@ export async function communityLoader({ params }: LoaderFunctionArgs) {
 
 export interface BoardLoaderData extends CommunityLoaderData {
   board: Board;
+  readContext: DiscussionReadContext;
+}
+
+async function loadDiscussionReadContext(
+  bbs: Community,
+): Promise<DiscussionReadContext> {
+  await ensureAuthReady();
+  const moderationQuery = bbsModerationQuery(
+    bbs.identity.pds ?? "",
+    bbs.identity.did,
+  );
+  let moderation;
+  try {
+    moderation = await queryClient.fetchQuery(moderationQuery);
+  } catch (error) {
+    moderation = queryClient.getQueryData(moderationQuery.queryKey);
+    if (!moderation) throw error;
+  }
+  const viewerDid = getCurrentUser()?.did;
+  return {
+    moderation,
+    audience: viewerDid === bbs.identity.did ? "sysop" : "public",
+    viewerDid,
+  };
 }
 
 export async function boardLoader({ params }: LoaderFunctionArgs) {
@@ -41,21 +68,24 @@ export async function boardLoader({ params }: LoaderFunctionArgs) {
   const slug = requiredParam(params, "slug");
   const board = bbs.site.boards.find((candidate) => candidate.slug === slug);
   if (!board) throw new Response("Board not found", { status: 404 });
-  return { handle, bbs, board } satisfies BoardLoaderData;
+  const readContext = await loadDiscussionReadContext(bbs);
+  return { handle, bbs, board, readContext } satisfies BoardLoaderData;
 }
 
 export interface ThreadLoaderData extends CommunityLoaderData {
   thread: Thread;
+  readContext: DiscussionReadContext;
 }
 
 export async function threadLoader({ params }: LoaderFunctionArgs) {
   const { handle, bbs } = await loadCommunity(params);
   const did = requiredParam(params, "did");
   const tid = requiredParam(params, "tid");
+  const readContext = await loadDiscussionReadContext(bbs);
   const thread = await queryClient.ensureQueryData(
-    threadRootQuery(bbs.identity.did, did, tid),
+    threadRootQuery(bbs.identity.did, did, tid, readContext),
   );
-  return { handle, bbs, thread } satisfies ThreadLoaderData;
+  return { handle, bbs, thread, readContext } satisfies ThreadLoaderData;
 }
 
 export interface NewsLoaderData extends CommunityLoaderData {

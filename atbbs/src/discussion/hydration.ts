@@ -9,6 +9,9 @@ import {
   getRecordsBatch,
   type RecordHydrationOptions,
 } from "../support/records";
+import { allSettledBounded } from "../support/batch";
+
+const BACKLINK_COUNT_CONCURRENCY = 10;
 
 export async function getBacklinkCountsBatch(
   subjects: string[],
@@ -16,9 +19,15 @@ export async function getBacklinkCountsBatch(
   options: RequestOptions = {},
 ) {
   const unique = [...new Set(subjects)];
-  const counts = await Promise.all(
-    unique.map((subject) => getBacklinkCount(subject, source, options)),
+  const settled = await allSettledBounded(
+    unique,
+    (subject) => getBacklinkCount(subject, source, options),
+    BACKLINK_COUNT_CONCURRENCY,
   );
+  const counts = settled.map((result) => {
+    if (result.status === "rejected") throw result.reason;
+    return result.value;
+  });
   return Object.fromEntries(
     unique.map((subject, index) => [subject, counts[index]]),
   );

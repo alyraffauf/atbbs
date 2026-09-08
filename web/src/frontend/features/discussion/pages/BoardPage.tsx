@@ -7,7 +7,6 @@ import { relativeDate } from "../../../ui/dates";
 import * as limits from "@atbbs/core/schema";
 import { bbsModerationQuery } from "../../../features/moderation/queries";
 import { boardThreadsInfiniteQuery } from "../../../features/discussion/queries";
-import { getPostModeration } from "@atbbs/core/moderation";
 import { threadUrl } from "../../../app/router/urls";
 import ThreadListItem, { ThreadListHeader } from "../components/ThreadListItem";
 import PostComposer from "../components/PostComposer";
@@ -16,7 +15,8 @@ import type { BoardLoaderData } from "../../../app/router/loaders/content";
 import { useBoardPosting } from "../useBoardPosting";
 
 export default function BoardPage() {
-  const { handle, bbs, board } = useLoaderData() as BoardLoaderData;
+  const { handle, bbs, board, readContext } =
+    useLoaderData() as BoardLoaderData;
   const { user } = useAuth();
 
   const {
@@ -24,25 +24,18 @@ export default function BoardPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery(boardThreadsInfiniteQuery(bbs.identity.did, board.slug));
+  } = useInfiniteQuery(
+    boardThreadsInfiniteQuery(bbs.identity.did, board.slug, readContext),
+  );
   const { data: moderation, isError: moderationIsStale } = useQuery(
     bbsModerationQuery(bbs.identity.pds ?? "", bbs.identity.did),
   );
-  const isSysop = !!(user && user.did === bbs.identity.did);
   const ready = !!threadPages && !!moderation;
-  const allThreads = threadPages?.pages.flatMap((page) => page.threads) ?? [];
-  const threads =
-    isSysop || !moderation
-      ? allThreads
-      : allThreads.filter(
-          (thread) =>
-            getPostModeration(moderation, thread, user?.did, bbs.identity.did)
-              .isVisible,
-        );
+  const threads = threadPages?.pages.flatMap((page) => page.threads) ?? [];
 
   usePageTitle(`${board.name} — ${bbs.site.name}`);
 
-  const createThread = useBoardPosting(bbs, board, handle);
+  const createThread = useBoardPosting(bbs, board, handle, readContext);
 
   return (
     <>

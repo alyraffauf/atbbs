@@ -22,6 +22,7 @@ import {
   setRefs,
 } from "../../features/discussion/cache";
 import { pendingAttachmentsFromFiles } from "../../features/discussion/browser/pendingAttachment";
+import type { DiscussionReadContext } from "./queries";
 
 interface ThreadMutationOptions {
   bbs: Community;
@@ -30,10 +31,12 @@ interface ThreadMutationOptions {
   page: number;
   setPage: (page: number) => void;
   onReplyCreated: () => void;
+  readContext: DiscussionReadContext;
 }
 
 export function useThreadMutations(options: ThreadMutationOptions) {
-  const { bbs, thread, handle, page, setPage, onReplyCreated } = options;
+  const { bbs, thread, handle, page, setPage, onReplyCreated, readContext } =
+    options;
   const { user, writer } = useAuth();
   const navigate = useNavigate();
   const threadUri = thread.uri;
@@ -69,7 +72,7 @@ export function useThreadMutations(options: ThreadMutationOptions) {
         parentRkey: input.parentRkey,
         attachments: record.attachments,
       };
-      const refs = appendRefAndReply(threadUri, ref, reply);
+      const refs = appendRefAndReply(threadUri, ref, reply, readContext);
       onReplyCreated();
       const lastPage = Math.max(1, Math.ceil(refs.length / REPLIES_PER_PAGE));
       if (page !== lastPage) setPage(lastPage);
@@ -84,13 +87,13 @@ export function useThreadMutations(options: ThreadMutationOptions) {
       return reply;
     },
     onMutate: async (reply) => {
-      await cancelRefsRefetch(threadUri);
-      const previousRefs = getRefs(threadUri);
-      removeRefAndReply(threadUri, reply.uri);
+      await cancelRefsRefetch(threadUri, readContext);
+      const previousRefs = getRefs(threadUri, readContext);
+      removeRefAndReply(threadUri, reply.uri, readContext);
       return { previousRefs };
     },
     onError: (error, _reply, context) => {
-      if (context) setRefs(threadUri, context.previousRefs);
+      if (context) setRefs(threadUri, context.previousRefs, readContext);
       alertOnError("delete")(error);
     },
   });
