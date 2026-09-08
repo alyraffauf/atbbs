@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { fetchProfile } from "../../../atbbs/profile/read";
+import { fetchProfile } from "../../../atbbs/profile/profile";
 import { slowQueryOptions } from "../../app/queryOptions";
 
 export const profileQuery = (handle: string) =>

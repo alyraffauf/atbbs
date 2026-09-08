@@ -1,9 +1,37 @@
-/** Pure helpers for reply pagination and hydration. */
-
 import type { ATRecord } from "../../atproto/records";
 import { parseAtUri } from "../../atproto/uri";
 import { isPostRecord } from "../schema/records";
 import { prepareAttachmentViews, type AttachmentView } from "./attachments";
+import type { PendingAttachment } from "./attachments";
+import type { AuthenticatedRepo } from "../../atproto/repository";
+import { BOARD } from "../../config";
+import { makeAtUri } from "../../atproto/uri";
+import type { Did } from "@atcute/lexicons/syntax";
+import { createPost } from "./posts";
+
+export interface CreateReplyInput {
+  communityDid: string;
+  boardSlug: string;
+  threadUri: string;
+  parent?: string;
+  body: string;
+  attachments: PendingAttachment[];
+}
+
+export function createReply(
+  repo: AuthenticatedRepo,
+  pdsUrl: string,
+  input: CreateReplyInput,
+) {
+  return createPost(repo, pdsUrl, {
+    scope: makeAtUri(input.communityDid as Did, BOARD, input.boardSlug),
+    body: input.body,
+    root: input.threadUri,
+    parent: input.parent,
+    attachments: input.attachments,
+  });
+}
+
 export interface Reply {
   uri: string;
   did: string;

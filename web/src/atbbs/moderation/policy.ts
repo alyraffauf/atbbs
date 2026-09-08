@@ -1,4 +1,4 @@
-import type { ModerationState } from "./read";
+import type { ModerationState } from "./state";
 
 export interface PostModeration {
   isVisible: boolean;

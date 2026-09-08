@@ -5,7 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/auth";
-import type { Board, Community } from "../../../atbbs/community/read";
+import type { Board, Community } from "../../../atbbs/community/site";
 import type {
   ThreadSummary,
   ThreadPageResult,

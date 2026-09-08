@@ -1,4 +1,4 @@
-import type { ModerationState } from "../../../../atbbs/moderation/read";
+import type { ModerationState } from "../../../../atbbs/moderation/state";
 import { getPostModeration } from "../../../../atbbs/moderation/policy";
 import type { Reply } from "../../../../atbbs/discussion/replies";
 import type { Thread } from "../../../../atbbs/discussion/thread";

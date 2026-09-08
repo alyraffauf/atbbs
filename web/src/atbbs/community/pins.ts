@@ -7,6 +7,15 @@ import { PIN, SITE } from "../../config";
 import { isPinRecord, isSiteRecord } from "../schema/records";
 import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
+import type { XyzAtbbsPin } from "../../lexicons";
+import {
+  createRecord,
+  deleteRecord,
+  type AuthenticatedRepo,
+} from "../../atproto/repository";
+import { nowIso } from "../support/time";
+
+type PinValue = Omit<XyzAtbbsPin.Main, "$type">;
 
 export interface PinnedCommunity {
   did: string;
@@ -65,4 +74,22 @@ export function findPinRkey(
 ): string | null {
   const match = pins.find((entry) => entry.did === targetDid);
   return match ? match.rkey : null;
+}
+
+export async function createPin(
+  repo: AuthenticatedRepo,
+  did: string,
+): Promise<void> {
+  const value: PinValue = {
+    did: did as PinValue["did"],
+    createdAt: nowIso(),
+  };
+  await createRecord(repo, PIN, value, did);
+}
+
+export async function deletePin(
+  repo: AuthenticatedRepo,
+  rkey: string,
+): Promise<void> {
+  await deleteRecord(repo, PIN, rkey);
 }

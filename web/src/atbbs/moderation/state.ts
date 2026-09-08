@@ -6,6 +6,16 @@ import { BAN, HIDE } from "../../config";
 import { parseAtUri } from "../../atproto/uri";
 import { isBanRecord, isHideRecord } from "../schema/records";
 import { malformed } from "../../atproto/transport";
+import type { XyzAtbbsBan, XyzAtbbsHide } from "../../lexicons";
+import { nowIso } from "../support/time";
+import {
+  createRecord,
+  deleteRecord,
+  type AuthenticatedRepo,
+} from "../../atproto/repository";
+
+type BanValue = Omit<XyzAtbbsBan.Main, "$type">;
+type HideValue = Omit<XyzAtbbsHide.Main, "$type">;
 
 // Fields must be JSON-safe — this shape is persisted via localStorage.
 export interface ModerationState {
@@ -39,4 +49,51 @@ export async function fetchBBSModeration(
   }
 
   return { banRkeys, hideRkeys };
+}
+
+async function deterministicRkey(value: string) {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(value),
+  );
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 24);
+}
+
+export async function createBan(
+  repo: AuthenticatedRepo,
+  did: string,
+): Promise<void> {
+  const value: BanValue = {
+    did: did as BanValue["did"],
+    createdAt: nowIso(),
+  };
+  await createRecord(repo, BAN, value, await deterministicRkey(did));
+}
+
+export async function createHide(
+  repo: AuthenticatedRepo,
+  uri: string,
+): Promise<void> {
+  const value: HideValue = {
+    uri: uri as HideValue["uri"],
+    createdAt: nowIso(),
+  };
+  await createRecord(repo, HIDE, value, await deterministicRkey(uri));
+}
+
+export async function deleteBan(
+  repo: AuthenticatedRepo,
+  rkey: string,
+): Promise<void> {
+  await deleteRecord(repo, BAN, rkey);
+}
+
+export async function deleteHide(
+  repo: AuthenticatedRepo,
+  rkey: string,
+): Promise<void> {
+  await deleteRecord(repo, HIDE, rkey);
 }

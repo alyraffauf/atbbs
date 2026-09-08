@@ -4,7 +4,7 @@ import Avatar from "../../../ui/Avatar";
 import PostBody from "../../discussion/components/PostBody";
 import { ActionButton } from "../../../app/ActionButton";
 import { bbsUrl } from "../../../app/router/urls";
-import type { Profile } from "../../../../atbbs/profile/read";
+import type { Profile } from "../../../../atbbs/profile/profile";
 
 interface ProfileViewProps {
   handle: string;

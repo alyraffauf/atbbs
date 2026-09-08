@@ -1,57 +1,26 @@
-import type { AuthenticatedRepo } from "../atproto/repository";
 import type { Client } from "@atcute/client";
-import { deleteRecord } from "../atproto/repository";
-import { getRecord } from "../atproto/records";
-import { malformed } from "../atproto/transport";
-import { makeAtUri, parseAtUri } from "../atproto/uri";
-import type { RecordKey } from "@atcute/lexicons/syntax";
+import type { AuthenticatedRepo } from "../atproto/repository";
 import {
-  createBoard,
-  createSite,
-  putBoard,
-  putSite,
-} from "./community/records";
-import { deleteBBS } from "./community/delete";
-import { createPin } from "./community/pinCommands";
-import {
-  createNews,
-  createReply,
-  createThread,
-  deletePost,
-  type CreatedPost,
-  type CreateNewsInput,
-  type CreateReplyInput,
-  type CreateThreadInput,
-} from "./discussion/commands";
+  createCommunity,
+  deleteCommunity,
+  updateCommunity,
+  type CommunityDraft,
+} from "./community/site";
+import { createPin, deletePin } from "./community/pins";
+import { createThread, type CreateThreadInput } from "./discussion/threads";
+import { createReply, type CreateReplyInput } from "./discussion/replies";
+import { createNews, type CreateNewsInput } from "./discussion/news";
+import { deletePost, type CreatedPost } from "./discussion/posts";
 import {
   createBan,
   createHide,
   deleteBan,
   deleteHide,
-} from "./moderation/commands";
-import { putProfile } from "./profile/commands";
-import { BOARD, PIN, SITE } from "../config";
-import { isBoardRecord, isSiteRecord } from "./schema/records";
-import { nowIso } from "./support/time";
+} from "./moderation/state";
+import { saveProfile, type ProfileDraft } from "./profile/profile";
 
-export interface BoardDraft {
-  slug: string;
-  name: string;
-  description: string;
-}
-
-export interface CommunityDraft {
-  name: string;
-  description: string;
-  intro: string;
-  boards: BoardDraft[];
-}
-
-export interface ProfileDraft {
-  name?: string;
-  pronouns?: string;
-  bio?: string;
-}
+export type { BoardDraft, CommunityDraft } from "./community/site";
+export type { ProfileDraft } from "./profile/profile";
 
 export interface AtbbsWriter {
   createCommunity(input: CommunityDraft): Promise<void>;
@@ -75,118 +44,20 @@ export function createAtbbsWriter(
   pdsUrl: string,
 ): AtbbsWriter {
   return {
-    async createCommunity(draft) {
-      const createdAt = nowIso();
-      const createdSlugs: string[] = [];
-      try {
-        for (const board of draft.boards) {
-          await createBoard(repo, { ...board, createdAt });
-          createdSlugs.push(board.slug);
-        }
-        await createSite(repo, {
-          name: draft.name,
-          description: draft.description,
-          intro: draft.intro,
-          boards: draft.boards.map((board) =>
-            makeAtUri(repo.did, BOARD, board.slug as RecordKey),
-          ),
-          createdAt,
-        });
-      } catch (error) {
-        for (const slug of [...createdSlugs].reverse()) {
-          try {
-            await deleteRecord(repo, BOARD, slug);
-          } catch {
-            // Preserve the create failure. The remaining record is retryable.
-          }
-        }
-        throw error;
-      }
-    },
-
-    async updateCommunity(draft) {
-      const updatedAt = nowIso();
-      const existing = await getRecord(repo.did, SITE, "self");
-      if (!isSiteRecord(existing)) malformed("Existing site record");
-      const existingSite = existing.value;
-      const existingBoards = new Set<string>();
-      for (const boardUri of existingSite.boards) {
-        const address = parseAtUri(boardUri);
-        if (address.did !== repo.did || address.collection !== BOARD) {
-          malformed("Existing site board reference");
-        }
-        existingBoards.add(address.rkey);
-      }
-
-      const boardCreatedAt = new Map<string, string>();
-      await Promise.all(
-        draft.boards.map(async (board) => {
-          if (!existingBoards.has(board.slug)) return;
-          const record = await getRecord(repo.did, BOARD, board.slug);
-          if (!isBoardRecord(record)) malformed("Existing board record");
-          const address = parseAtUri(record.uri);
-          if (
-            address.did !== repo.did ||
-            address.collection !== BOARD ||
-            address.rkey !== board.slug
-          ) {
-            malformed("Existing board record address");
-          }
-          boardCreatedAt.set(board.slug, record.value.createdAt);
-        }),
-      );
-
-      for (const board of draft.boards) {
-        await putBoard(repo, {
-          ...board,
-          createdAt: boardCreatedAt.get(board.slug) ?? updatedAt,
-          updatedAt,
-        });
-      }
-      await putSite(repo, {
-        name: draft.name,
-        description: draft.description,
-        intro: draft.intro,
-        boards: draft.boards.map((board) =>
-          makeAtUri(repo.did, BOARD, board.slug as RecordKey),
-        ),
-        createdAt: existingSite.createdAt,
-        updatedAt,
-      });
-      const currentSlugs = new Set(draft.boards.map((board) => board.slug));
-      for (const rkey of existingBoards) {
-        if (!currentSlugs.has(rkey)) {
-          await deleteRecord(repo, BOARD, rkey);
-        }
-      }
-    },
-
-    deleteCommunity: () => deleteBBS(repo, repo.did, pdsUrl),
-    async pinCommunity(did) {
-      await createPin(repo, did);
-    },
-    async unpinCommunity(rkey) {
-      await deleteRecord(repo, PIN, rkey);
-    },
+    createCommunity: (input) => createCommunity(repo, input),
+    updateCommunity: (input) => updateCommunity(repo, input),
+    deleteCommunity: () => deleteCommunity(repo, pdsUrl),
+    pinCommunity: (did) => createPin(repo, did),
+    unpinCommunity: (rkey) => deletePin(repo, rkey),
     createThread: (input) => createThread(repo, pdsUrl, input),
     createReply: (input) => createReply(repo, pdsUrl, input),
     createNews: (input) => createNews(repo, pdsUrl, input),
     deletePost: (rkey) => deletePost(repo, rkey),
-    async banActor(did) {
-      await createBan(repo, did);
-    },
-    async unbanActor(rkey) {
-      await deleteBan(repo, rkey);
-    },
-    async hidePost(uri) {
-      await createHide(repo, uri);
-    },
-    async unhidePost(rkey) {
-      await deleteHide(repo, rkey);
-    },
-    async saveProfile(input) {
-      await putProfile(repo, input.name, input.pronouns, input.bio);
-    },
+    banActor: (did) => createBan(repo, did),
+    unbanActor: (rkey) => deleteBan(repo, rkey),
+    hidePost: (uri) => createHide(repo, uri),
+    unhidePost: (rkey) => deleteHide(repo, rkey),
+    saveProfile: (input) => saveProfile(repo, input),
   };
 }
 

@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { PIN } from "../../../config";
-import { resolveCommunity } from "../../../atbbs/community/read";
+import { resolveCommunity } from "../../../atbbs/community/site";
 import { fetchPins } from "../../../atbbs/community/pins";
 import { fetchDiscovery } from "../../../atbbs/community/discovery";
 import { fetchHomeSysopInfo } from "../../../atbbs/community/home";

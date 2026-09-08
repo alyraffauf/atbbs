@@ -6,6 +6,17 @@ import { getAvatar } from "../identity/service";
 import { PROFILE, SITE } from "../../config";
 import { isProfileRecord, isSiteRecord } from "../schema/records";
 import { isNotFound, malformed } from "../../atproto/transport";
+import type { XyzAtbbsProfile } from "../../lexicons";
+import { nowIso } from "../support/time";
+import { putRecord, type AuthenticatedRepo } from "../../atproto/repository";
+
+type ProfileValue = Omit<XyzAtbbsProfile.Main, "$type">;
+
+export interface ProfileDraft {
+  name?: string;
+  pronouns?: string;
+  bio?: string;
+}
 
 export interface Profile {
   did: string;
@@ -67,4 +78,17 @@ export async function fetchProfile(handle: string): Promise<Profile | null> {
   }
 
   return profile;
+}
+
+export async function saveProfile(
+  repo: AuthenticatedRepo,
+  draft: ProfileDraft,
+): Promise<void> {
+  const value: ProfileValue = {
+    ...(draft.name ? { name: draft.name } : {}),
+    ...(draft.pronouns ? { pronouns: draft.pronouns } : {}),
+    ...(draft.bio ? { bio: draft.bio } : {}),
+    createdAt: nowIso() as ProfileValue["createdAt"],
+  };
+  await putRecord(repo, PROFILE, "self", value);
 }

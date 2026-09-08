@@ -8,6 +8,29 @@ import type { Did } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "../schema/records";
 import { resolveIdentity } from "../../atproto/identity";
 import { prepareAttachmentViews, type AttachmentView } from "./attachments";
+import type { PendingAttachment } from "./attachments";
+import type { AuthenticatedRepo } from "../../atproto/repository";
+import { createPost } from "./posts";
+
+export interface CreateNewsInput {
+  communityDid: string;
+  title: string;
+  body: string;
+  attachments: PendingAttachment[];
+}
+
+export function createNews(
+  repo: AuthenticatedRepo,
+  pdsUrl: string,
+  input: CreateNewsInput,
+) {
+  return createPost(repo, pdsUrl, {
+    scope: makeAtUri(input.communityDid as Did, SITE, "self"),
+    title: input.title,
+    body: input.body,
+    attachments: input.attachments,
+  });
+}
 
 export interface NewsPost {
   uri: string;

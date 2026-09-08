@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createThread } from "./commands";
+import { createThread } from "./threads";
 import type { AuthenticatedRepo } from "../../atproto/repository";
 import { uploadAttachments } from "./attachments";
 

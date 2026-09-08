@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { PostDraft } from "./components/PostComposer";
 import { alertOnError } from "../../app/browser/alerts";
 import { useAuth } from "../auth/auth";
-import type { Community } from "../../../atbbs/community/read";
+import type { Community } from "../../../atbbs/community/site";
 import type { NewsPost } from "../../../atbbs/discussion/news";
 import { newsQuery } from "../../features/discussion/queries";
 import { queryClient } from "../../app/queryClient";

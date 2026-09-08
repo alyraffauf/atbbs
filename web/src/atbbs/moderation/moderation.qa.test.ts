@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fetchBBSModeration } from "./read";
+import { fetchBBSModeration } from "./state";
 import { fetchSysopModeration } from "./sysop";
 
 const bannedDid = "did:plc:banned";

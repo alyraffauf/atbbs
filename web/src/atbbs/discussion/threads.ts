@@ -13,6 +13,30 @@ import { BOARD, POST } from "../../config";
 import { makeAtUri, parseAtUri } from "../../atproto/uri";
 import type { Did } from "@atcute/lexicons/syntax";
 import { isPostRecord } from "../schema/records";
+import type { AuthenticatedRepo } from "../../atproto/repository";
+import type { PendingAttachment } from "./attachments";
+import { createPost } from "./posts";
+
+export interface CreateThreadInput {
+  communityDid: string;
+  boardSlug: string;
+  title: string;
+  body: string;
+  attachments: PendingAttachment[];
+}
+
+export function createThread(
+  repo: AuthenticatedRepo,
+  pdsUrl: string,
+  input: CreateThreadInput,
+) {
+  return createPost(repo, pdsUrl, {
+    scope: makeAtUri(input.communityDid as Did, BOARD, input.boardSlug),
+    title: input.title,
+    body: input.body,
+    attachments: input.attachments,
+  });
+}
 
 export interface Participant {
   did: string;

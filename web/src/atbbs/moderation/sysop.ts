@@ -3,7 +3,7 @@
 import { resolveIdentitiesBatch } from "../identity/service";
 import { getRecordsByUri } from "../support/records";
 import { parseAtUri } from "../../atproto/uri";
-import { fetchBBSModeration } from "./read";
+import { fetchBBSModeration } from "./state";
 import { isPostRecord } from "../schema/records";
 import { malformed } from "../../atproto/transport";
 

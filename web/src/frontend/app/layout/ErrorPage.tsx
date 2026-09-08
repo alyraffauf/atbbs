@@ -1,4 +1,4 @@
-import { BBSNotFoundError, NoBBSError } from "../../../atbbs/community/read";
+import { BBSNotFoundError, NoBBSError } from "../../../atbbs/community/site";
 import { useAuth } from "../../features/auth/auth";
 import { isRouteErrorResponse } from "react-router-dom";
 import { ActionLink } from "../ActionButton";
