@@ -1,10 +1,14 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import { OAUTH_SCOPE } from "@atbbs/core/config";
+import shared from "../atbbs/shared.json" with { type: "json" };
 
 const SERVER_HOST = "127.0.0.1";
 const SERVER_PORT = 5173;
+const OAUTH_SCOPE = [
+  ...shared.oauth_base_scopes,
+  ...Object.values(shared.lexicon_collections).map((nsid) => `repo:${nsid}`),
+].join(" ");
 
 // Placeholder the Docker entrypoint replaces at runtime with PUBLIC_URL.
 const PUBLIC_URL_TOKEN = "__PUBLIC_URL__";
