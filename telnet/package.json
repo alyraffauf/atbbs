@@ -15,10 +15,10 @@
     "@atbbs/core": "1.4.2"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
-    "esbuild": "^0.28.1",
-    "oxlint": "^1.82.0",
-    "prettier": "^3.9.6",
-    "typescript": "^7.0.2"
+    "@types/node": "24.13.3",
+    "esbuild": "0.28.2",
+    "oxlint": "1.82.0",
+    "prettier": "3.9.6",
+    "typescript": "7.0.2"
   }
 }
