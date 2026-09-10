@@ -21,7 +21,7 @@
     "@atcute/lexicons": "^2.1.0",
     "@atcute/oauth-browser-client": "^5.0.0",
     "@tanstack/react-query": "^5.102.8",
-    "lucide-react": "^1.41.0",
+    "lucide-react": "^1.42.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-markdown": "^10.1.0",
