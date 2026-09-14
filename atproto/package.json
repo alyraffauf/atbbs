@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@atcute/atproto": "^4.0.4",
-    "@atcute/client": "^5.1.1",
+    "@atcute/client": "^5.1.2",
     "@atcute/lexicons": "^2.1.0"
   },
   "devDependencies": {
