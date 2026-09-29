@@ -11,7 +11,7 @@ COPY atproto atproto
 COPY web web
 RUN npm --workspace atbbs-web run build
 
-FROM nginx:alpine@sha256:62ff2089abf5a9ed33bd232895bef5e22f7bb4b200675cec49a5ebc48e3d4ac8
+FROM nginx:alpine@sha256:df221db836e1754089190208cee7eeda94f233197056426eda74a43ab1abeac2
 COPY --from=build /repo/web/dist /usr/share/nginx/html
 COPY web/nginx.conf /etc/nginx/conf.d/default.conf
 COPY web/docker-entrypoint.sh /docker-entrypoint.sh
