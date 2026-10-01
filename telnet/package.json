@@ -17,7 +17,7 @@
   "devDependencies": {
     "@types/node": "24.19.0",
     "esbuild": "0.28.2",
-    "oxlint": "1.82.0",
+    "oxlint": "1.85.0",
     "prettier": "3.9.9",
     "typescript": "7.0.2"
   }
