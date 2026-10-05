@@ -15,7 +15,7 @@
     "@atbbs/core": "1.4.2"
   },
   "devDependencies": {
-    "@types/node": "24.19.0",
+    "@types/node": "24.19.1",
     "esbuild": "0.28.2",
     "oxlint": "1.85.0",
     "prettier": "3.9.9",
