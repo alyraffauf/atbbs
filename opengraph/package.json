@@ -18,11 +18,11 @@
     "workers-og": "^0.0.27"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "5.20260927.1",
-    "oxlint": "1.85.0",
+    "@cloudflare/workers-types": "5.20261002.1",
+    "oxlint": "1.86.0",
     "prettier": "3.9.9",
     "typescript": "7.0.2",
-    "vitest": "5.0.2",
-    "wrangler": "4.141.0"
+    "vitest": "5.0.3",
+    "wrangler": "4.146.0"
   }
 }
