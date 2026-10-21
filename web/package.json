@@ -20,26 +20,26 @@
     "@atcute/client": "^5.1.2",
     "@atcute/lexicons": "^2.1.1",
     "@atcute/oauth-browser-client": "^5.1.0",
-    "@tanstack/react-query": "^5.104.1",
-    "lucide-react": "^1.54.0",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
+    "@tanstack/react-query": "^5.104.4",
+    "lucide-react": "^1.59.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.18.4"
   },
   "devDependencies": {
-    "@atcute/identity-resolver": "2.0.2",
+    "@atcute/identity-resolver": "2.0.3",
     "@atcute/lex-cli": "3.3.0",
     "@tailwindcss/typography": "0.5.20",
     "@tailwindcss/vite": "4.3.3",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.2",
-    "oxlint": "1.87.0",
-    "prettier": "3.9.9",
+    "oxlint": "1.88.0",
+    "prettier": "3.9.10",
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
     "vite": "8.3.4",
-    "vitest": "5.0.3"
+    "vitest": "5.0.5"
   }
 }
