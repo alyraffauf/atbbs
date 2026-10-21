@@ -31,9 +31,9 @@
     "@atbbs/atproto": "1.4.2"
   },
   "devDependencies": {
-    "oxlint": "1.87.0",
-    "prettier": "3.9.9",
+    "oxlint": "1.88.0",
+    "prettier": "3.9.10",
     "typescript": "7.0.2",
-    "vitest": "5.0.3"
+    "vitest": "5.0.5"
   }
 }
